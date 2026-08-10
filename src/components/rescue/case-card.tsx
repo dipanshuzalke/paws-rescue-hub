@@ -14,10 +14,10 @@ export function CaseCard({
   showDistance = false,
 }: {
   report: RescueReport;
-  to?: string;
-  params?: Record<string, string>;
-  footer?: ReactNode;
-  showDistance?: boolean;
+  to?: string | undefined;
+  params?: Record<string, string> | undefined;
+  footer?: ReactNode | undefined;
+  showDistance?: boolean | undefined;
 }) {
   const body = (
     <>

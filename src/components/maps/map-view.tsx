@@ -40,10 +40,10 @@ export function MapView({
   caption = "Nagpur · Demo map surface (mock coordinates)",
 }: {
   markers: MapMarker[];
-  height?: string;
-  activeId?: string;
-  onSelect?: (id: string) => void;
-  caption?: string;
+  height?: string | undefined;
+  activeId?: string | undefined;
+  onSelect?: ((id: string) => void) | undefined;
+  caption?: string | undefined;
 }) {
   return (
     <div className={cn("card-surface relative overflow-hidden", height)}>

@@ -257,7 +257,12 @@ function Index() {
         </div>
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {featured.map((report) => (
-            <CaseCard key={report.id} report={report} to="/rescue-cases/$id" />
+            <CaseCard
+              key={report.id}
+              report={report}
+              to="/rescue-cases/$id"
+              params={{ id: report.id }}
+            />
           ))}
         </div>
       </section>
