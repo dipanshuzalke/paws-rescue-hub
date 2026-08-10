@@ -10,33 +10,725 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CitizenRouteImport } from './routes/citizen'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as NgoRouteImport } from './routes/ngo'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RescuerRouteImport } from './routes/rescuer'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AdminActiveRescuesRouteImport } from './routes/admin.active-rescues'
+import { Route as AdminActivityRouteImport } from './routes/admin.activity'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminCitizensRouteImport } from './routes/admin.citizens'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminNgosRouteImport } from './routes/admin.ngos'
+import { Route as AdminRescuersRouteImport } from './routes/admin.rescuers'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as CitizenDashboardRouteImport } from './routes/citizen.dashboard'
+import { Route as CitizenHistoryRouteImport } from './routes/citizen.history'
+import { Route as CitizenNotificationsRouteImport } from './routes/citizen.notifications'
+import { Route as CitizenProfileRouteImport } from './routes/citizen.profile'
+import { Route as CitizenReportRouteImport } from './routes/citizen.report'
+import { Route as CitizenRescuesRouteImport } from './routes/citizen.rescues'
+import { Route as CitizenSettingsRouteImport } from './routes/citizen.settings'
+import { Route as NgoActiveRouteImport } from './routes/ngo.active'
+import { Route as NgoAnalyticsRouteImport } from './routes/ngo.analytics'
+import { Route as NgoAssignmentsRouteImport } from './routes/ngo.assignments'
+import { Route as NgoDashboardRouteImport } from './routes/ngo.dashboard'
+import { Route as NgoHistoryRouteImport } from './routes/ngo.history'
+import { Route as NgoNotificationsRouteImport } from './routes/ngo.notifications'
+import { Route as NgoProfileRouteImport } from './routes/ngo.profile'
+import { Route as NgoRescuersRouteImport } from './routes/ngo.rescuers'
+import { Route as NgoSettingsRouteImport } from './routes/ngo.settings'
+import { Route as RescueCasesIndexRouteImport } from './routes/rescue-cases.index'
+import { Route as RescueCasesIdRouteImport } from './routes/rescue-cases.$id'
+import { Route as RescuerActiveRouteImport } from './routes/rescuer.active'
+import { Route as RescuerDashboardRouteImport } from './routes/rescuer.dashboard'
+import { Route as RescuerHistoryRouteImport } from './routes/rescuer.history'
+import { Route as RescuerMapRouteImport } from './routes/rescuer.map'
+import { Route as RescuerNotificationsRouteImport } from './routes/rescuer.notifications'
+import { Route as RescuerProfileRouteImport } from './routes/rescuer.profile'
+import { Route as RescuerSettingsRouteImport } from './routes/rescuer.settings'
+import { Route as AdminReportsIndexRouteImport } from './routes/admin.reports.index'
+import { Route as AdminReportsIdRouteImport } from './routes/admin.reports.$id'
+import { Route as CitizenReportsIndexRouteImport } from './routes/citizen.reports.index'
+import { Route as CitizenReportsIdRouteImport } from './routes/citizen.reports.$id'
+import { Route as NgoRequestsIndexRouteImport } from './routes/ngo.requests.index'
+import { Route as NgoRequestsIdRouteImport } from './routes/ngo.requests.$id'
+import { Route as RescuerRequestsIndexRouteImport } from './routes/rescuer.requests.index'
+import { Route as RescuerRequestsIdRouteImport } from './routes/rescuer.requests.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CitizenRoute = CitizenRouteImport.update({
+  id: '/citizen',
+  path: '/citizen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NgoRoute = NgoRouteImport.update({
+  id: '/ngo',
+  path: '/ngo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RescuerRoute = RescuerRouteImport.update({
+  id: '/rescuer',
+  path: '/rescuer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminActiveRescuesRoute = AdminActiveRescuesRouteImport.update({
+  id: '/active-rescues',
+  path: '/active-rescues',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCitizensRoute = AdminCitizensRouteImport.update({
+  id: '/citizens',
+  path: '/citizens',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNgosRoute = AdminNgosRouteImport.update({
+  id: '/ngos',
+  path: '/ngos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRescuersRoute = AdminRescuersRouteImport.update({
+  id: '/rescuers',
+  path: '/rescuers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const CitizenDashboardRoute = CitizenDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenHistoryRoute = CitizenHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenNotificationsRoute = CitizenNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenProfileRoute = CitizenProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenReportRoute = CitizenReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenRescuesRoute = CitizenRescuesRouteImport.update({
+  id: '/rescues',
+  path: '/rescues',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenSettingsRoute = CitizenSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const NgoActiveRoute = NgoActiveRouteImport.update({
+  id: '/active',
+  path: '/active',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoAnalyticsRoute = NgoAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoAssignmentsRoute = NgoAssignmentsRouteImport.update({
+  id: '/assignments',
+  path: '/assignments',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoDashboardRoute = NgoDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoHistoryRoute = NgoHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoNotificationsRoute = NgoNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoProfileRoute = NgoProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoRescuersRoute = NgoRescuersRouteImport.update({
+  id: '/rescuers',
+  path: '/rescuers',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoSettingsRoute = NgoSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => NgoRoute,
+} as any)
+const RescueCasesIndexRoute = RescueCasesIndexRouteImport.update({
+  id: '/rescue-cases/',
+  path: '/rescue-cases/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RescueCasesIdRoute = RescueCasesIdRouteImport.update({
+  id: '/rescue-cases/$id',
+  path: '/rescue-cases/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RescuerActiveRoute = RescuerActiveRouteImport.update({
+  id: '/active',
+  path: '/active',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerDashboardRoute = RescuerDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerHistoryRoute = RescuerHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerMapRoute = RescuerMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerNotificationsRoute = RescuerNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerProfileRoute = RescuerProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerSettingsRoute = RescuerSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsIdRoute = AdminReportsIdRouteImport.update({
+  id: '/reports/$id',
+  path: '/reports/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const CitizenReportsIndexRoute = CitizenReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const CitizenReportsIdRoute = CitizenReportsIdRouteImport.update({
+  id: '/reports/$id',
+  path: '/reports/$id',
+  getParentRoute: () => CitizenRoute,
+} as any)
+const NgoRequestsIndexRoute = NgoRequestsIndexRouteImport.update({
+  id: '/requests/',
+  path: '/requests/',
+  getParentRoute: () => NgoRoute,
+} as any)
+const NgoRequestsIdRoute = NgoRequestsIdRouteImport.update({
+  id: '/requests/$id',
+  path: '/requests/$id',
+  getParentRoute: () => NgoRoute,
+} as any)
+const RescuerRequestsIndexRoute = RescuerRequestsIndexRouteImport.update({
+  id: '/requests/',
+  path: '/requests/',
+  getParentRoute: () => RescuerRoute,
+} as any)
+const RescuerRequestsIdRoute = RescuerRequestsIdRouteImport.update({
+  id: '/requests/$id',
+  path: '/requests/$id',
+  getParentRoute: () => RescuerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/citizen': typeof CitizenRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
+  '/ngo': typeof NgoRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
+  '/rescuer': typeof RescuerRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
+  '/admin/active-rescues': typeof AdminActiveRescuesRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/citizens': typeof AdminCitizensRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/ngos': typeof AdminNgosRoute
+  '/admin/rescuers': typeof AdminRescuersRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/citizen/dashboard': typeof CitizenDashboardRoute
+  '/citizen/history': typeof CitizenHistoryRoute
+  '/citizen/notifications': typeof CitizenNotificationsRoute
+  '/citizen/profile': typeof CitizenProfileRoute
+  '/citizen/report': typeof CitizenReportRoute
+  '/citizen/rescues': typeof CitizenRescuesRoute
+  '/citizen/settings': typeof CitizenSettingsRoute
+  '/ngo/active': typeof NgoActiveRoute
+  '/ngo/analytics': typeof NgoAnalyticsRoute
+  '/ngo/assignments': typeof NgoAssignmentsRoute
+  '/ngo/dashboard': typeof NgoDashboardRoute
+  '/ngo/history': typeof NgoHistoryRoute
+  '/ngo/notifications': typeof NgoNotificationsRoute
+  '/ngo/profile': typeof NgoProfileRoute
+  '/ngo/rescuers': typeof NgoRescuersRoute
+  '/ngo/settings': typeof NgoSettingsRoute
+  '/rescue-cases/$id': typeof RescueCasesIdRoute
+  '/rescuer/active': typeof RescuerActiveRoute
+  '/rescuer/dashboard': typeof RescuerDashboardRoute
+  '/rescuer/history': typeof RescuerHistoryRoute
+  '/rescuer/map': typeof RescuerMapRoute
+  '/rescuer/notifications': typeof RescuerNotificationsRoute
+  '/rescuer/profile': typeof RescuerProfileRoute
+  '/rescuer/settings': typeof RescuerSettingsRoute
+  '/rescue-cases/': typeof RescueCasesIndexRoute
+  '/admin/reports/$id': typeof AdminReportsIdRoute
+  '/citizen/reports/$id': typeof CitizenReportsIdRoute
+  '/ngo/requests/$id': typeof NgoRequestsIdRoute
+  '/rescuer/requests/$id': typeof RescuerRequestsIdRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
+  '/citizen/reports/': typeof CitizenReportsIndexRoute
+  '/ngo/requests/': typeof NgoRequestsIndexRoute
+  '/rescuer/requests/': typeof RescuerRequestsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/citizen': typeof CitizenRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
+  '/ngo': typeof NgoRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
+  '/rescuer': typeof RescuerRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
+  '/admin/active-rescues': typeof AdminActiveRescuesRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/citizens': typeof AdminCitizensRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/ngos': typeof AdminNgosRoute
+  '/admin/rescuers': typeof AdminRescuersRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/citizen/dashboard': typeof CitizenDashboardRoute
+  '/citizen/history': typeof CitizenHistoryRoute
+  '/citizen/notifications': typeof CitizenNotificationsRoute
+  '/citizen/profile': typeof CitizenProfileRoute
+  '/citizen/report': typeof CitizenReportRoute
+  '/citizen/rescues': typeof CitizenRescuesRoute
+  '/citizen/settings': typeof CitizenSettingsRoute
+  '/ngo/active': typeof NgoActiveRoute
+  '/ngo/analytics': typeof NgoAnalyticsRoute
+  '/ngo/assignments': typeof NgoAssignmentsRoute
+  '/ngo/dashboard': typeof NgoDashboardRoute
+  '/ngo/history': typeof NgoHistoryRoute
+  '/ngo/notifications': typeof NgoNotificationsRoute
+  '/ngo/profile': typeof NgoProfileRoute
+  '/ngo/rescuers': typeof NgoRescuersRoute
+  '/ngo/settings': typeof NgoSettingsRoute
+  '/rescue-cases/$id': typeof RescueCasesIdRoute
+  '/rescuer/active': typeof RescuerActiveRoute
+  '/rescuer/dashboard': typeof RescuerDashboardRoute
+  '/rescuer/history': typeof RescuerHistoryRoute
+  '/rescuer/map': typeof RescuerMapRoute
+  '/rescuer/notifications': typeof RescuerNotificationsRoute
+  '/rescuer/profile': typeof RescuerProfileRoute
+  '/rescuer/settings': typeof RescuerSettingsRoute
+  '/rescue-cases': typeof RescueCasesIndexRoute
+  '/admin/reports/$id': typeof AdminReportsIdRoute
+  '/citizen/reports/$id': typeof CitizenReportsIdRoute
+  '/ngo/requests/$id': typeof NgoRequestsIdRoute
+  '/rescuer/requests/$id': typeof RescuerRequestsIdRoute
+  '/admin/reports': typeof AdminReportsIndexRoute
+  '/citizen/reports': typeof CitizenReportsIndexRoute
+  '/ngo/requests': typeof NgoRequestsIndexRoute
+  '/rescuer/requests': typeof RescuerRequestsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/citizen': typeof CitizenRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
+  '/ngo': typeof NgoRouteWithChildren
+  '/privacy': typeof PrivacyRoute
+  '/register': typeof RegisterRoute
+  '/rescuer': typeof RescuerRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
+  '/admin/active-rescues': typeof AdminActiveRescuesRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/citizens': typeof AdminCitizensRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/ngos': typeof AdminNgosRoute
+  '/admin/rescuers': typeof AdminRescuersRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/citizen/dashboard': typeof CitizenDashboardRoute
+  '/citizen/history': typeof CitizenHistoryRoute
+  '/citizen/notifications': typeof CitizenNotificationsRoute
+  '/citizen/profile': typeof CitizenProfileRoute
+  '/citizen/report': typeof CitizenReportRoute
+  '/citizen/rescues': typeof CitizenRescuesRoute
+  '/citizen/settings': typeof CitizenSettingsRoute
+  '/ngo/active': typeof NgoActiveRoute
+  '/ngo/analytics': typeof NgoAnalyticsRoute
+  '/ngo/assignments': typeof NgoAssignmentsRoute
+  '/ngo/dashboard': typeof NgoDashboardRoute
+  '/ngo/history': typeof NgoHistoryRoute
+  '/ngo/notifications': typeof NgoNotificationsRoute
+  '/ngo/profile': typeof NgoProfileRoute
+  '/ngo/rescuers': typeof NgoRescuersRoute
+  '/ngo/settings': typeof NgoSettingsRoute
+  '/rescue-cases/$id': typeof RescueCasesIdRoute
+  '/rescuer/active': typeof RescuerActiveRoute
+  '/rescuer/dashboard': typeof RescuerDashboardRoute
+  '/rescuer/history': typeof RescuerHistoryRoute
+  '/rescuer/map': typeof RescuerMapRoute
+  '/rescuer/notifications': typeof RescuerNotificationsRoute
+  '/rescuer/profile': typeof RescuerProfileRoute
+  '/rescuer/settings': typeof RescuerSettingsRoute
+  '/rescue-cases/': typeof RescueCasesIndexRoute
+  '/admin/reports/$id': typeof AdminReportsIdRoute
+  '/citizen/reports/$id': typeof CitizenReportsIdRoute
+  '/ngo/requests/$id': typeof NgoRequestsIdRoute
+  '/rescuer/requests/$id': typeof RescuerRequestsIdRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
+  '/citizen/reports/': typeof CitizenReportsIndexRoute
+  '/ngo/requests/': typeof NgoRequestsIndexRoute
+  '/rescuer/requests/': typeof RescuerRequestsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/citizen'
+    | '/contact'
+    | '/demo'
+    | '/forgot-password'
+    | '/how-it-works'
+    | '/login'
+    | '/ngo'
+    | '/privacy'
+    | '/register'
+    | '/rescuer'
+    | '/reset-password'
+    | '/terms'
+    | '/admin/active-rescues'
+    | '/admin/activity'
+    | '/admin/analytics'
+    | '/admin/citizens'
+    | '/admin/dashboard'
+    | '/admin/ngos'
+    | '/admin/rescuers'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/citizen/dashboard'
+    | '/citizen/history'
+    | '/citizen/notifications'
+    | '/citizen/profile'
+    | '/citizen/report'
+    | '/citizen/rescues'
+    | '/citizen/settings'
+    | '/ngo/active'
+    | '/ngo/analytics'
+    | '/ngo/assignments'
+    | '/ngo/dashboard'
+    | '/ngo/history'
+    | '/ngo/notifications'
+    | '/ngo/profile'
+    | '/ngo/rescuers'
+    | '/ngo/settings'
+    | '/rescue-cases/$id'
+    | '/rescuer/active'
+    | '/rescuer/dashboard'
+    | '/rescuer/history'
+    | '/rescuer/map'
+    | '/rescuer/notifications'
+    | '/rescuer/profile'
+    | '/rescuer/settings'
+    | '/rescue-cases/'
+    | '/admin/reports/$id'
+    | '/citizen/reports/$id'
+    | '/ngo/requests/$id'
+    | '/rescuer/requests/$id'
+    | '/admin/reports/'
+    | '/citizen/reports/'
+    | '/ngo/requests/'
+    | '/rescuer/requests/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/citizen'
+    | '/contact'
+    | '/demo'
+    | '/forgot-password'
+    | '/how-it-works'
+    | '/login'
+    | '/ngo'
+    | '/privacy'
+    | '/register'
+    | '/rescuer'
+    | '/reset-password'
+    | '/terms'
+    | '/admin/active-rescues'
+    | '/admin/activity'
+    | '/admin/analytics'
+    | '/admin/citizens'
+    | '/admin/dashboard'
+    | '/admin/ngos'
+    | '/admin/rescuers'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/citizen/dashboard'
+    | '/citizen/history'
+    | '/citizen/notifications'
+    | '/citizen/profile'
+    | '/citizen/report'
+    | '/citizen/rescues'
+    | '/citizen/settings'
+    | '/ngo/active'
+    | '/ngo/analytics'
+    | '/ngo/assignments'
+    | '/ngo/dashboard'
+    | '/ngo/history'
+    | '/ngo/notifications'
+    | '/ngo/profile'
+    | '/ngo/rescuers'
+    | '/ngo/settings'
+    | '/rescue-cases/$id'
+    | '/rescuer/active'
+    | '/rescuer/dashboard'
+    | '/rescuer/history'
+    | '/rescuer/map'
+    | '/rescuer/notifications'
+    | '/rescuer/profile'
+    | '/rescuer/settings'
+    | '/rescue-cases'
+    | '/admin/reports/$id'
+    | '/citizen/reports/$id'
+    | '/ngo/requests/$id'
+    | '/rescuer/requests/$id'
+    | '/admin/reports'
+    | '/citizen/reports'
+    | '/ngo/requests'
+    | '/rescuer/requests'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/citizen'
+    | '/contact'
+    | '/demo'
+    | '/forgot-password'
+    | '/how-it-works'
+    | '/login'
+    | '/ngo'
+    | '/privacy'
+    | '/register'
+    | '/rescuer'
+    | '/reset-password'
+    | '/terms'
+    | '/admin/active-rescues'
+    | '/admin/activity'
+    | '/admin/analytics'
+    | '/admin/citizens'
+    | '/admin/dashboard'
+    | '/admin/ngos'
+    | '/admin/rescuers'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/citizen/dashboard'
+    | '/citizen/history'
+    | '/citizen/notifications'
+    | '/citizen/profile'
+    | '/citizen/report'
+    | '/citizen/rescues'
+    | '/citizen/settings'
+    | '/ngo/active'
+    | '/ngo/analytics'
+    | '/ngo/assignments'
+    | '/ngo/dashboard'
+    | '/ngo/history'
+    | '/ngo/notifications'
+    | '/ngo/profile'
+    | '/ngo/rescuers'
+    | '/ngo/settings'
+    | '/rescue-cases/$id'
+    | '/rescuer/active'
+    | '/rescuer/dashboard'
+    | '/rescuer/history'
+    | '/rescuer/map'
+    | '/rescuer/notifications'
+    | '/rescuer/profile'
+    | '/rescuer/settings'
+    | '/rescue-cases/'
+    | '/admin/reports/$id'
+    | '/citizen/reports/$id'
+    | '/ngo/requests/$id'
+    | '/rescuer/requests/$id'
+    | '/admin/reports/'
+    | '/citizen/reports/'
+    | '/ngo/requests/'
+    | '/rescuer/requests/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  CitizenRoute: typeof CitizenRouteWithChildren
+  ContactRoute: typeof ContactRoute
+  DemoRoute: typeof DemoRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  LoginRoute: typeof LoginRoute
+  NgoRoute: typeof NgoRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
+  RegisterRoute: typeof RegisterRoute
+  RescuerRoute: typeof RescuerRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  TermsRoute: typeof TermsRoute
+  RescueCasesIdRoute: typeof RescueCasesIdRoute
+  RescueCasesIndexRoute: typeof RescueCasesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +740,534 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/citizen': {
+      id: '/citizen'
+      path: '/citizen'
+      fullPath: '/citizen'
+      preLoaderRoute: typeof CitizenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ngo': {
+      id: '/ngo'
+      path: '/ngo'
+      fullPath: '/ngo'
+      preLoaderRoute: typeof NgoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rescuer': {
+      id: '/rescuer'
+      path: '/rescuer'
+      fullPath: '/rescuer'
+      preLoaderRoute: typeof RescuerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/active-rescues': {
+      id: '/admin/active-rescues'
+      path: '/active-rescues'
+      fullPath: '/admin/active-rescues'
+      preLoaderRoute: typeof AdminActiveRescuesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/citizens': {
+      id: '/admin/citizens'
+      path: '/citizens'
+      fullPath: '/admin/citizens'
+      preLoaderRoute: typeof AdminCitizensRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ngos': {
+      id: '/admin/ngos'
+      path: '/ngos'
+      fullPath: '/admin/ngos'
+      preLoaderRoute: typeof AdminNgosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/rescuers': {
+      id: '/admin/rescuers'
+      path: '/rescuers'
+      fullPath: '/admin/rescuers'
+      preLoaderRoute: typeof AdminRescuersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/citizen/dashboard': {
+      id: '/citizen/dashboard'
+      path: '/dashboard'
+      fullPath: '/citizen/dashboard'
+      preLoaderRoute: typeof CitizenDashboardRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/history': {
+      id: '/citizen/history'
+      path: '/history'
+      fullPath: '/citizen/history'
+      preLoaderRoute: typeof CitizenHistoryRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/notifications': {
+      id: '/citizen/notifications'
+      path: '/notifications'
+      fullPath: '/citizen/notifications'
+      preLoaderRoute: typeof CitizenNotificationsRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/profile': {
+      id: '/citizen/profile'
+      path: '/profile'
+      fullPath: '/citizen/profile'
+      preLoaderRoute: typeof CitizenProfileRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/report': {
+      id: '/citizen/report'
+      path: '/report'
+      fullPath: '/citizen/report'
+      preLoaderRoute: typeof CitizenReportRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/rescues': {
+      id: '/citizen/rescues'
+      path: '/rescues'
+      fullPath: '/citizen/rescues'
+      preLoaderRoute: typeof CitizenRescuesRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/settings': {
+      id: '/citizen/settings'
+      path: '/settings'
+      fullPath: '/citizen/settings'
+      preLoaderRoute: typeof CitizenSettingsRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/ngo/active': {
+      id: '/ngo/active'
+      path: '/active'
+      fullPath: '/ngo/active'
+      preLoaderRoute: typeof NgoActiveRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/analytics': {
+      id: '/ngo/analytics'
+      path: '/analytics'
+      fullPath: '/ngo/analytics'
+      preLoaderRoute: typeof NgoAnalyticsRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/assignments': {
+      id: '/ngo/assignments'
+      path: '/assignments'
+      fullPath: '/ngo/assignments'
+      preLoaderRoute: typeof NgoAssignmentsRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/dashboard': {
+      id: '/ngo/dashboard'
+      path: '/dashboard'
+      fullPath: '/ngo/dashboard'
+      preLoaderRoute: typeof NgoDashboardRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/history': {
+      id: '/ngo/history'
+      path: '/history'
+      fullPath: '/ngo/history'
+      preLoaderRoute: typeof NgoHistoryRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/notifications': {
+      id: '/ngo/notifications'
+      path: '/notifications'
+      fullPath: '/ngo/notifications'
+      preLoaderRoute: typeof NgoNotificationsRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/profile': {
+      id: '/ngo/profile'
+      path: '/profile'
+      fullPath: '/ngo/profile'
+      preLoaderRoute: typeof NgoProfileRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/rescuers': {
+      id: '/ngo/rescuers'
+      path: '/rescuers'
+      fullPath: '/ngo/rescuers'
+      preLoaderRoute: typeof NgoRescuersRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/settings': {
+      id: '/ngo/settings'
+      path: '/settings'
+      fullPath: '/ngo/settings'
+      preLoaderRoute: typeof NgoSettingsRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/rescue-cases/': {
+      id: '/rescue-cases/'
+      path: '/rescue-cases'
+      fullPath: '/rescue-cases/'
+      preLoaderRoute: typeof RescueCasesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rescue-cases/$id': {
+      id: '/rescue-cases/$id'
+      path: '/rescue-cases/$id'
+      fullPath: '/rescue-cases/$id'
+      preLoaderRoute: typeof RescueCasesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rescuer/active': {
+      id: '/rescuer/active'
+      path: '/active'
+      fullPath: '/rescuer/active'
+      preLoaderRoute: typeof RescuerActiveRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/dashboard': {
+      id: '/rescuer/dashboard'
+      path: '/dashboard'
+      fullPath: '/rescuer/dashboard'
+      preLoaderRoute: typeof RescuerDashboardRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/history': {
+      id: '/rescuer/history'
+      path: '/history'
+      fullPath: '/rescuer/history'
+      preLoaderRoute: typeof RescuerHistoryRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/map': {
+      id: '/rescuer/map'
+      path: '/map'
+      fullPath: '/rescuer/map'
+      preLoaderRoute: typeof RescuerMapRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/notifications': {
+      id: '/rescuer/notifications'
+      path: '/notifications'
+      fullPath: '/rescuer/notifications'
+      preLoaderRoute: typeof RescuerNotificationsRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/profile': {
+      id: '/rescuer/profile'
+      path: '/profile'
+      fullPath: '/rescuer/profile'
+      preLoaderRoute: typeof RescuerProfileRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/settings': {
+      id: '/rescuer/settings'
+      path: '/settings'
+      fullPath: '/rescuer/settings'
+      preLoaderRoute: typeof RescuerSettingsRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/admin/reports/': {
+      id: '/admin/reports/'
+      path: '/reports'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AdminReportsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports/$id': {
+      id: '/admin/reports/$id'
+      path: '/reports/$id'
+      fullPath: '/admin/reports/$id'
+      preLoaderRoute: typeof AdminReportsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/citizen/reports/': {
+      id: '/citizen/reports/'
+      path: '/reports'
+      fullPath: '/citizen/reports/'
+      preLoaderRoute: typeof CitizenReportsIndexRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/citizen/reports/$id': {
+      id: '/citizen/reports/$id'
+      path: '/reports/$id'
+      fullPath: '/citizen/reports/$id'
+      preLoaderRoute: typeof CitizenReportsIdRouteImport
+      parentRoute: typeof CitizenRoute
+    }
+    '/ngo/requests/': {
+      id: '/ngo/requests/'
+      path: '/requests'
+      fullPath: '/ngo/requests/'
+      preLoaderRoute: typeof NgoRequestsIndexRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/ngo/requests/$id': {
+      id: '/ngo/requests/$id'
+      path: '/requests/$id'
+      fullPath: '/ngo/requests/$id'
+      preLoaderRoute: typeof NgoRequestsIdRouteImport
+      parentRoute: typeof NgoRoute
+    }
+    '/rescuer/requests/': {
+      id: '/rescuer/requests/'
+      path: '/requests'
+      fullPath: '/rescuer/requests/'
+      preLoaderRoute: typeof RescuerRequestsIndexRouteImport
+      parentRoute: typeof RescuerRoute
+    }
+    '/rescuer/requests/$id': {
+      id: '/rescuer/requests/$id'
+      path: '/requests/$id'
+      fullPath: '/rescuer/requests/$id'
+      preLoaderRoute: typeof RescuerRequestsIdRouteImport
+      parentRoute: typeof RescuerRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminActiveRescuesRoute: typeof AdminActiveRescuesRoute
+  AdminActivityRoute: typeof AdminActivityRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminCitizensRoute: typeof AdminCitizensRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminNgosRoute: typeof AdminNgosRoute
+  AdminRescuersRoute: typeof AdminRescuersRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminReportsIdRoute: typeof AdminReportsIdRoute
+  AdminReportsIndexRoute: typeof AdminReportsIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminActiveRescuesRoute: AdminActiveRescuesRoute,
+  AdminActivityRoute: AdminActivityRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminCitizensRoute: AdminCitizensRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminNgosRoute: AdminNgosRoute,
+  AdminRescuersRoute: AdminRescuersRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminReportsIdRoute: AdminReportsIdRoute,
+  AdminReportsIndexRoute: AdminReportsIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface CitizenRouteChildren {
+  CitizenDashboardRoute: typeof CitizenDashboardRoute
+  CitizenHistoryRoute: typeof CitizenHistoryRoute
+  CitizenNotificationsRoute: typeof CitizenNotificationsRoute
+  CitizenProfileRoute: typeof CitizenProfileRoute
+  CitizenReportRoute: typeof CitizenReportRoute
+  CitizenRescuesRoute: typeof CitizenRescuesRoute
+  CitizenSettingsRoute: typeof CitizenSettingsRoute
+  CitizenReportsIdRoute: typeof CitizenReportsIdRoute
+  CitizenReportsIndexRoute: typeof CitizenReportsIndexRoute
+}
+
+const CitizenRouteChildren: CitizenRouteChildren = {
+  CitizenDashboardRoute: CitizenDashboardRoute,
+  CitizenHistoryRoute: CitizenHistoryRoute,
+  CitizenNotificationsRoute: CitizenNotificationsRoute,
+  CitizenProfileRoute: CitizenProfileRoute,
+  CitizenReportRoute: CitizenReportRoute,
+  CitizenRescuesRoute: CitizenRescuesRoute,
+  CitizenSettingsRoute: CitizenSettingsRoute,
+  CitizenReportsIdRoute: CitizenReportsIdRoute,
+  CitizenReportsIndexRoute: CitizenReportsIndexRoute,
+}
+
+const CitizenRouteWithChildren =
+  CitizenRoute._addFileChildren(CitizenRouteChildren)
+
+interface NgoRouteChildren {
+  NgoActiveRoute: typeof NgoActiveRoute
+  NgoAnalyticsRoute: typeof NgoAnalyticsRoute
+  NgoAssignmentsRoute: typeof NgoAssignmentsRoute
+  NgoDashboardRoute: typeof NgoDashboardRoute
+  NgoHistoryRoute: typeof NgoHistoryRoute
+  NgoNotificationsRoute: typeof NgoNotificationsRoute
+  NgoProfileRoute: typeof NgoProfileRoute
+  NgoRescuersRoute: typeof NgoRescuersRoute
+  NgoSettingsRoute: typeof NgoSettingsRoute
+  NgoRequestsIdRoute: typeof NgoRequestsIdRoute
+  NgoRequestsIndexRoute: typeof NgoRequestsIndexRoute
+}
+
+const NgoRouteChildren: NgoRouteChildren = {
+  NgoActiveRoute: NgoActiveRoute,
+  NgoAnalyticsRoute: NgoAnalyticsRoute,
+  NgoAssignmentsRoute: NgoAssignmentsRoute,
+  NgoDashboardRoute: NgoDashboardRoute,
+  NgoHistoryRoute: NgoHistoryRoute,
+  NgoNotificationsRoute: NgoNotificationsRoute,
+  NgoProfileRoute: NgoProfileRoute,
+  NgoRescuersRoute: NgoRescuersRoute,
+  NgoSettingsRoute: NgoSettingsRoute,
+  NgoRequestsIdRoute: NgoRequestsIdRoute,
+  NgoRequestsIndexRoute: NgoRequestsIndexRoute,
+}
+
+const NgoRouteWithChildren = NgoRoute._addFileChildren(NgoRouteChildren)
+
+interface RescuerRouteChildren {
+  RescuerActiveRoute: typeof RescuerActiveRoute
+  RescuerDashboardRoute: typeof RescuerDashboardRoute
+  RescuerHistoryRoute: typeof RescuerHistoryRoute
+  RescuerMapRoute: typeof RescuerMapRoute
+  RescuerNotificationsRoute: typeof RescuerNotificationsRoute
+  RescuerProfileRoute: typeof RescuerProfileRoute
+  RescuerSettingsRoute: typeof RescuerSettingsRoute
+  RescuerRequestsIdRoute: typeof RescuerRequestsIdRoute
+  RescuerRequestsIndexRoute: typeof RescuerRequestsIndexRoute
+}
+
+const RescuerRouteChildren: RescuerRouteChildren = {
+  RescuerActiveRoute: RescuerActiveRoute,
+  RescuerDashboardRoute: RescuerDashboardRoute,
+  RescuerHistoryRoute: RescuerHistoryRoute,
+  RescuerMapRoute: RescuerMapRoute,
+  RescuerNotificationsRoute: RescuerNotificationsRoute,
+  RescuerProfileRoute: RescuerProfileRoute,
+  RescuerSettingsRoute: RescuerSettingsRoute,
+  RescuerRequestsIdRoute: RescuerRequestsIdRoute,
+  RescuerRequestsIndexRoute: RescuerRequestsIndexRoute,
+}
+
+const RescuerRouteWithChildren =
+  RescuerRoute._addFileChildren(RescuerRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AdminRoute: AdminRouteWithChildren,
+  CitizenRoute: CitizenRouteWithChildren,
+  ContactRoute: ContactRoute,
+  DemoRoute: DemoRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  LoginRoute: LoginRoute,
+  NgoRoute: NgoRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
+  RegisterRoute: RegisterRoute,
+  RescuerRoute: RescuerRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
+  TermsRoute: TermsRoute,
+  RescueCasesIdRoute: RescueCasesIdRoute,
+  RescueCasesIndexRoute: RescueCasesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
