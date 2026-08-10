@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Mail, MapPin, Phone, User as UserIcon } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, MapPin, Phone, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
