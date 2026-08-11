@@ -66,7 +66,7 @@ function RescueCaseDetail() {
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-8">
             <div className="grid gap-3 sm:grid-cols-2">
-              {(report.images.length ? report.images : ["/placeholder.svg"]).map((src, i) => (
+              {(report.images.length ? report.images : ["/placeholder.svg"]).map((src: string, i: number) => (
                 <div
                   key={`${src}-${i}`}
                   className="aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted"
