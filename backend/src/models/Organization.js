@@ -1,0 +1,29 @@
+import mongoose from "mongoose";
+import { VERIFICATION_STATUSES } from "../utils/constants.js";
+
+const organizationSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true, unique: true, maxlength: 160 },
+    description: { type: String, trim: true, default: "", maxlength: 2000 },
+    email: { type: String, required: true, lowercase: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    address: { type: String, trim: true, default: "" },
+    location: {
+      type: { type: String, enum: ["Point"], default: "Point" },
+      coordinates: { type: [Number], default: undefined },
+      address: { type: String, default: "" },
+    },
+    logo: { url: String, publicId: String },
+    website: { type: String, trim: true, default: "" },
+    contactPerson: { type: String, trim: true, default: "" },
+    verificationStatus: { type: String, enum: VERIFICATION_STATUSES, default: "PENDING", index: true },
+    isActive: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+  },
+  { timestamps: true },
+);
+
+organizationSchema.index({ location: "2dsphere" });
+organizationSchema.index({ name: "text", address: "text" });
+
+export const Organization = mongoose.model("Organization", organizationSchema);

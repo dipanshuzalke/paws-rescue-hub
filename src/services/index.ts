@@ -62,3 +62,19 @@ export const getAnalytics = () =>
   delay({
     generatedAt: new Date().toISOString(),
   });
+/* ------------------------------------------------------------------ *
+ * Phase 2 API services.
+ *
+ * When VITE_API_URL is set these hit the Express + MongoDB backend in
+ * `backend/`; otherwise the mock helpers above keep the Phase 1 UI alive.
+ * ------------------------------------------------------------------ */
+export { authService } from "./authService";
+export { userService } from "./userService";
+export { reportService } from "./reportService";
+export { rescueService } from "./rescueService";
+export { ngoService } from "./ngoService";
+export { adminService } from "./adminService";
+export { notificationService } from "./notificationService";
+export { analyticsService } from "./analyticsService";
+export { publicService } from "./publicService";
+export { isApiEnabled, apiErrorMessage } from "@/lib/api-client";

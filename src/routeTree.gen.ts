@@ -30,6 +30,8 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCitizensRouteImport } from './routes/admin.citizens'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminNgosRouteImport } from './routes/admin.ngos'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminRescuersRouteImport } from './routes/admin.rescuers'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -170,6 +172,16 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
 const AdminNgosRoute = AdminNgosRouteImport.update({
   id: '/ngos',
   path: '/ngos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRescuersRoute = AdminRescuersRouteImport.update({
@@ -375,6 +387,8 @@ export interface FileRoutesByFullPath {
   '/admin/citizens': typeof AdminCitizensRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/ngos': typeof AdminNgosRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/rescuers': typeof AdminRescuersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -434,6 +448,8 @@ export interface FileRoutesByTo {
   '/admin/citizens': typeof AdminCitizensRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/ngos': typeof AdminNgosRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/rescuers': typeof AdminRescuersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -494,6 +510,8 @@ export interface FileRoutesById {
   '/admin/citizens': typeof AdminCitizensRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/ngos': typeof AdminNgosRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/rescuers': typeof AdminRescuersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -555,6 +573,8 @@ export interface FileRouteTypes {
     | '/admin/citizens'
     | '/admin/dashboard'
     | '/admin/ngos'
+    | '/admin/notifications'
+    | '/admin/profile'
     | '/admin/rescuers'
     | '/admin/settings'
     | '/admin/users'
@@ -614,6 +634,8 @@ export interface FileRouteTypes {
     | '/admin/citizens'
     | '/admin/dashboard'
     | '/admin/ngos'
+    | '/admin/notifications'
+    | '/admin/profile'
     | '/admin/rescuers'
     | '/admin/settings'
     | '/admin/users'
@@ -673,6 +695,8 @@ export interface FileRouteTypes {
     | '/admin/citizens'
     | '/admin/dashboard'
     | '/admin/ngos'
+    | '/admin/notifications'
+    | '/admin/profile'
     | '/admin/rescuers'
     | '/admin/settings'
     | '/admin/users'
@@ -878,6 +902,20 @@ declare module '@tanstack/react-router' {
       path: '/ngos'
       fullPath: '/admin/ngos'
       preLoaderRoute: typeof AdminNgosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/rescuers': {
@@ -1142,6 +1180,8 @@ interface AdminRouteChildren {
   AdminCitizensRoute: typeof AdminCitizensRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminNgosRoute: typeof AdminNgosRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminRescuersRoute: typeof AdminRescuersRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -1156,6 +1196,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCitizensRoute: AdminCitizensRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminNgosRoute: AdminNgosRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminRescuersRoute: AdminRescuersRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
