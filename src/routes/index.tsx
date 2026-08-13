@@ -26,13 +26,13 @@ import { mockReports } from "@/data/mockReports";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ResQ Paws — Report & Track Stray Animal Rescues" },
+      { title: "SafePaws — Report & Track Stray Animal Rescues" },
       {
         name: "description",
         content:
           "One coordinated platform for citizens, rescuers and NGOs: report a stray animal in distress, get it assigned to the nearest rescuer, and follow every step to recovery.",
       },
-      { property: "og:title", content: "ResQ Paws — Report & Track Stray Animal Rescues" },
+      { property: "og:title", content: "SafePaws — Report & Track Stray Animal Rescues" },
       {
         property: "og:description",
         content:
@@ -98,10 +98,10 @@ const audiences = [
 ];
 
 const impact = [
-  { value: "2,480+", label: "Rescues coordinated" },
+  { value: "100+", label: "Rescues coordinated" },
   { value: "18 min", label: "Median response time" },
-  { value: "340", label: "Verified rescuers" },
-  { value: "26", label: "Partner NGOs" },
+  { value: "40", label: "Verified rescuers" },
+  { value: "6", label: "Partner NGOs" },
 ];
 
 function Index() {
@@ -122,7 +122,7 @@ function Index() {
               <span className="text-primary"> fast response</span>.
             </h1>
             <p className="mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
-              ResQ Paws connects the person who spots an injured animal with the rescuer who can
+              SafePaws connects the person who spots an injured animal with the rescuer who can
               reach it first — and keeps everyone informed until the animal is safe.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">

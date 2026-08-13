@@ -22,8 +22,8 @@ export const Route = createFileRoute("/login")({
         content:
           "Sign in to ResQ Paws to report stray animals, accept rescue assignments or manage your organisation.",
       },
-      { property: "og:title", content: "Log in — ResQ Paws" },
-      { property: "og:description", content: "Sign in to the ResQ Paws rescue network." },
+      { property: "og:title", content: "Log in — SafePaws" },
+      { property: "og:description", content: "Sign in to the SafePaws rescue network." },
     ],
   }),
   component: Login,

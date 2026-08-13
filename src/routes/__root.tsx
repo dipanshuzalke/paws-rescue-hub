@@ -79,14 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ResQ Paws — Stray Animal Rescue Coordination" },
+      { title: "SafePaws — Stray Animal Rescue Coordination" },
       {
         name: "description",
         content:
-          "ResQ Paws connects citizens, rescuers and NGOs to report, assign and track stray animal rescues in real time.",
+          "SafePaws connects citizens, rescuers and NGOs to report, assign and track stray animal rescues in real time.",
       },
-      { name: "author", content: "ResQ Paws" },
-      { property: "og:title", content: "ResQ Paws — Stray Animal Rescue Coordination" },
+      { name: "author", content: "SafePaws" },
+      { property: "og:title", content: "SafePaws — Stray Animal Rescue Coordination" },
       {
         property: "og:description",
         content: "Report a stray animal in distress and track the rescue from alert to recovery.",

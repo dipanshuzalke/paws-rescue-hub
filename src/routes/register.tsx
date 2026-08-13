@@ -18,13 +18,13 @@ import type { Role } from "@/types";
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Create an account — ResQ Paws" },
+      { title: "Create an account — SafePaws" },
       {
         name: "description",
         content:
-          "Join ResQ Paws as a citizen reporter, verified rescuer or partner NGO and help coordinate stray animal rescues in Nagpur.",
+          "Join SafePaws as a citizen reporter, verified rescuer or partner NGO and help coordinate stray animal rescues in Nagpur.",
       },
-      { property: "og:title", content: "Create an account — ResQ Paws" },
+      { property: "og:title", content: "Create an account — SafePaws" },
       {
         property: "og:description",
         content: "Sign up as a citizen, rescuer or NGO on the ResQ Paws rescue network.",

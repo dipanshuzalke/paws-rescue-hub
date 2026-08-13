@@ -14,7 +14,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       {!compact ? (
         <span className="min-w-0">
           <span className="block truncate font-display text-base leading-tight font-bold text-foreground">
-            ResQ Paws
+            SafePaws
           </span>
           <span className="block truncate text-[11px] leading-tight text-muted-foreground">
             Report. Rescue. Recover.

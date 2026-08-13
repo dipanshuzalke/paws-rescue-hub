@@ -45,18 +45,6 @@ Ensure MongoDB is running locally or provide a URI to a remote instance. The sys
 ### Cloudinary
 Sign up at [Cloudinary](https://cloudinary.com/) and obtain your API credentials to enable image uploads for rescue reports and proof.
 
-## Running the API
-
-To start the server in development mode with hot-reloading:
-```bash
-npm run dev
-```
-The API will be available at `http://localhost:5000/api`.
-
-### Connecting the Frontend
-When running the frontend, ensure the environment variable is set:
-```bash
-VITE_API_URL=http://localhost:5000/api
 ```
 
 ## Database Seeding
