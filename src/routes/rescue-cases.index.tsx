@@ -129,7 +129,9 @@ function RescueCases() {
             <TableSkeleton rows={6} cols={3} />
           </div>
         ) : error ? (
-          <ErrorState className="mt-6" onRetry={retry} />
+          <div className="mt-6">
+            <ErrorState onRetry={retry} />
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState
             className="mt-6"
