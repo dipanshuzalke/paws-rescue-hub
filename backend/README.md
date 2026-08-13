@@ -1,6 +1,6 @@
 # ResQ Paws — Stray Animal Rescue Coordination & Management System
 
-ResQ Paws is an Express and MongoDB-based API designed to coordinate stray animal rescues between citizens, rescuers, and NGOs. It provides real-time reporting, automated assignments, and rescue tracking.
+ResQ Paws is an Express and MongoDB-based API designed to coordinate stray animal rescues between citizens, rescuers, and NGOs. It provides rescue reporting, manual NGO-controlled rescuer assignment, status lifecycle tracking, notifications and analytics.
 
 ## Requirements
 
