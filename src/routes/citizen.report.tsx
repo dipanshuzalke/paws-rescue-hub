@@ -110,21 +110,31 @@ function CitizenReport() {
     }, 800);
   };
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!animal || !condition || !emergency || !coords) return;
-    const report = createReport({
-      animal,
-      count,
-      condition,
-      emergency,
-      description,
-      address,
-      area,
-      images: images.length ? images.map((i) => i.url) : [],
-      coords,
-    });
-    toast.success(`Report #${report.id} submitted successfully`);
-    setSubmitted(report.id);
+    setSubmitting(true);
+    try {
+      const report = await createReport({
+        animal,
+        count,
+        condition,
+        emergency,
+        description,
+        address,
+        area,
+        images: images.length ? images.map((i) => i.url) : [],
+        files: images.map((i) => i.file),
+        coords,
+      });
+      toast.success(`Report #${report.id} submitted successfully`);
+      setSubmitted(report.id);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to submit your report.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
