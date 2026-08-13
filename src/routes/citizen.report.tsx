@@ -99,15 +99,54 @@ function CitizenReport() {
   };
 
   const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by this browser.");
+      return;
+    }
+
     setLocating(true);
-    setTimeout(() => {
-      const mockCoords = { lat: 21.1385 + (Math.random() - 0.5) * 0.02, lng: 79.0625 + (Math.random() - 0.5) * 0.02 };
-      setCoords(mockCoords);
-      if (!address) setAddress("Near Shankar Nagar Square");
-      if (!area) setArea("Dharampeth");
-      setLocating(false);
-      toast.success("Location detected");
-    }, 800);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const nextCoords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+
+        setCoords(nextCoords);
+
+        setLocating(false);
+
+        toast.success("Your current location has been detected.");
+      },
+      (error) => {
+        setLocating(false);
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            toast.error(
+              "Location permission was denied. Please allow location access."
+            );
+            break;
+
+          case error.POSITION_UNAVAILABLE:
+            toast.error("Your current location is unavailable.");
+            break;
+
+          case error.TIMEOUT:
+            toast.error("Location request timed out.");
+            break;
+
+          default:
+            toast.error("Unable to determine your location.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const [submitting, setSubmitting] = useState(false);
@@ -295,6 +334,7 @@ function CitizenReport() {
                 <Label className="mb-2 block" htmlFor="address">
                   Address
                 </Label>
+
                 <Input
                   id="address"
                   value={address}
@@ -302,10 +342,12 @@ function CitizenReport() {
                   placeholder="e.g. Near Shankar Nagar Square"
                 />
               </div>
+
               <div>
                 <Label className="mb-2 block" htmlFor="area">
                   Area
                 </Label>
+
                 <Input
                   id="area"
                   value={area}
@@ -314,37 +356,62 @@ function CitizenReport() {
                 />
               </div>
             </div>
-            <Button type="button" variant="outline" onClick={useCurrentLocation} disabled={locating}>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={useCurrentLocation}
+              disabled={locating}
+            >
               {locating ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
                 <Locate className="h-4 w-4" aria-hidden="true" />
               )}
-              Use my current location
+
+              {locating
+                ? "Detecting location..."
+                : "Use my current location"}
             </Button>
+
             <MapView
-              height="h-[280px]"
+              height="h-[320px]"
               markers={
                 coords
-                  ? [{ id: "pin", label: address || "Selected location", coords, kind: "you" }]
+                  ? [
+                    {
+                      id: "animal-location",
+                      label: "Animal location",
+                      sub: address || "Reported location",
+                      coords,
+                      kind: "you",
+                    },
+                  ]
                   : []
               }
-              onSelect={() => {
-                if (!coords) useCurrentLocation();
-              }}
+              onSelect={() => { }}
               caption={
                 coords
-                  ? `Pin set at ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`
-                  : "Tap “Use my current location” to drop a pin"
+                  ? `Animal location: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
+                  : "Use your current location to place the animal marker"
               }
             />
+
+
             {!coords ? (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-                No location selected yet.
+                Use your current location to place the animal report.
               </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The animal report will be saved at this exact GPS location.
+              </p>
+            )}
+
+            {errors[1] ? (
+              <p className="text-sm text-destructive">{errors[1]}</p>
             ) : null}
-            {errors[1] ? <p className="text-sm text-destructive">{errors[1]}</p> : null}
           </div>
         ) : null}
 

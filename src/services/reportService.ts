@@ -69,13 +69,14 @@ export const reportService = {
   },
 
   /** Sends the report as multipart form data so Multer/Cloudinary receive the images. */
-  async createReport(input: CreateReportInput): Promise<RescueReport> {
+async createReport(input: CreateReportInput): Promise<RescueReport> {
     const form = new FormData();
     form.append("animalType", toApiAnimal(input.animal));
     form.append("animalCount", String(input.count));
     form.append("condition", toApiCondition(input.condition));
     form.append("emergencyLevel", input.emergency);
-    form.append("description", input.description);
+    const safeDescription = input.description.trim() || `Need rescue assistance for ${input.animal.toLowerCase()} at ${input.area || input.address}`;
+    form.append("description", safeDescription);
     form.append("address", input.address);
     form.append("area", input.area);
     form.append("city", input.city ?? "Nagpur");
@@ -83,9 +84,7 @@ export const reportService = {
     form.append("longitude", String(input.coords.lng));
     (input.files ?? []).forEach((file) => form.append("images", file));
 
-    const data = await unwrap<ApiReport>(
-      api.post("/reports", form, { headers: { "Content-Type": "multipart/form-data" } }),
-    );
+    const data = await unwrap<ApiReport>(api.post("/reports", form));
     return adaptReport(data);
   },
 
