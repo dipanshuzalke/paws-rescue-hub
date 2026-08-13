@@ -83,6 +83,7 @@ const initialForm: FormState = {
 
 function Register() {
   const navigate = useNavigate();
+  const { signUp } = useApp();
   const [role, setRole] = useState<SignupRole>("citizen");
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -111,12 +112,18 @@ function Register() {
     return Object.keys(next).length === 0;
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    window.setTimeout(() => {
-      setLoading(false);
+    try {
+      await signUp({
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        password: form.password,
+        role,
+      });
       toast.success("Account created", {
         description:
           role === "ngo"
@@ -124,7 +131,11 @@ function Register() {
             : "Your account has been created. Please sign in to continue.",
       });
       void navigate({ to: "/login" });
-    }, 900);
+    } catch (err) {
+      setErrors({ email: apiErrorMessage(err) });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
