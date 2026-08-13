@@ -20,6 +20,8 @@ import {
 import { useAsync } from "@/hooks/use-async";
 import { formatDate, initials } from "@/lib/format";
 import { getRescuers } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 import type { Rescuer } from "@/types";
 
 export const Route = createFileRoute("/admin/rescuers")({
@@ -41,7 +43,11 @@ export const Route = createFileRoute("/admin/rescuers")({
 });
 
 function AdminRescuers() {
-  const { data, loading, error, retry } = useAsync(getRescuers, []);
+  const { apiMode } = useApp();
+  const { data, loading, error, retry } = useAsync(
+    () => (apiMode ? adminService.getRescuers({ limit: 200 }).then((r) => r.items) : getRescuers()),
+    [apiMode],
+  );
   const [rescuers, setRescuers] = useState<Rescuer[] | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");

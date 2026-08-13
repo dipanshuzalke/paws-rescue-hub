@@ -23,6 +23,9 @@ import { FilterSelect } from "@/components/shared/filter-bar";
 import { useAsync } from "@/hooks/use-async";
 import { rangeOptions, seriesForRange, type RangeKey } from "@/data/mockAnalytics";
 import { getNGOs, getReports } from "@/services";
+import { adminService } from "@/services/adminService";
+import { analyticsService } from "@/services/analyticsService";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/admin/analytics")({
   head: () => ({
@@ -50,8 +53,15 @@ const emergencyColors: Record<string, string> = {
 };
 
 function AdminAnalytics() {
-  const reportsState = useAsync(getReports, []);
-  const ngosState = useAsync(getNGOs, []);
+  const { apiMode } = useApp();
+  const reportsState = useAsync(
+    () => (apiMode ? adminService.getReports({ limit: 500 }).then((r) => r.items) : getReports()),
+    [apiMode],
+  );
+  const ngosState = useAsync(
+    () => (apiMode ? adminService.getNgos({ limit: 500 }).then((r) => r.items) : getNGOs()),
+    [apiMode],
+  );
   const [range, setRange] = useState<RangeKey["key"]>("30d");
 
   const loading = reportsState.loading || ngosState.loading;
@@ -74,7 +84,16 @@ function AdminAnalytics() {
     };
   }, [reports]);
 
-  const trend = seriesForRange(range);
+  const trendState = useAsync(
+    () =>
+      apiMode
+        ? analyticsService
+            .getMonthly()
+            .then((pts) => pts.map((p) => ({ period: p.month, reported: p.reports, rescued: p.rescued })))
+        : Promise.resolve(seriesForRange(range)),
+    [apiMode, range],
+  );
+  const trend = trendState.data ?? [];
 
   const emergencyMix = useMemo(() => {
     const counts: Record<string, number> = {};

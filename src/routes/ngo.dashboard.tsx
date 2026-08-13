@@ -16,13 +16,16 @@ import { MapView } from "@/components/maps/map-view";
 import { AvailabilityBadge, PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
-import { EmptyState } from "@/components/shared/states";
+import { EmptyState, StatSkeletonRow } from "@/components/shared/states";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { seriesForRange } from "@/data/mockAnalytics";
 import { mockRescuers } from "@/data/mockUsers";
+import { useAsync } from "@/hooks/use-async";
 import { initials, timeAgo } from "@/lib/format";
+import { analyticsService } from "@/services/analyticsService";
+import { ngoService } from "@/services/ngoService";
 import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
 
@@ -49,8 +52,27 @@ const emergencyColors: Record<string, string> = {
 };
 
 function NgoDashboard() {
-  const { reports } = useApp();
+  const { reports, apiMode } = useApp();
   const [assignTarget, setAssignTarget] = useState<RescueReport | null>(null);
+
+  const { data: rescuersData, loading: rescuersLoading } = useAsync(
+    () =>
+      apiMode
+        ? ngoService.getRescuers({ limit: 50 }).then((r) => r.items)
+        : Promise.resolve(mockRescuers),
+    [apiMode],
+  );
+  const rescuers = rescuersData ?? [];
+
+  const { data: monthlyData, loading: chartLoading } = useAsync(
+    () =>
+      apiMode
+        ? analyticsService
+            .getMonthly()
+            .then((pts) => pts.map((p) => ({ period: p.month, reported: p.reports, rescued: p.rescued })))
+        : Promise.resolve(seriesForRange("6m")),
+    [apiMode],
+  );
 
   const open = reports.filter((r) => r.status === "REPORTED");
   const assigned = reports.filter((r) => r.status === "ASSIGNED");
@@ -65,9 +87,9 @@ function NgoDashboard() {
           new Date(r.updatedAt).getFullYear() === now.getFullYear()
         : false,
   );
-  const avgResponse = Math.round(
-    mockRescuers.reduce((sum, r) => sum + r.avgResponseMins, 0) / mockRescuers.length,
-  );
+  const avgResponse = rescuers.length
+    ? Math.round(rescuers.reduce((sum, r) => sum + r.avgResponseMins, 0) / rescuers.length)
+    : 0;
 
   const urgentQueue = useMemo(
     () =>
@@ -89,7 +111,7 @@ function NgoDashboard() {
     emergency: r.emergency,
   }));
 
-  const chartData = seriesForRange("6m");
+  const chartData = monthlyData ?? [];
   const emergencyCounts = (["CRITICAL", "HIGH", "MEDIUM", "LOW"] as const).map((e) => ({
     name: e,
     value: reports.filter((r) => r.emergency === e).length,
@@ -107,23 +129,27 @@ function NgoDashboard() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard label="Open requests" value={open.length} icon={Inbox} tone="info" />
-        <StatCard label="Assigned" value={assigned.length} icon={CheckCircle2} tone="primary" />
-        <StatCard label="In progress" value={inProgress.length} icon={Truck} tone="warning" />
-        <StatCard
-          label="Rescued this month"
-          value={rescuedThisMonth.length}
-          icon={AlertTriangle}
-          tone="success"
-        />
-        <StatCard
-          label="Avg. response time"
-          value={`${avgResponse}m`}
-          icon={Timer}
-          tone="neutral"
-        />
-      </div>
+      {rescuersLoading ? (
+        <StatSkeletonRow count={5} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <StatCard label="Open requests" value={open.length} icon={Inbox} tone="info" />
+          <StatCard label="Assigned" value={assigned.length} icon={CheckCircle2} tone="primary" />
+          <StatCard label="In progress" value={inProgress.length} icon={Truck} tone="warning" />
+          <StatCard
+            label="Rescued this month"
+            value={rescuedThisMonth.length}
+            icon={AlertTriangle}
+            tone="success"
+          />
+          <StatCard
+            label="Avg. response time"
+            value={`${avgResponse}m`}
+            icon={Timer}
+            tone="neutral"
+          />
+        </div>
+      )}
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="card-surface p-5 xl:col-span-2">
@@ -168,7 +194,7 @@ function NgoDashboard() {
         <div className="card-surface p-5">
           <SectionHeading title="Team availability" description="Rescuers in your network." />
           <ul className="space-y-3">
-            {mockRescuers.slice(0, 6).map((r) => (
+            {rescuers.slice(0, 6).map((r) => (
               <li key={r.id} className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarFallback>{initials(r.name)}</AvatarFallback>
@@ -189,6 +215,7 @@ function NgoDashboard() {
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="card-surface p-5 xl:col-span-2">
           <SectionHeading title="Cases over time" description="Reported vs. rescued (last 6 months)." />
+          {chartLoading ? null : (
           <ChartContainer
             config={{
               reported: { label: "Reported", color: "var(--color-chart-1)" },
@@ -216,6 +243,7 @@ function NgoDashboard() {
               />
             </AreaChart>
           </ChartContainer>
+          )}
         </div>
         <div className="card-surface p-5">
           <SectionHeading title="Emergency distribution" description="All-time reports by priority." />
