@@ -273,9 +273,6 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
               </DropdownMenu>
             </div>
           </div>
-          <p className="border-t border-border bg-primary-soft/60 px-4 py-1.5 text-[11px] font-medium text-primary sm:px-6">
-            Demo Mode · Phase 1 prototype using mock data — no real authentication or backend.
-          </p>
         </header>
 
         <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 lg:pb-8">{children}</main>
