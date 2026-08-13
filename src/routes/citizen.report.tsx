@@ -110,21 +110,31 @@ function CitizenReport() {
     }, 800);
   };
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!animal || !condition || !emergency || !coords) return;
-    const report = createReport({
-      animal,
-      count,
-      condition,
-      emergency,
-      description,
-      address,
-      area,
-      images: images.length ? images.map((i) => i.url) : [],
-      coords,
-    });
-    toast.success(`Report #${report.id} submitted successfully`);
-    setSubmitted(report.id);
+    setSubmitting(true);
+    try {
+      const report = await createReport({
+        animal,
+        count,
+        condition,
+        emergency,
+        description,
+        address,
+        area,
+        images: images.length ? images.map((i) => i.url) : [],
+        files: images.map((i) => i.file),
+        coords,
+      });
+      toast.success(`Report #${report.id} submitted successfully`);
+      setSubmitted(report.id);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unable to submit your report.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -477,7 +487,10 @@ function CitizenReport() {
             Next
           </Button>
         ) : (
-          <Button onClick={handleSubmit}>Submit report</Button>
+          <Button onClick={() => void handleSubmit()} disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+            Submit report
+          </Button>
         )}
       </div>
     </div>

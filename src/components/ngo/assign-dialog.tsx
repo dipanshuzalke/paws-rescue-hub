@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { initials } from "@/lib/format";
 import { mockRescuers } from "@/data/mockUsers";
+import { useAsync } from "@/hooks/use-async";
+import { ngoService } from "@/services/ngoService";
 import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
 
@@ -26,12 +28,20 @@ export function AssignDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const { assignRescuer, user } = useApp();
+  const { assignRescuer, user, apiMode } = useApp();
   const [selected, setSelected] = useState<string | null>(null);
 
+  const { data } = useAsync(
+    () =>
+      apiMode
+        ? ngoService.getRescuers({ limit: 200 }).then((r) => r.items)
+        : Promise.resolve(mockRescuers),
+    [apiMode],
+  );
+
   const rescuers = useMemo(
-    () => [...mockRescuers].sort((a, b) => a.distanceKm - b.distanceKm),
-    [],
+    () => [...(data ?? [])].sort((a, b) => a.distanceKm - b.distanceKm),
+    [data],
   );
 
   if (!report) return null;

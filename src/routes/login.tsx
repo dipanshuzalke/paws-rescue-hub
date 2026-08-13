@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { demoAccounts } from "@/data/mockUsers";
+import { apiErrorMessage } from "@/lib/api-client";
 import { useApp } from "@/store/app-store";
 import type { Role } from "@/types";
 
@@ -36,7 +37,7 @@ const roleHome: Record<Role, string> = {
 };
 
 function Login() {
-  const { loginAs } = useApp();
+  const { loginAs, signIn, apiMode } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("citizen@demo.com");
   const [password, setPassword] = useState("demo1234");
@@ -44,29 +45,39 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const signIn = (role: Role) => {
+  const enterAsRole = async (role: Role) => {
     setLoading(true);
     setError(null);
-    window.setTimeout(() => {
-      loginAs(role);
+    try {
+      const me = await loginAs(role);
+      toast.success(`Signed in as ${me.role}`, {
+        description: apiMode ? "Seeded demo account." : "Demo session — no real account.",
+      });
+      void navigate({ to: roleHome[me.role] });
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
       setLoading(false);
-      toast.success(`Signed in as ${role}`, { description: "Demo session — no real account." });
-      void navigate({ to: roleHome[role] });
-    }, 700);
+    }
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const match = demoAccounts.find((a) => a.email === email.trim().toLowerCase());
-    if (!match) {
-      setError("Use one of the demo accounts listed below to explore the prototype.");
-      return;
-    }
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
     }
-    signIn(match.role);
+    setLoading(true);
+    setError(null);
+    try {
+      const me = await signIn(email, password);
+      toast.success(`Welcome back, ${me.name}`);
+      void navigate({ to: roleHome[me.role] });
+    } catch (err) {
+      setError(err instanceof Error && !apiMode ? err.message : apiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,7 +93,7 @@ function Login() {
         </>
       }
     >
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <form onSubmit={(e) => void onSubmit(e)} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -146,7 +157,7 @@ function Login() {
             <button
               key={a.role}
               type="button"
-              onClick={() => signIn(a.role)}
+              onClick={() => void enterAsRole(a.role)}
               className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:border-primary hover:bg-primary-soft/40"
             >
               <span className="min-w-0">

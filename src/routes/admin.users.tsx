@@ -20,6 +20,8 @@ import {
 import { useAsync } from "@/hooks/use-async";
 import { formatDate, initials } from "@/lib/format";
 import { getUsers } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 import type { User } from "@/types";
 
 export const Route = createFileRoute("/admin/users")({
@@ -35,7 +37,11 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsers() {
-  const { data, loading, error, retry } = useAsync(getUsers, []);
+  const { apiMode } = useApp();
+  const { data, loading, error, retry } = useAsync(
+    () => (apiMode ? adminService.getUsers({ limit: 200 }).then((r) => r.items) : getUsers()),
+    [apiMode],
+  );
   const [users, setUsers] = useState<User[] | null>(null);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");

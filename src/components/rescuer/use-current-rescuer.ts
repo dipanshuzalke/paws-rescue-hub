@@ -1,16 +1,27 @@
 import { useMemo } from "react";
 
 import { mockRescuers } from "@/data/mockUsers";
+import { useAsync } from "@/hooks/use-async";
+import { ngoService } from "@/services/ngoService";
 import { useApp } from "@/store/app-store";
 import type { Rescuer } from "@/types";
 
-/** Resolves the logged-in rescuer's extended profile from mock data. */
+/** Resolves the logged-in rescuer's extended profile. */
 export function useCurrentRescuer(): Rescuer {
-  const { user } = useApp();
-  return useMemo(
-    () => mockRescuers.find((r) => r.id === user?.id) ?? mockRescuers[0]!,
-    [user],
+  const { user, apiMode } = useApp();
+
+  const { data } = useAsync(
+    () =>
+      apiMode
+        ? ngoService.getRescuers({ limit: 200 }).then((r) => r.items)
+        : Promise.resolve(mockRescuers),
+    [apiMode],
   );
+
+  return useMemo(() => {
+    const list = data ?? mockRescuers;
+    return list.find((r) => r.id === user?.id) ?? list[0]!;
+  }, [data, user]);
 }
 
 export function elapsedLabel(iso: string) {

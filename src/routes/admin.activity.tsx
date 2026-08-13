@@ -7,6 +7,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/states";
 import { useAsync } from "@/hooks/use-async";
 import { getActivity } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 import type { ActivityEntry } from "@/types";
 
 export const Route = createFileRoute("/admin/activity")({
@@ -37,7 +39,11 @@ const kindOptions: { value: ActivityEntry["kind"]; label: string }[] = [
 ];
 
 function AdminActivity() {
-  const { data, loading } = useAsync(getActivity, []);
+  const { apiMode } = useApp();
+  const { data, loading } = useAsync(
+    () => (apiMode ? adminService.getActivity(100) : getActivity()),
+    [apiMode],
+  );
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("all");
 

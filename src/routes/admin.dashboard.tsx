@@ -34,6 +34,9 @@ import { Button } from "@/components/ui/button";
 import { useAsync } from "@/hooks/use-async";
 import { seriesForRange } from "@/data/mockAnalytics";
 import { getActivity, getNGOs, getReports, getUsers } from "@/services";
+import { adminService } from "@/services/adminService";
+import { analyticsService } from "@/services/analyticsService";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
@@ -61,10 +64,23 @@ const roleColors: Record<string, string> = {
 };
 
 function AdminDashboard() {
-  const usersState = useAsync(getUsers, []);
-  const ngosState = useAsync(getNGOs, []);
-  const reportsState = useAsync(getReports, []);
-  const activityState = useAsync(getActivity, []);
+  const { apiMode } = useApp();
+  const usersState = useAsync(
+    () => (apiMode ? adminService.getUsers({ limit: 500 }).then((r) => r.items) : getUsers()),
+    [apiMode],
+  );
+  const ngosState = useAsync(
+    () => (apiMode ? adminService.getNgos({ limit: 500 }).then((r) => r.items) : getNGOs()),
+    [apiMode],
+  );
+  const reportsState = useAsync(
+    () => (apiMode ? adminService.getReports({ limit: 500 }).then((r) => r.items) : getReports()),
+    [apiMode],
+  );
+  const activityState = useAsync(
+    () => (apiMode ? adminService.getActivity(100) : getActivity()),
+    [apiMode],
+  );
 
   const loading = usersState.loading || ngosState.loading || reportsState.loading;
 
@@ -115,7 +131,16 @@ function AdminDashboard() {
   }, [reportsState.data]);
 
   const pendingNgos = (ngosState.data ?? []).filter((n) => n.verification === "PENDING");
-  const trend = seriesForRange("30d");
+  const trendState = useAsync(
+    () =>
+      apiMode
+        ? analyticsService
+            .getMonthly()
+            .then((pts) => pts.map((p) => ({ period: p.month, reported: p.reports, rescued: p.rescued })))
+        : Promise.resolve(seriesForRange("30d")),
+    [apiMode],
+  );
+  const trend = trendState.data ?? [];
 
   return (
     <div className="space-y-6">

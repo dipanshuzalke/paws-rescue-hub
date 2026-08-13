@@ -43,10 +43,14 @@ function DemoSwitcher() {
   const { loginAs } = useApp();
   const navigate = useNavigate();
 
-  const enter = (role: Role) => {
-    loginAs(role);
-    toast.success(`Signed in as ${role}`, { description: "Demo session — no real account." });
-    void navigate({ to: roleHome[role] });
+  const enter = async (role: Role) => {
+    try {
+      await loginAs(role);
+      toast.success(`Signed in as ${role}`, { description: "Demo session account." });
+      void navigate({ to: roleHome[role] });
+    } catch {
+      toast.error("Unable to sign in with the demo account.");
+    }
   };
 
   return (

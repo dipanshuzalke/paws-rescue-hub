@@ -20,6 +20,8 @@ import {
 import { useAsync } from "@/hooks/use-async";
 import { formatDate } from "@/lib/format";
 import { getNGOs } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 import type { NGO } from "@/types";
 
 export const Route = createFileRoute("/admin/ngos")({
@@ -47,7 +49,11 @@ const verificationTone: Record<NGO["verification"], string> = {
 };
 
 function AdminNgos() {
-  const { data, loading, error, retry } = useAsync(getNGOs, []);
+  const { apiMode } = useApp();
+  const { data, loading, error, retry } = useAsync(
+    () => (apiMode ? adminService.getNgos({ limit: 200 }).then((r) => r.items) : getNGOs()),
+    [apiMode],
+  );
   const [ngos, setNgos] = useState<NGO[] | null>(null);
   const [search, setSearch] = useState("");
   const [verification, setVerification] = useState("all");

@@ -4,6 +4,12 @@ import type { ReactNode } from "react";
 import { STATUS_LABELS, buildTimeline, mockReports } from "@/data/mockReports";
 import { mockNotifications } from "@/data/mockNotifications";
 import { demoAccounts, mockUsers } from "@/data/mockUsers";
+import { isApiEnabled, apiErrorMessage } from "@/lib/api-client";
+import { authService } from "@/services/authService";
+import { reportService } from "@/services/reportService";
+import { rescueService } from "@/services/rescueService";
+import { ngoService } from "@/services/ngoService";
+import { notificationService } from "@/services/notificationService";
 import type {
   AppNotification,
   RescueReport,
@@ -21,6 +27,7 @@ interface NewReportInput {
   address: string;
   area: string;
   images: string[];
+  files?: File[];
   coords: { lat: number; lng: number };
 }
 
@@ -30,9 +37,22 @@ interface AppState {
   reports: RescueReport[];
   notifications: AppNotification[];
   unreadCount: number;
-  loginAs: (role: Role) => User;
+  /** True when VITE_API_URL is configured and the Express backend is in use. */
+  apiMode: boolean;
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User>;
+  signUp: (input: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: Role;
+  }) => Promise<User>;
+  loginAs: (role: Role) => Promise<User>;
   logout: () => void;
-  createReport: (input: NewReportInput) => RescueReport;
+  createReport: (input: NewReportInput) => Promise<RescueReport>;
   assignRescuer: (reportId: string, rescuerId: string, rescuerName: string, ngo?: string) => void;
   updateStatus: (reportId: string, status: RescueStatus, note?: string) => void;
   addNote: (reportId: string, text: string) => void;
@@ -45,13 +65,24 @@ const AppContext = createContext<AppState | null>(null);
 
 const STORAGE_KEY = "resqpaws.demo.v1";
 
+/** Password used by the seeded demo accounts (see backend/src/seed/seed.js). */
+const DEMO_PASSWORD = "demo1234";
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [reports, setReports] = useState<RescueReport[]>(mockReports);
-  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
+  const [reports, setReports] = useState<RescueReport[]>(isApiEnabled ? [] : mockReports);
+  const [notifications, setNotifications] = useState<AppNotification[]>(
+    isApiEnabled ? [] : mockNotifications,
+  );
   const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isApiEnabled) {
+      setHydrated(true);
+      return;
+    }
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -66,7 +97,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isApiEnabled) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, reports }));
     } catch {
@@ -74,14 +105,106 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [user, reports, hydrated]);
 
-  const loginAs = useCallback((role: Role) => {
+  /** Pulls the data visible to the signed-in role from the Express API. */
+  const loadFor = useCallback(async (current: User | null) => {
+    if (!isApiEnabled || !current) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [reportPage, notificationPage] = await Promise.all([
+        current.role === "citizen"
+          ? reportService.getMyReports({ limit: 100 })
+          : current.role === "rescuer"
+            ? rescueService.getAvailableRequests({ limit: 100 })
+            : current.role === "ngo"
+              ? ngoService.getReports({ limit: 100 })
+              : reportService.getReports({ limit: 100 }),
+        notificationService.getNotifications({ limit: 50 }),
+      ]);
+      setReports(reportPage.items);
+      setNotifications(notificationPage.items);
+    } catch (err) {
+      setError(apiErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refresh = useCallback(() => loadFor(user), [loadFor, user]);
+
+  // Restore the JWT session on first load when the backend is configured.
+  useEffect(() => {
+    if (!isApiEnabled) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const me = await authService.me();
+        if (cancelled) return;
+        setUser(me);
+        await loadFor(me);
+      } catch {
+        /* no active session — the login page handles it */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadFor]);
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      if (!isApiEnabled) {
+        const account = demoAccounts.find((a) => a.email === email.trim().toLowerCase());
+        if (!account) throw new Error("Use one of the demo accounts listed below.");
+        const found = mockUsers.find((u) => u.id === account.userId)!;
+        setUser(found);
+        return found;
+      }
+      const me = await authService.login(email.trim().toLowerCase(), password);
+      setUser(me);
+      void loadFor(me);
+      return me;
+    },
+    [loadFor],
+  );
+
+  const signUp = useCallback(
+    async (input: { name: string; email: string; phone: string; password: string; role: Role }) => {
+      if (!isApiEnabled) {
+        const account = demoAccounts.find((a) => a.role === input.role)!;
+        const found = { ...mockUsers.find((u) => u.id === account.userId)!, name: input.name };
+        setUser(found);
+        return found;
+      }
+      const me = await authService.register(input);
+      setUser(me);
+      void loadFor(me);
+      return me;
+    },
+    [loadFor],
+  );
+
+  const loginAs = useCallback(async (role: Role) => {
     const account = demoAccounts.find((a) => a.role === role)!;
+    if (isApiEnabled) {
+      const me = await authService.login(account.email, DEMO_PASSWORD);
+      setUser(me);
+      void loadFor(me);
+      return me;
+    }
     const found = mockUsers.find((u) => u.id === account.userId)!;
     setUser(found);
     return found;
-  }, []);
+  }, [loadFor]);
 
-  const logout = useCallback(() => setUser(null), []);
+  const logout = useCallback(() => {
+    setUser(null);
+    if (isApiEnabled) {
+      setReports([]);
+      setNotifications([]);
+      void authService.logout();
+    }
+  }, []);
 
   const pushNotification = useCallback((n: Omit<AppNotification, "id" | "at" | "read">) => {
     setNotifications((prev) => [
@@ -91,7 +214,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const createReport = useCallback(
-    (input: NewReportInput) => {
+    async (input: NewReportInput) => {
+      if (isApiEnabled) {
+        const created = await reportService.createReport({
+          animal: input.animal,
+          count: input.count,
+          condition: input.condition,
+          emergency: input.emergency,
+          description: input.description,
+          address: input.address,
+          area: input.area,
+          coords: input.coords,
+          files: input.files ?? [],
+        });
+        setReports((prev) => [created, ...prev]);
+        return created;
+      }
       const nextNumber = 1024 + reports.filter((r) => r.id.startsWith("R10")).length;
       const id = `R${Math.max(1048, nextNumber)}`;
       const now = new Date().toISOString();
@@ -150,6 +288,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const assignRescuer = useCallback(
     (reportId: string, rescuerId: string, rescuerName: string, ngo?: string) => {
+      if (isApiEnabled) {
+        void ngoService
+          .assignRescuer(reportId, rescuerId)
+          .then((updated) =>
+            setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r))),
+          )
+          .catch((err) => setError(apiErrorMessage(err)));
+        return;
+      }
       mutate(reportId, (r) => {
         const now = new Date().toISOString();
         return {
@@ -177,6 +324,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateStatus = useCallback(
     (reportId: string, status: RescueStatus, note?: string) => {
+      if (isApiEnabled) {
+        const call =
+          status === "ACCEPTED"
+            ? rescueService.acceptRescue(reportId)
+            : rescueService.updateStatus(reportId, status, note);
+        void call
+          .then((updated) =>
+            setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r))),
+          )
+          .catch((err) => setError(apiErrorMessage(err)));
+        return;
+      }
       mutate(reportId, (r) => {
         const now = new Date().toISOString();
         const hasStep = r.timeline.some((t) => t.status === status);
@@ -214,6 +373,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addNote = useCallback(
     (reportId: string, text: string) => {
+      if (isApiEnabled) {
+        void rescueService
+          .addNote(reportId, text)
+          .then((updated) =>
+            setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r))),
+          )
+          .catch((err) => setError(apiErrorMessage(err)));
+        return;
+      }
       mutate(reportId, (r) => ({
         ...r,
         notes: [
@@ -232,14 +400,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const markRead = useCallback((id: string) => {
+    if (isApiEnabled) void notificationService.markRead(id).catch(() => undefined);
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
   const markAllRead = useCallback(() => {
+    if (isApiEnabled) void notificationService.markAllRead().catch(() => undefined);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, []);
 
   const deleteReport = useCallback((id: string) => {
+    if (isApiEnabled) void reportService.deleteReport(id).catch(() => undefined);
     setReports((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
@@ -250,6 +421,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reports,
       notifications,
       unreadCount: notifications.filter((n) => !n.read).length,
+      apiMode: isApiEnabled,
+      loading,
+      error,
+      refresh,
+      signIn,
+      signUp,
       loginAs,
       logout,
       createReport,
@@ -264,6 +441,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       user,
       reports,
       notifications,
+      loading,
+      error,
+      refresh,
+      signIn,
+      signUp,
       loginAs,
       logout,
       createReport,

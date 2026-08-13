@@ -5,7 +5,11 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { CaseCard } from "@/components/rescue/case-card";
 import { EmptyState } from "@/components/shared/states";
 import { FilterBar, FilterSelect, SearchBar } from "@/components/shared/filter-bar";
+import { ErrorState, TableSkeleton } from "@/components/shared/states";
 import { mockReports } from "@/data/mockReports";
+import { useAsync } from "@/hooks/use-async";
+import { isApiEnabled } from "@/lib/api-client";
+import { publicService } from "@/services/publicService";
 
 export const Route = createFileRoute("/rescue-cases/")({
   head: () => ({
@@ -56,8 +60,17 @@ function RescueCases() {
   const [status, setStatus] = useState("all");
   const [emergency, setEmergency] = useState("all");
 
+  const { data, loading, error, retry } = useAsync(
+    () =>
+      isApiEnabled
+        ? publicService.getRescueCases({ limit: 200 }).then((r) => r.items)
+        : Promise.resolve(mockReports),
+    [],
+  );
+  const reports = data ?? [];
+
   const filtered = useMemo(() => {
-    return mockReports.filter((r) => {
+    return reports.filter((r) => {
       if (animal !== "all" && r.animal !== animal) return false;
       if (status !== "all" && r.status !== status) return false;
       if (emergency !== "all" && r.emergency !== emergency) return false;
@@ -72,7 +85,7 @@ function RescueCases() {
       }
       return true;
     });
-  }, [search, animal, status, emergency]);
+  }, [reports, search, animal, status, emergency]);
 
   return (
     <PublicShell>
@@ -108,10 +121,18 @@ function RescueCases() {
         </FilterBar>
 
         <p className="mt-4 text-sm text-muted-foreground">
-          Showing {filtered.length} of {mockReports.length} cases
+          Showing {filtered.length} of {reports.length} cases
         </p>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="mt-6">
+            <TableSkeleton rows={6} cols={3} />
+          </div>
+        ) : error ? (
+          <div className="mt-6">
+            <ErrorState onRetry={retry} />
+          </div>
+        ) : filtered.length === 0 ? (
           <EmptyState
             className="mt-6"
             title="No cases match your filters"
