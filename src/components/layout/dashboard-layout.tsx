@@ -83,16 +83,17 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
   useEffect(() => {
     // Demo mode auto-signs into the matching role; with the real API the
     // session comes from the backend, so unauthenticated users go to login.
-    if (user && user.role === role) return;
+    if (user && user.role === role) return undefined;
     if (apiMode) {
       if (typeof window !== "undefined" && user === null) {
         // give the session restore a moment before bouncing to login
         const t = window.setTimeout(() => window.location.assign("/login"), 1200);
         return () => window.clearTimeout(t);
       }
-      return;
+      return undefined;
     }
     void loginAs(role);
+    return undefined;
   }, [user, role, loginAs, apiMode]);
 
   const roleNotifications = notifications
