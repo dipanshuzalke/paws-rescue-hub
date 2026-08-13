@@ -487,7 +487,10 @@ function CitizenReport() {
             Next
           </Button>
         ) : (
-          <Button onClick={handleSubmit}>Submit report</Button>
+          <Button onClick={() => void handleSubmit()} disabled={submitting}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+            Submit report
+          </Button>
         )}
       </div>
     </div>
