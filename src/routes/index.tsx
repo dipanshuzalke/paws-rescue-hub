@@ -105,7 +105,7 @@ const impact = [
 ];
 
 function Index() {
-  const featured = mockReports.slice(0, 3);
+  // const featured = mockReports.slice(0, 3);
 
   return (
     <PublicShell>
@@ -255,7 +255,7 @@ function Index() {
             <Link to="/rescue-cases">View all</Link>
           </Button>
         </div>
-        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {featured.map((report) => (
             <CaseCard
               key={report.id}
@@ -264,7 +264,7 @@ function Index() {
               params={{ id: report.id }}
             />
           ))}
-        </div>
+        </div> */}
       </section>
 
       {/* Partners */}

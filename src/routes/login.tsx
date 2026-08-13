@@ -149,7 +149,7 @@ function Login() {
       </form>
 
       <div className="mt-8">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {/* <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Demo accounts — one click
         </p>
         <div className="mt-3 grid gap-2">
@@ -169,7 +169,7 @@ function Login() {
               <span className="shrink-0 text-xs font-medium text-primary">Enter</span>
             </button>
           ))}
-        </div>
+        </div> */}
       </div>
     </AuthShell>
   );
