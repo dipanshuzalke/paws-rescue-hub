@@ -9,9 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDateTime, timeAgo } from "@/lib/format";
 import { mockReports } from "@/data/mockReports";
+import { isApiEnabled } from "@/lib/api-client";
+import { publicService } from "@/services/publicService";
 
 export const Route = createFileRoute("/rescue-cases/$id")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    if (isApiEnabled) {
+      try {
+        return { report: await publicService.getRescueCase(params.id) };
+      } catch {
+        throw notFound();
+      }
+    }
     const report = mockReports.find((r) => r.id === params.id);
     if (!report) throw notFound();
     return { report };
