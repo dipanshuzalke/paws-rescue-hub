@@ -234,7 +234,7 @@ export function adaptReport(r: ApiReport): RescueReport {
   const condition = CONDITION_TO_UI[r.condition] ?? "Other";
 
   return {
-    id: r.reportId ?? r._id,
+    id: r._id,
     animal,
     count: r.animalCount ?? 1,
     condition,
