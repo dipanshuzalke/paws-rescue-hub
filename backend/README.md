@@ -19,23 +19,7 @@ ResQ Paws is an Express and MongoDB-based API designed to coordinate stray anima
    npm install
    ```
 3. Create a `.env` file based on `.env.example` and fill in your credentials.
-
-## Environment Variables
-
-| Variable | Description | Example |
-| :--- | :--- | :--- |
-| `PORT` | Server port | `5000` |
-| `NODE_ENV` | Environment mode | `development` |
-| `CLIENT_URL` | Allowed CORS origin | `http://localhost:8080` |
-| `MONGODB_URI` | MongoDB connection string | `mongodb://127.0.0.1:27017/resqpaws` |
-| `JWT_SECRET` | Secret for signing tokens | `your-random-string` |
-| `JWT_EXPIRES_IN` | Token expiry duration | `7d` |
-| `COOKIE_NAME` | Auth cookie name | `resqpaws_token` |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | `your-cloud-name` |
-| `CLOUDINARY_API_KEY` | Cloudinary API key | `your-api-key` |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret | `your-api-secret` |
-| `CLOUDINARY_FOLDER` | Folder for uploads | `resqpaws` |
-| `SEED_PASSWORD` | Password for seeded accounts | `demo1234` |
+   
 
 ## Setup
 
