@@ -14,8 +14,8 @@ export interface MapMarker {
 export interface MapViewProps {
   markers: MapMarker[];
   height?: string;
-  activeId?: string;
-  onSelect?: (id: string) => void;
+  activeId?: string | undefined;
+  onSelect?: ((id: string) => void) | undefined;
   onMapClick?: (coords: GeoPoint) => void;
   caption?: string;
 }
