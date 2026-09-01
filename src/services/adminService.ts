@@ -74,7 +74,21 @@ export const adminService = {
   },
 
   async getActivity(limit = 20) {
-    const { items } = await unwrapList<ActivityEntry>(api.get("/admin/activity", { params: { limit } }));
-    return items;
+    const { items } = await unwrapList<
+      Omit<ActivityEntry, "kind"> & { kind: ActivityEntry["kind"] | "REPORT_STATUS" }
+    >(api.get("/admin/activity", { params: { limit } }));
+    return items.map((entry): ActivityEntry => ({
+      ...entry,
+      kind:
+        entry.kind === "REPORT_STATUS"
+          ? entry.action === "ASSIGNED"
+            ? "assign"
+            : entry.action === "ACCEPTED"
+              ? "accept"
+              : entry.action === "IN_PROGRESS" || entry.action === "RESCUED" || entry.action === "CLOSED"
+                ? "rescue"
+                : "report"
+          : entry.kind,
+    }));
   },
 };

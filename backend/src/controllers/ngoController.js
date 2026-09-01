@@ -19,15 +19,18 @@ const REPORT_POPULATE = [
 ];
 
 /** Resolves the caller's org scope: NGO users are locked to their own organization, ADMIN sees all. */
-function orgScope(user) {
+function orgScope(user, { requireOrganization = true } = {}) {
   if (user.role === "ADMIN") return null;
-  if (!user.organization) throw ApiError.forbidden("Your account is not linked to an organization");
+  if (!user.organization && requireOrganization) {
+    throw ApiError.forbidden("Your account is not linked to an organization");
+  }
   return user.organization;
 }
 
 export const getStats = asyncHandler(async (req, res) => {
-  const org = orgScope(req.user);
-  const orgMatch = org ? { assignedOrganization: org } : {};
+  const org = orgScope(req.user, { requireOrganization: false });
+  const isAdmin = req.user.role === "ADMIN";
+  const orgMatch = isAdmin ? {} : org ? { assignedOrganization: org } : { assignedOrganization: null };
 
   const [unassigned, orgReports, activeRescues, completedRescues, criticalCases, rescuers] = await Promise.all([
     RescueReport.countDocuments({ assignedOrganization: null, status: "REPORTED" }),
@@ -50,8 +53,13 @@ export const getStats = asyncHandler(async (req, res) => {
 
 export const getReports = asyncHandler(async (req, res) => {
   const { page, limit, skip, sort } = parseQueryOptions(req.query, { defaultSort: "createdAt" });
-  const org = orgScope(req.user);
-  const scope = org ? { $or: [{ assignedOrganization: null }, { assignedOrganization: org }] } : {};
+  const org = orgScope(req.user, { requireOrganization: false });
+  const scope =
+    req.user.role === "ADMIN"
+      ? {}
+      : org
+        ? { $or: [{ assignedOrganization: null }, { assignedOrganization: org }] }
+        : { assignedOrganization: null };
   const filter = buildReportFilter(req.query, scope);
 
   const result = await paginateReports(filter, { page, limit, skip, sort }, REPORT_POPULATE);
