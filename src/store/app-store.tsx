@@ -111,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const [reportPage, notificationPage] = await Promise.all([
+      const [reportResult, notificationResult] = await Promise.allSettled([
         current.role === "citizen"
           ? reportService.getMyReports({ limit: 100 })
           : current.role === "rescuer"
@@ -121,10 +121,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
               : reportService.getReports({ limit: 100 }),
         notificationService.getNotifications({ limit: 50 }),
       ]);
-      setReports(reportPage.items);
-      setNotifications(notificationPage.items);
-    } catch (err) {
-      setError(apiErrorMessage(err));
+      if (reportResult.status === "fulfilled") {
+        setReports(reportResult.value.items);
+      } else {
+        setReports([]);
+        setError(apiErrorMessage(reportResult.reason));
+      }
+      if (notificationResult.status === "fulfilled") {
+        setNotifications(notificationResult.value.items);
+      }
     } finally {
       setLoading(false);
     }
@@ -162,7 +167,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       const me = await authService.login(email.trim().toLowerCase(), password);
       setUser(me);
-      void loadFor(me);
+      setReports([]);
+      setNotifications([]);
+      await loadFor(me);
       return me;
     },
     [loadFor],
@@ -178,7 +185,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       const me = await authService.register(input);
       setUser(me);
-      void loadFor(me);
+      setReports([]);
+      setNotifications([]);
+      await loadFor(me);
       return me;
     },
     [loadFor],
@@ -189,7 +198,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isApiEnabled) {
       const me = await authService.login(account.email, DEMO_PASSWORD);
       setUser(me);
-      void loadFor(me);
+      setReports([]);
+      setNotifications([]);
+      await loadFor(me);
       return me;
     }
     const found = mockUsers.find((u) => u.id === account.userId)!;

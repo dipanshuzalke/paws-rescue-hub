@@ -24,7 +24,7 @@ export function ActivityList({
   return (
     <ul className={cn("divide-y divide-border", className)}>
       {entries.map((entry) => {
-        const meta = kindMeta[entry.kind];
+        const meta = kindMeta[entry.kind] ?? kindMeta.report;
         const Icon = meta.icon;
         return (
           <li key={entry.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
