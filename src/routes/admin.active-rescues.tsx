@@ -10,6 +10,8 @@ import { useAsync } from "@/hooks/use-async";
 import { MapView, type MapMarker } from "@/components/maps/map-view";
 import { timeAgo } from "@/lib/format";
 import { getActiveRescues } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/admin/active-rescues")({
   head: () => ({
