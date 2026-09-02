@@ -32,7 +32,18 @@ export const Route = createFileRoute("/admin/active-rescues")({
 });
 
 function AdminActiveRescues() {
-  const { data, loading } = useAsync(getActiveRescues, []);
+  const { apiMode } = useApp();
+  const { data, loading } = useAsync(
+    () =>
+      apiMode
+        ? adminService
+            .getReports({ limit: 500 })
+            .then((r) =>
+              r.items.filter((x) => x.status === "ACCEPTED" || x.status === "IN_PROGRESS"),
+            )
+        : getActiveRescues(),
+    [apiMode],
+  );
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
 
   const list = data ?? [];
