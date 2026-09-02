@@ -1,6 +1,16 @@
 import mongoose from "mongoose";
 import { VERIFICATION_STATUSES } from "../utils/constants.js";
 
+const pointSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: ["Point"], default: "Point" },
+    // GeoJSON order: [longitude, latitude]
+    coordinates: { type: [Number], default: undefined },
+    address: { type: String, trim: true, default: "" },
+  },
+  { _id: false },
+);
+
 const organizationSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, unique: true, maxlength: 160 },
@@ -8,11 +18,7 @@ const organizationSchema = new mongoose.Schema(
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, required: true, trim: true },
     address: { type: String, trim: true, default: "" },
-    location: {
-      type: { type: String, enum: ["Point"], default: "Point" },
-      coordinates: { type: [Number], default: undefined },
-      address: { type: String, default: "" },
-    },
+    location: { type: pointSchema, default: undefined },
     logo: { url: String, publicId: String },
     website: { type: String, trim: true, default: "" },
     contactPerson: { type: String, trim: true, default: "" },
