@@ -34,7 +34,11 @@ export const Route = createFileRoute("/admin/reports/")({
 });
 
 function AdminReports() {
-  const { data, loading, error, retry } = useAsync(getReports, []);
+  const { apiMode } = useApp();
+  const { data, loading, error, retry } = useAsync(
+    () => (apiMode ? adminService.getReports({ limit: 500 }).then((r) => r.items) : getReports()),
+    [apiMode],
+  );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [emergency, setEmergency] = useState("all");
