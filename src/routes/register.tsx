@@ -125,6 +125,12 @@ function Register() {
         phone: form.phone.trim(),
         password: form.password,
         role,
+        ...(role === "ngo"
+          ? {
+              organizationName: form.organization.trim(),
+              organizationDescription: form.about.trim(),
+            }
+          : {}),
       });
       toast.success("Account created", {
         description:

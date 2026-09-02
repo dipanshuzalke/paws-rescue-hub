@@ -14,6 +14,8 @@ export interface RegisterInput {
   phone: string;
   password: string;
   role: Role;
+  organizationName?: string;
+  organizationDescription?: string;
 }
 
 export const authService = {

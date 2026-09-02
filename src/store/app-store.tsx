@@ -49,6 +49,8 @@ interface AppState {
     phone: string;
     password: string;
     role: Role;
+    organizationName?: string;
+    organizationDescription?: string;
   }) => Promise<User>;
   loginAs: (role: Role) => Promise<User>;
   logout: () => void;
@@ -176,7 +178,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const signUp = useCallback(
-    async (input: { name: string; email: string; phone: string; password: string; role: Role }) => {
+    async (input: {
+      name: string;
+      email: string;
+      phone: string;
+      password: string;
+      role: Role;
+      organizationName?: string;
+      organizationDescription?: string;
+    }) => {
       if (!isApiEnabled) {
         const account = demoAccounts.find((a) => a.role === input.role)!;
         const found = { ...mockUsers.find((u) => u.id === account.userId)!, name: input.name };
