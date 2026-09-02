@@ -10,6 +10,8 @@ import { useAsync } from "@/hooks/use-async";
 import { MapView, type MapMarker } from "@/components/maps/map-view";
 import { timeAgo } from "@/lib/format";
 import { getActiveRescues } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/admin/active-rescues")({
   head: () => ({
@@ -30,7 +32,18 @@ export const Route = createFileRoute("/admin/active-rescues")({
 });
 
 function AdminActiveRescues() {
-  const { data, loading } = useAsync(getActiveRescues, []);
+  const { apiMode } = useApp();
+  const { data, loading } = useAsync(
+    () =>
+      apiMode
+        ? adminService
+            .getReports({ limit: 500 })
+            .then((r) =>
+              r.items.filter((x) => x.status === "ACCEPTED" || x.status === "IN_PROGRESS"),
+            )
+        : getActiveRescues(),
+    [apiMode],
+  );
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
 
   const list = data ?? [];

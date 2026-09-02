@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useAsync } from "@/hooks/use-async";
 import { timeAgo } from "@/lib/format";
 import { getReports } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
 
 export const Route = createFileRoute("/admin/reports/")({
@@ -32,7 +34,11 @@ export const Route = createFileRoute("/admin/reports/")({
 });
 
 function AdminReports() {
-  const { data, loading, error, retry } = useAsync(getReports, []);
+  const { apiMode } = useApp();
+  const { data, loading, error, retry } = useAsync(
+    () => (apiMode ? adminService.getReports({ limit: 500 }).then((r) => r.items) : getReports()),
+    [apiMode],
+  );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [emergency, setEmergency] = useState("all");
