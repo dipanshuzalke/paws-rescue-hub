@@ -13,6 +13,9 @@ export const registerSchema = z.object({
   phone: z.string().trim().min(1, "Phone is required").max(24),
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(PUBLIC_ROLES).optional().default("CITIZEN"),
+  organizationName: z.string().trim().min(1).max(160).optional(),
+  organizationDescription: z.string().trim().max(2000).optional(),
+  organizationRegNumber: z.string().trim().max(120).optional(),
 });
 
 export const loginSchema = z.object({

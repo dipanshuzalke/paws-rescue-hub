@@ -19,7 +19,7 @@ const REPORT_POPULATE = [
 ];
 
 /** Resolves the caller's org scope: NGO users are locked to their own organization, ADMIN sees all. */
-function orgScope(user, { requireOrganization = true } = {}) {
+function orgScope(user, { requireOrganization = false } = {}) {
   if (user.role === "ADMIN") return null;
   if (!user.organization && requireOrganization) {
     throw ApiError.forbidden("Your account is not linked to an organization");
@@ -83,8 +83,10 @@ export const getActiveRescues = asyncHandler(async (req, res) => {
 
 export const getRescuers = asyncHandler(async (req, res) => {
   const org = orgScope(req.user);
-  const filter = { role: "RESCUER" };
-  if (org) filter.organization = org;
+  // Rescuers in this NGO plus unaffiliated rescuers available for assignment.
+  const filter = org
+    ? { role: "RESCUER", $or: [{ organization: org }, { organization: null }] }
+    : { role: "RESCUER" };
 
   const rescuers = await User.find(filter).sort({ name: 1 });
   const shaped = rescuers.map((r) => ({
