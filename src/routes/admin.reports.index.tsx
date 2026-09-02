@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useAsync } from "@/hooks/use-async";
 import { timeAgo } from "@/lib/format";
 import { getReports } from "@/services";
+import { adminService } from "@/services/adminService";
+import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
 
 export const Route = createFileRoute("/admin/reports/")({
