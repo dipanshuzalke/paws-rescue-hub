@@ -265,7 +265,7 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
                     <Link to="/demo">Switch demo role</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={logout} asChild>
-                    <Link to="/login">
+                    <Link to="/">
                       <LogOut className="h-4 w-4" /> Log out
                     </Link>
                   </DropdownMenuItem>
