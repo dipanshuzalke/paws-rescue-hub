@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 // import { PawPrint } from "lucide-react";
-import logo from "../../../public/logo.jpeg"
+
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
@@ -10,7 +10,7 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       aria-label="ResQ Paws home"
     >
       <span className="grid h-12 w-12 shrink-0 place-items-center ">
-        <img src={logo} className="h-10 w-10" aria-hidden="true" />
+        <img src="/logo.jpeg" alt="" className="h-10 w-10 rounded-md object-contain" />
       </span>
       {!compact ? (
         <span className="min-w-0">

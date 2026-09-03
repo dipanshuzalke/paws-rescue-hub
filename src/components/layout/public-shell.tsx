@@ -30,9 +30,9 @@ function PublicNav() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b transition-colors",
+        "sticky top-0 z-50 border-b transition-[background-color,border-color,box-shadow] duration-300",
         scrolled
-          ? "border-border bg-background/85 backdrop-blur-md"
+          ? "border-border bg-background/80 shadow-sm backdrop-blur-md"
           : "border-transparent bg-background",
       )}
     >
@@ -55,7 +55,7 @@ function PublicNav() {
             <Link to="/login">Login</Link>
           </Button>
           <Button asChild className="hidden sm:inline-flex">
-            <Link to="/citizen/report">Report an Animal</Link>
+            <Link to="/register">Report an Animal</Link>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -86,7 +86,7 @@ function PublicNav() {
                   <Link to="/login">Login</Link>
                 </Button>
                 <Button asChild onClick={() => setOpen(false)}>
-                  <Link to="/citizen/report">Report an Animal</Link>
+                  <Link to="/register">Report an Animal</Link>
                 </Button>
               </div>
             </SheetContent>
@@ -135,7 +135,7 @@ function PublicFooter() {
         <FooterColumn
           title="Get involved"
           links={[
-            { to: "/citizen/report", label: "Report an Animal" },
+            { to: "/register", label: "Report an Animal" },
             { to: "/register", label: "Join as Rescuer" },
             { to: "/contact", label: "Contact" },
           ]}
@@ -150,7 +150,7 @@ function PublicFooter() {
       </div>
       <div className="border-t border-border">
         <p className="mx-auto max-w-7xl px-4 py-5 text-xs text-muted-foreground sm:px-6 lg:px-8">
-          © 2026 ResQ Paws · Phase 1 demonstration build using mock data.
+          © 2026 SafePaws. All rights reserved.
         </p>
       </div>
     </footer>
