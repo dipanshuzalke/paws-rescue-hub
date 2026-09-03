@@ -39,8 +39,6 @@ interface AppState {
   unreadCount: number;
   /** True when VITE_API_URL is configured and the Express backend is in use. */
   apiMode: boolean;
-  /** False until the persisted/JWT session has been checked on first load. */
-  sessionResolved: boolean;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -79,7 +77,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isApiEnabled ? [] : mockNotifications,
   );
   const [hydrated, setHydrated] = useState(false);
-  const [sessionResolved, setSessionResolved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,7 +96,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       /* demo storage is best-effort */
     }
     setHydrated(true);
-    setSessionResolved(true);
   }, []);
 
   useEffect(() => {
@@ -155,8 +151,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await loadFor(me);
       } catch {
         /* no active session — the login page handles it */
-      } finally {
-        if (!cancelled) setSessionResolved(true);
       }
     })();
     return () => {
@@ -449,7 +443,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notifications,
       unreadCount: notifications.filter((n) => !n.read).length,
       apiMode: isApiEnabled,
-      sessionResolved,
       loading,
       error,
       refresh,
@@ -469,7 +462,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       user,
       reports,
       notifications,
-      sessionResolved,
       loading,
       error,
       refresh,
