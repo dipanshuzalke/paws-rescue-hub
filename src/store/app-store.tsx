@@ -99,6 +99,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       /* demo storage is best-effort */
     }
     setHydrated(true);
+    setSessionResolved(true);
   }, []);
 
   useEffect(() => {
