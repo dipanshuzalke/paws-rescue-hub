@@ -88,7 +88,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setHydrated(true);
       return;
     }
-    setSessionResolved(true);
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
