@@ -17,6 +17,25 @@ export const REPORT_STATUSES = [
 ];
 export const ASSIGNMENT_STATUSES = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "REJECTED"];
 export const VERIFICATION_STATUSES = ["PENDING", "VERIFIED", "REJECTED"];
+
+/** Statuses considered "still live" — used by duplicate detection. */
+export const ACTIVE_REPORT_STATUSES = ["REPORTED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
+
+/** Evidence verification lifecycle (NONE = no evidence submitted yet). */
+export const EVIDENCE_STATUSES = ["NONE", "PENDING", "VERIFIED", "REJECTED"];
+
+/** Non status-change audit actions recorded on RescueHistory. */
+export const HISTORY_ACTIONS = [
+  "STATUS_CHANGE",
+  "RESCUE_EVIDENCE_SUBMITTED",
+  "RESCUE_EVIDENCE_RESUBMITTED",
+  "RESCUE_EVIDENCE_VERIFIED",
+  "RESCUE_EVIDENCE_REJECTED",
+  "DUPLICATE_MARKED",
+  "DUPLICATE_DISMISSED",
+];
+
+export const DUPLICATE_CONFIDENCE = ["HIGH", "POSSIBLE", "LOW"];
 export const NOTIFICATION_TYPES = [
   "NEW_REPORT",
   "ASSIGNMENT",
@@ -24,6 +43,10 @@ export const NOTIFICATION_TYPES = [
   "RESCUE_ACCEPTED",
   "RESCUE_STARTED",
   "RESCUE_COMPLETED",
+  "EVIDENCE_SUBMITTED",
+  "EVIDENCE_VERIFIED",
+  "EVIDENCE_REJECTED",
+  "DUPLICATE_FLAGGED",
   "SYSTEM",
 ];
 
@@ -55,3 +78,5 @@ export function canTransition(from, to) {
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_IMAGES = 5;
+export const MAX_EVIDENCE_IMAGES = 6;
+export const MIN_EVIDENCE_IMAGES = 1;
