@@ -25,5 +25,11 @@ export const env = {
     apiSecret: process.env.CLOUDINARY_API_SECRET || "",
     folder: process.env.CLOUDINARY_FOLDER || "resqpaws",
   },
+  duplicates: {
+    radiusMeters: Number(process.env.DUPLICATE_REPORT_RADIUS_METERS || 500),
+    windowHours: Number(process.env.DUPLICATE_REPORT_WINDOW_HOURS || 48),
+    // Minimum score (0-100) a candidate needs before it is shown to a citizen.
+    minScore: Number(process.env.DUPLICATE_REPORT_MIN_SCORE || 50),
+  },
   seedPassword: process.env.SEED_PASSWORD || "demo1234",
 };
