@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { demoAccounts } from "@/data/mockUsers";
 import { apiErrorMessage } from "@/lib/api-client";
 import { useApp } from "@/store/app-store";
 import type { Role } from "@/types";
@@ -37,29 +36,13 @@ const roleHome: Record<Role, string> = {
 };
 
 function Login() {
-  const { loginAs, signIn, apiMode } = useApp();
+  const { signIn } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("citizen@demo.com");
   const [password, setPassword] = useState("demo1234");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const enterAsRole = async (role: Role) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const me = await loginAs(role);
-      toast.success(`Signed in as ${me.role}`, {
-        description: apiMode ? "Seeded demo account." : "Demo session — no real account.",
-      });
-      void navigate({ to: roleHome[me.role] });
-    } catch (err) {
-      setError(apiErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +57,7 @@ function Login() {
       toast.success(`Welcome back, ${me.name}`);
       void navigate({ to: roleHome[me.role] });
     } catch (err) {
-      setError(err instanceof Error && !apiMode ? err.message : apiErrorMessage(err));
+      setError(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }

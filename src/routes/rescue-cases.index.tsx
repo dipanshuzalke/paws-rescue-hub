@@ -6,9 +6,7 @@ import { CaseCard } from "@/components/rescue/case-card";
 import { EmptyState } from "@/components/shared/states";
 import { FilterBar, FilterSelect, SearchBar } from "@/components/shared/filter-bar";
 import { ErrorState, TableSkeleton } from "@/components/shared/states";
-import { mockReports } from "@/data/mockReports";
 import { useAsync } from "@/hooks/use-async";
-import { isApiEnabled } from "@/lib/api-client";
 import { publicService } from "@/services/publicService";
 
 export const Route = createFileRoute("/rescue-cases/")({
@@ -62,9 +60,7 @@ function RescueCases() {
 
   const { data, loading, error, retry } = useAsync(
     () =>
-      isApiEnabled
-        ? publicService.getRescueCases({ limit: 200 }).then((r) => r.items)
-        : Promise.resolve(mockReports),
+      publicService.getRescueCases({ limit: 200 }).then((r) => r.items),
     [],
   );
   const reports = data ?? [];

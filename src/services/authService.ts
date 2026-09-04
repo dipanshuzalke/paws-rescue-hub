@@ -44,6 +44,7 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
+    setToken(null);
     try {
       await api.post("/auth/logout");
     } finally {

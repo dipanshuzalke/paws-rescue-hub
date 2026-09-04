@@ -1,4 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   ArrowRight,
   BellRing,
@@ -21,7 +22,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { mockNGOs } from "@/data/mockNGOs";
-import { mockReports } from "@/data/mockReports";
+import { useAsync } from "@/hooks/use-async";
+import { publicService } from "@/services/publicService";
+import { useApp } from "@/store/app-store";
+import type { Role } from "@/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -105,7 +109,25 @@ const impact = [
 ];
 
 function Index() {
-  // const featured = mockReports.slice(0, 3);
+  const { user, authReady } = useApp();
+  const navigate = useNavigate();
+  const reportPath = authReady && user ? "/citizen/report" : "/login";
+  const { data: liveReports } = useAsync(
+    () => publicService.getRescueCases({ limit: 3 }).then((response) => response.items),
+    [],
+  );
+  const featured = liveReports ?? [];
+
+  useEffect(() => {
+    if (!authReady || !user) return;
+    const dashboardByRole: Record<Role, string> = {
+      citizen: "/citizen/dashboard",
+      rescuer: "/rescuer/dashboard",
+      ngo: "/ngo/dashboard",
+      admin: "/admin/dashboard",
+    };
+    void navigate({ to: dashboardByRole[user.role] });
+  }, [authReady, navigate, user]);
 
   return (
     <PublicShell>
@@ -127,7 +149,7 @@ function Index() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="gap-2">
-                <Link to="/citizen/report">
+                <Link to={reportPath}>
                   <Siren className="h-4.5 w-4.5" aria-hidden="true" />
                   Report an Animal
                 </Link>
@@ -229,12 +251,12 @@ function Index() {
                   </span>
                   <h3 className="mt-5 font-display text-lg font-bold text-foreground">{a.role}</h3>
                   <p className="mt-2 flex-1 text-sm text-muted-foreground">{a.body}</p>
-                  <Button asChild variant="ghost" className="mt-5 justify-start gap-1.5 px-0">
+                  {/* <Button asChild variant="ghost" className="mt-5 justify-start gap-1.5 px-0">
                     <Link to={a.to}>
                       {a.cta}
                       <ArrowRight className="h-4 w-4" aria-hidden="true" />
                     </Link>
-                  </Button>
+                  </Button> */}
                 </CardContent>
               </Card>
             ))}
@@ -255,7 +277,7 @@ function Index() {
             <Link to="/rescue-cases">View all</Link>
           </Button>
         </div>
-        {/* <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {featured.map((report) => (
             <CaseCard
               key={report.id}
@@ -264,7 +286,7 @@ function Index() {
               params={{ id: report.id }}
             />
           ))}
-        </div> */}
+        </div>
       </section>
 
       {/* Partners */}
@@ -298,7 +320,7 @@ function Index() {
             Reporting takes less than a minute and immediately alerts the closest available rescuer.
           </p>
           <Button asChild size="lg" variant="secondary" className="mt-8 gap-2">
-            <Link to="/citizen/report">
+            <Link to={reportPath}>
               <Siren className="h-4.5 w-4.5" aria-hidden="true" />
               Report an Animal
             </Link>

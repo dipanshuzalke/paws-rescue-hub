@@ -39,6 +39,7 @@ interface AppState {
   unreadCount: number;
   /** True when VITE_API_URL is configured and the Express backend is in use. */
   apiMode: boolean;
+  authReady: boolean;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -77,6 +78,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isApiEnabled ? [] : mockNotifications,
   );
   const [hydrated, setHydrated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,6 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       /* demo storage is best-effort */
     }
     setHydrated(true);
+    setAuthReady(true);
   }, []);
 
   useEffect(() => {
@@ -151,6 +154,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await loadFor(me);
       } catch {
         /* no active session — the login page handles it */
+      } finally {
+        if (!cancelled) setAuthReady(true);
       }
     })();
     return () => {
@@ -443,6 +448,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notifications,
       unreadCount: notifications.filter((n) => !n.read).length,
       apiMode: isApiEnabled,
+      authReady,
       loading,
       error,
       refresh,
@@ -463,6 +469,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reports,
       notifications,
       loading,
+      authReady,
       error,
       refresh,
       signIn,

@@ -14,7 +14,6 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CitizenRouteImport } from './routes/citizen'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as DemoRouteImport } from './routes/demo'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LoginRouteImport } from './routes/login'
@@ -92,11 +91,6 @@ const CitizenRoute = CitizenRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -371,7 +365,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/citizen': typeof CitizenRouteWithChildren
   '/contact': typeof ContactRoute
-  '/demo': typeof DemoRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
@@ -432,7 +425,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/citizen': typeof CitizenRouteWithChildren
   '/contact': typeof ContactRoute
-  '/demo': typeof DemoRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
@@ -494,7 +486,6 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/citizen': typeof CitizenRouteWithChildren
   '/contact': typeof ContactRoute
-  '/demo': typeof DemoRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
@@ -557,7 +548,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/citizen'
     | '/contact'
-    | '/demo'
     | '/forgot-password'
     | '/how-it-works'
     | '/login'
@@ -618,7 +608,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/citizen'
     | '/contact'
-    | '/demo'
     | '/forgot-password'
     | '/how-it-works'
     | '/login'
@@ -679,7 +668,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/citizen'
     | '/contact'
-    | '/demo'
     | '/forgot-password'
     | '/how-it-works'
     | '/login'
@@ -741,7 +729,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CitizenRoute: typeof CitizenRouteWithChildren
   ContactRoute: typeof ContactRoute
-  DemoRoute: typeof DemoRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
@@ -790,13 +777,6 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -1297,7 +1277,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CitizenRoute: CitizenRouteWithChildren,
   ContactRoute: ContactRoute,
-  DemoRoute: DemoRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,

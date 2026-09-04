@@ -171,12 +171,12 @@ function HowItWorks() {
                         <p className="text-sm text-muted-foreground">{flow.intro}</p>
                       </div>
                     </div>
-                    <Button asChild variant="outline" className="gap-1.5">
+                    {/* <Button asChild variant="outline" className="gap-1.5">
                       <Link to={flow.cta.to}>
                         {flow.cta.label}
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </Link>
-                    </Button>
+                    </Button> */}
                   </div>
 
                   <ol className="relative mt-8 grid gap-6 border-t border-border pt-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -194,26 +194,6 @@ function HowItWorks() {
               </Card>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="card-surface flex flex-col items-center gap-6 p-10 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-critical-soft text-critical">
-            <PhoneCall className="h-6 w-6" aria-hidden="true" />
-          </span>
-          <h2 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-            Spotted an animal that needs help right now?
-          </h2>
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Every second counts. File a report and a nearby rescuer will be alerted within moments.
-          </p>
-          <Button asChild size="lg" className="gap-2">
-            <Link to="/citizen/report">
-              <MapPin className="h-4.5 w-4.5" aria-hidden="true" />
-              Report an animal now
-            </Link>
-          </Button>
         </div>
       </section>
     </PublicShell>

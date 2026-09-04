@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { timeAgo } from "@/lib/format";
+import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
 
 export function CaseCard({
@@ -19,6 +20,7 @@ export function CaseCard({
   footer?: ReactNode | undefined;
   showDistance?: boolean | undefined;
 }) {
+  const { user } = useApp();
   const body = (
     <>
       <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-muted">
@@ -62,12 +64,16 @@ export function CaseCard({
 
   return (
     <article className="card-surface group flex flex-col p-4 transition-shadow hover:shadow-[var(--shadow-pop)]">
-      {to ? (
+      {to && user ? (
         <Link
           to={to}
           params={params ?? {}}
           className="rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
+          {body}
+        </Link>
+      ) : to ? (
+        <Link to="/login" className="rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
           {body}
         </Link>
       ) : (

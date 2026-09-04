@@ -75,7 +75,7 @@ function Crumbs() {
 }
 
 export function DashboardLayout({ role, children }: { role: Role; children: ReactNode }) {
-  const { user, notifications, unreadCount, markRead, logout, loginAs, apiMode } = useApp();
+  const { user, notifications, unreadCount, markRead, logout, loginAs, apiMode, authReady } = useApp();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -83,18 +83,17 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
   useEffect(() => {
     // Demo mode auto-signs into the matching role; with the real API the
     // session comes from the backend, so unauthenticated users go to login.
+    if (!authReady) return undefined;
     if (user && user.role === role) return undefined;
     if (apiMode) {
       if (typeof window !== "undefined" && user === null) {
-        // give the session restore a moment before bouncing to login
-        const t = window.setTimeout(() => window.location.assign("/login"), 1200);
-        return () => window.clearTimeout(t);
+        window.location.assign("/login");
       }
       return undefined;
     }
     void loginAs(role);
     return undefined;
-  }, [user, role, loginAs, apiMode]);
+  }, [user, role, loginAs, apiMode, authReady]);
 
   const roleNotifications = notifications
     .filter((n) => n.role === role || n.role === "all")

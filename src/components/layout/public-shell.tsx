@@ -1,12 +1,14 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Facebook, Instagram, Menu, Twitter } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { authService } from "@/services/authService";
+import { useApp } from "@/store/app-store";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -17,8 +19,22 @@ const navItems = [
 ];
 
 function PublicNav() {
+  const { user, authReady, apiMode } = useApp();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const reportPath = authReady && user ? "/citizen/report" : "/login";
+
+  const handleReportClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!user || !apiMode) return;
+
+    event.preventDefault();
+    void authService.me().then(() => {
+      void navigate({ to: "/citizen/report" });
+    }).catch(() => {
+      void navigate({ to: "/login" });
+    });
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -55,7 +71,7 @@ function PublicNav() {
             <Link to="/login">Login</Link>
           </Button>
           <Button asChild className="hidden sm:inline-flex">
-            <Link to="/citizen/report">Report an Animal</Link>
+            <Link to={reportPath} onClick={handleReportClick}>Report an Animal</Link>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -86,7 +102,7 @@ function PublicNav() {
                   <Link to="/login">Login</Link>
                 </Button>
                 <Button asChild onClick={() => setOpen(false)}>
-                  <Link to="/citizen/report">Report an Animal</Link>
+                  <Link to={reportPath} onClick={handleReportClick}>Report an Animal</Link>
                 </Button>
               </div>
             </SheetContent>

@@ -96,7 +96,14 @@ export async function unwrapList<T>(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
+    const requestUrl = error.config?.url ?? "";
+    const isSessionProbe = requestUrl.endsWith("/auth/me");
+
+    if (
+      error.response?.status === 401 &&
+      !isSessionProbe &&
+      typeof window !== "undefined"
+    ) {
       setToken(null);
       if (!window.location.pathname.startsWith("/login")) {
         window.location.assign("/login");
