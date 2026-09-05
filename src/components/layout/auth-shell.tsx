@@ -41,7 +41,7 @@ export function AuthShell({
         </div>
       </div>
 
-      <aside className="relative hidden flex-col justify-center bg-primary px-16 lg:flex">
+      <aside className="relative hidden h-dvh flex-col justify-center self-start bg-primary px-16 lg:sticky lg:top-0 lg:flex">
         <blockquote className="max-w-md">
           <p className="font-display text-3xl leading-tight font-bold text-primary-foreground">
             “The difference between a rescue and a tragedy is usually twenty minutes.”
