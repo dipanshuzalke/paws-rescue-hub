@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { STATUS_LABELS, buildTimeline, mockReports } from "@/data/mockReports";
@@ -54,7 +54,7 @@ interface AppState {
     organizationDescription?: string;
   }) => Promise<User>;
   loginAs: (role: Role) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
   createReport: (input: NewReportInput) => Promise<RescueReport>;
   assignRescuer: (reportId: string, rescuerId: string, rescuerName: string, ngo?: string) => void;
   updateStatus: (reportId: string, status: RescueStatus, note?: string) => void;
@@ -81,6 +81,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const authVersion = useRef(0);
 
   useEffect(() => {
     if (isApiEnabled) {
@@ -145,11 +146,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Restore the JWT session on first load when the backend is configured.
   useEffect(() => {
     if (!isApiEnabled) return;
+    const restoreVersion = authVersion.current;
     let cancelled = false;
     void (async () => {
       try {
         const me = await authService.me();
-        if (cancelled) return;
+        if (cancelled || restoreVersion !== authVersion.current) return;
         setUser(me);
         await loadFor(me);
       } catch {
@@ -223,13 +225,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return found;
   }, [loadFor]);
 
-  const logout = useCallback(() => {
-    setUser(null);
+  const logout = useCallback(async () => {
+    authVersion.current += 1;
     if (isApiEnabled) {
       setReports([]);
       setNotifications([]);
-      void authService.logout();
+      try {
+        await authService.logout();
+      } finally {
+        setUser(null);
+      }
+      return;
     }
+    setUser(null);
   }, []);
 
   const pushNotification = useCallback((n: Omit<AppNotification, "id" | "at" | "read">) => {

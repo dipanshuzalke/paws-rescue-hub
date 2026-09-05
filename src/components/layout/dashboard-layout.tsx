@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
   ChevronRight,
@@ -76,9 +76,15 @@ function Crumbs() {
 
 export function DashboardLayout({ role, children }: { role: Role; children: ReactNode }) {
   const { user, notifications, unreadCount, markRead, logout, loginAs, apiMode, authReady } = useApp();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const handleLogout = async () => {
+    await logout();
+    await navigate({ to: "/login" });
+  };
 
   useEffect(() => {
     // Demo mode auto-signs into the matching role; with the real API the
@@ -260,13 +266,8 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/demo">Switch demo role</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout} asChild>
-                    <Link to="/login">
-                      <LogOut className="h-4 w-4" /> Log out
-                    </Link>
+                  <DropdownMenuItem onSelect={() => void handleLogout()}>
+                    <LogOut className="h-4 w-4" /> Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

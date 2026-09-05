@@ -68,7 +68,17 @@ export function apiErrorMessage(error: unknown): string {
   const err = error as AxiosError<{ message?: string }>;
   if (err?.response?.data?.message) return err.response.data.message;
   if (err?.code === "ECONNABORTED") return "The request timed out. Please try again.";
-  if (err?.message === "Network Error") return "Unable to reach the server. Check your connection.";
+  if (err?.code === "ERR_NETWORK" || err?.message === "Network Error") {
+    return API_URL
+      ? `Unable to reach the API at ${API_URL}. Start the backend and try again.`
+      : "Unable to reach the server. Check your connection.";
+  }
+  if (err?.request && !err?.response) {
+    return API_URL
+      ? `The API at ${API_URL} did not respond. Start the backend and try again.`
+      : "The server did not respond. Check your connection and try again.";
+  }
+  if (error instanceof Error && error.message) return error.message;
   return "Something went wrong. Please try again.";
 }
 
