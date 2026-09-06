@@ -7,6 +7,9 @@ import {
   createReportSchema,
   updateReportSchema,
   reportQuerySchema,
+  checkDuplicatesSchema,
+  markDuplicateSchema,
+  keepSeparateSchema,
 } from "../utils/validators.js";
 import {
   listReports,
@@ -19,6 +22,12 @@ import {
   cancelReport,
   deleteReport,
 } from "../controllers/reportController.js";
+import {
+  checkDuplicates,
+  reportDuplicates,
+  markDuplicate,
+  keepSeparate,
+} from "../controllers/duplicateController.js";
 
 const router = Router();
 
@@ -41,6 +50,27 @@ router.get(
   authorizeRoles("NGO", "ADMIN", "RESCUER"),
   validate(reportQuerySchema, "query"),
   reportsByStatus,
+);
+
+// --- Phase 3: duplicate detection ---------------------------------------
+router.post(
+  "/check-duplicates",
+  authorizeRoles("CITIZEN", "NGO", "ADMIN"),
+  validate(checkDuplicatesSchema),
+  checkDuplicates,
+);
+router.get("/:id/duplicates", authorizeRoles("NGO", "ADMIN"), reportDuplicates);
+router.post(
+  "/:id/mark-duplicate",
+  authorizeRoles("NGO", "ADMIN"),
+  validate(markDuplicateSchema),
+  markDuplicate,
+);
+router.post(
+  "/:id/keep-separate",
+  authorizeRoles("NGO", "ADMIN"),
+  validate(keepSeparateSchema),
+  keepSeparate,
 );
 
 router.get("/:id", getReport);
