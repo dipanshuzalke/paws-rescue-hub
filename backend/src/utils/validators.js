@@ -45,6 +45,8 @@ export const createReportSchema = z.object({
   latitude: numberFromAny(z.number().min(-90).max(90)),
   longitude: numberFromAny(z.number().min(-180).max(180)),
   title: z.string().trim().max(200).optional().default(""),
+  duplicateWarningShown: z.preprocess((v) => v === true || v === "true", z.boolean()).optional(),
+  duplicateOverride: z.preprocess((v) => v === true || v === "true", z.boolean()).optional(),
 });
 
 export const updateReportSchema = createReportSchema.partial();
@@ -78,4 +80,50 @@ export const reportQuerySchema = z.object({
   limit: z.string().trim().optional(),
   sortBy: z.string().trim().optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
+/* ------------------------------------------------------------------ *
+ * Phase 3 — duplicate detection
+ * ------------------------------------------------------------------ */
+
+export const checkDuplicatesSchema = z.object({
+  animalType: z.enum(ANIMAL_TYPES),
+  latitude: numberFromAny(z.number().min(-90).max(90)),
+  longitude: numberFromAny(z.number().min(-180).max(180)),
+  condition: z.enum(CONDITIONS).optional(),
+  radiusMeters: numberFromAny(z.number().int().min(50).max(20000)).optional(),
+  windowHours: numberFromAny(z.number().int().min(1).max(720)).optional(),
+});
+
+export const markDuplicateSchema = z.object({
+  primaryReportId: z.string().trim().min(1, "A primary report is required"),
+  note: z.string().trim().max(1000).optional().default(""),
+});
+
+export const keepSeparateSchema = z.object({
+  note: z.string().trim().max(1000).optional().default(""),
+});
+
+/* ------------------------------------------------------------------ *
+ * Phase 3 — rescue evidence & verification
+ * ------------------------------------------------------------------ */
+
+export const evidenceSubmitSchema = z.object({
+  notes: z.string().trim().min(5, "Please describe how the rescue was completed").max(2000),
+  animalCondition: z.string().trim().max(200).optional().default(""),
+  treatmentNotes: z.string().trim().max(2000).optional().default(""),
+  latitude: numberFromAny(z.number().min(-90).max(90)).optional(),
+  longitude: numberFromAny(z.number().min(-180).max(180)).optional(),
+  confirmed: z
+    .preprocess((v) => v === true || v === "true", z.boolean())
+    .refine((v) => v === true, "You must confirm the rescue was completed"),
+});
+
+export const evidenceVerifySchema = z.object({
+  notes: z.string().trim().max(2000).optional().default(""),
+  close: z.preprocess((v) => (v === undefined ? true : v === true || v === "true"), z.boolean()).optional(),
+});
+
+export const evidenceRejectSchema = z.object({
+  reason: z.string().trim().min(5, "A rejection reason is required").max(2000),
 });
