@@ -58,6 +58,7 @@ function CitizenReport() {
   const [submitted, setSubmitted] = useState<string | null>(null);
 
   const [animal, setAnimal] = useState<AnimalType | null>(null);
+  const [customAnimal, setCustomAnimal] = useState("");
   const [count, setCount] = useState(1);
   const [condition, setCondition] = useState<Condition | null>(null);
   const [emergency, setEmergency] = useState<Emergency | null>(null);
@@ -75,6 +76,8 @@ function CitizenReport() {
   const errors: Partial<Record<number, string>> = {};
   if (step === 0 && (!animal || !condition || !emergency)) {
     errors[0] = "Select the animal type, condition and emergency level to continue.";
+  } else if (step === 0 && animal === "Other" && !customAnimal.trim()) {
+    errors[0] = "Specify the animal type to continue.";
   }
   if (step === 1 && (!address.trim() || !area.trim() || !coords)) {
     errors[1] = "Add an address, area and location to continue.";
@@ -153,10 +156,12 @@ function CitizenReport() {
 
   const handleSubmit = async () => {
     if (!animal || !condition || !emergency || !coords) return;
+    const animalType = animal === "Other" ? customAnimal.trim() : animal;
+    if (!animalType) return;
     setSubmitting(true);
     try {
       const report = await createReport({
-        animal,
+        animal: animalType,
         count,
         condition,
         emergency,
@@ -197,6 +202,7 @@ function CitizenReport() {
               setSubmitted(null);
               setStep(0);
               setAnimal(null);
+              setCustomAnimal("");
               setCount(1);
               setCondition(null);
               setEmergency(null);
@@ -251,6 +257,21 @@ function CitizenReport() {
                 ))}
               </div>
             </div>
+
+            {animal === "Other" ? (
+              <div>
+                <Label className="mb-2 block" htmlFor="custom-animal">
+                  Specify the animal type
+                </Label>
+                <Input
+                  id="custom-animal"
+                  value={customAnimal}
+                  onChange={(e) => setCustomAnimal(e.target.value)}
+                  placeholder="e.g. Rabbit, Goat, or Monkey"
+                  autoFocus
+                />
+              </div>
+            ) : null}
 
             <div>
               <Label className="mb-2 block" htmlFor="count">
@@ -507,7 +528,7 @@ function CitizenReport() {
               <div>
                 <dt className="text-xs font-semibold uppercase text-muted-foreground">Animal</dt>
                 <dd className="text-sm font-medium text-foreground">
-                  {count} × {animal}
+                  {count} × {animal === "Other" ? customAnimal : animal}
                 </dd>
               </div>
               <div>

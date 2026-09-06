@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   PUBLIC_ROLES,
-  ANIMAL_TYPES,
   CONDITIONS,
   EMERGENCY_LEVELS,
   REPORT_STATUSES,
@@ -35,7 +34,7 @@ const numberFromAny = (schema) =>
   z.preprocess((v) => (typeof v === "string" ? Number(v) : v), schema);
 
 export const createReportSchema = z.object({
-  animalType: z.enum(ANIMAL_TYPES),
+  animalType: z.string().trim().min(1, "Animal type is required").max(50),
   animalCount: numberFromAny(z.number().int().min(1).max(100)).optional().default(1),
   condition: z.enum(CONDITIONS),
   emergencyLevel: z.enum(EMERGENCY_LEVELS),
@@ -67,7 +66,7 @@ export const assignmentSchema = z.object({
 
 export const reportQuerySchema = z.object({
   search: z.string().trim().optional(),
-  animalType: z.enum(ANIMAL_TYPES).optional(),
+  animalType: z.string().trim().min(1).max(50).optional(),
   condition: z.enum(CONDITIONS).optional(),
   emergencyLevel: z.enum(EMERGENCY_LEVELS).optional(),
   status: z.enum(REPORT_STATUSES).optional(),

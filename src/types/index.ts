@@ -13,7 +13,7 @@ export type Emergency = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "PENDING" | "VERIFIED" | "REJECTED";
 
-export type AnimalType = "Dog" | "Cat" | "Cow" | "Bird" | "Other";
+export type AnimalType = string;
 
 export type Condition =
   | "Injured"

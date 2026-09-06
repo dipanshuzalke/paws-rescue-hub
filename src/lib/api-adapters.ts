@@ -58,7 +58,7 @@ export interface ApiReport {
   _id: string;
   reportId: string;
   title?: string;
-  animalType: "DOG" | "CAT" | "COW" | "BIRD" | "OTHER";
+  animalType: string;
   animalCount: number;
   condition: string;
   emergencyLevel: Emergency;
@@ -130,6 +130,11 @@ const ANIMAL_TO_UI: Record<string, AnimalType> = {
   BIRD: "Bird",
   OTHER: "Other",
 };
+
+const formatAnimalType = (animalType: string) =>
+  animalType
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
 const CONDITION_TO_UI: Record<string, Condition> = {
   INJURED: "Injured",
@@ -230,7 +235,7 @@ export function adaptReport(r: ApiReport): RescueReport {
       ? r.assignedOrganization
       : undefined;
   const coords = r.location?.coordinates;
-  const animal = ANIMAL_TO_UI[r.animalType] ?? "Other";
+  const animal = ANIMAL_TO_UI[r.animalType] ?? formatAnimalType(r.animalType);
   const condition = CONDITION_TO_UI[r.condition] ?? "Other";
 
   return {

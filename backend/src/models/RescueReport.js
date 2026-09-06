@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import {
-  ANIMAL_TYPES,
   CONDITIONS,
   EMERGENCY_LEVELS,
   REPORT_STATUSES,
@@ -73,7 +72,7 @@ const rescueReportSchema = new mongoose.Schema(
     reportId: { type: String, unique: true, index: true, default: generateReportId },
     reporter: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     title: { type: String, trim: true, maxlength: 200, default: "" },
-    animalType: { type: String, enum: ANIMAL_TYPES, required: true, index: true },
+    animalType: { type: String, trim: true, minlength: 1, maxlength: 50, required: true, index: true },
     animalCount: { type: Number, default: 1, min: 1, max: 100 },
     condition: { type: String, enum: CONDITIONS, required: true, index: true },
     emergencyLevel: { type: String, enum: EMERGENCY_LEVELS, required: true, index: true },
