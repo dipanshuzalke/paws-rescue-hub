@@ -9,6 +9,7 @@ import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/states";
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { StatusTimeline } from "@/components/shared/status-timeline";
+import { ReportImageGallery } from "@/components/shared/report-image-gallery";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -99,17 +100,10 @@ function AdminReportDetail() {
           {report.images.length ? (
             <div className="card-surface p-5">
               <SectionHeading title="Photos" />
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {report.images.map((src, i) => (
-                  <img
-                    key={`${src}-${i}`}
-                    src={src}
-                    alt={`${report.condition} ${report.animal.toLowerCase()} photo ${i + 1}`}
-                    loading="lazy"
-                    className="aspect-square w-full rounded-lg object-cover"
-                  />
-                ))}
-              </div>
+              <ReportImageGallery
+                images={report.images}
+                alt={`${report.condition} ${report.animal.toLowerCase()} photo`}
+              />
             </div>
           ) : null}
 

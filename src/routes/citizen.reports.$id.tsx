@@ -9,8 +9,8 @@ import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { StatusTimeline } from "@/components/shared/status-timeline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportImageGallery } from "@/components/shared/report-image-gallery";
 import { formatDateTime, initials, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 
@@ -33,8 +33,6 @@ function CitizenReportDetail() {
 
   const [note, setNote] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [activeImg, setActiveImg] = useState(0);
-  const [imageOpen, setImageOpen] = useState(false);
 
   if (!authReady || loading) {
     return (
@@ -95,49 +93,12 @@ function CitizenReportDetail() {
         <div className="space-y-6 xl:col-span-2">
           {report.images.length > 0 ? (
             <div className="card-surface p-3">
-              <button
-                type="button"
-                className="block aspect-video w-full overflow-hidden rounded-lg bg-muted"
-                onClick={() => setImageOpen(true)}
-                aria-label="View report image full screen"
-              >
-                <img
-                  src={report.images[activeImg]}
-                  alt={`${report.condition} ${report.animal} in ${report.area}`}
-                  className="h-full w-full object-cover"
-                />
-              </button>
-              {report.images.length > 1 ? (
-                <div className="mt-3 flex gap-2">
-                  {report.images.map((img, i) => (
-                    <button
-                      key={img + i}
-                      type="button"
-                      onClick={() => setActiveImg(i)}
-                      className={`h-14 w-14 shrink-0 overflow-hidden rounded-md border-2 ${
-                        i === activeImg ? "border-primary" : "border-transparent"
-                      }`}
-                    >
-                      <img src={img} alt="" className="h-full w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              ) : null}
+              <ReportImageGallery
+                images={report.images}
+                alt={`${report.condition} ${report.animal} in ${report.area}`}
+              />
             </div>
           ) : null}
-
-          <Dialog open={imageOpen} onOpenChange={setImageOpen}>
-            <DialogContent className="h-dvh w-screen max-w-none rounded-none border-0 bg-black/95 p-2 text-white [&>button]:text-white [&>button]:opacity-100 sm:h-[95vh] sm:w-[95vw] sm:rounded-lg">
-              <DialogTitle className="sr-only">Report image</DialogTitle>
-              <div className="flex h-full items-center justify-center">
-                <img
-                  src={report.images[activeImg]}
-                  alt={`${report.condition} ${report.animal} in ${report.area}`}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
 
           <div className="card-surface p-5">
             <h2 className="font-display text-lg font-bold text-foreground">Details</h2>

@@ -16,6 +16,7 @@ import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/states";
 import { StatusTimeline } from "@/components/shared/status-timeline";
+import { ReportImageGallery } from "@/components/shared/report-image-gallery";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -127,16 +128,10 @@ function RescuerRequestDetail() {
         <div className="space-y-6 lg:col-span-2">
           <section className="card-surface p-4">
             <SectionHeading title="Photos" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {report.images.map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt={`${report.condition} ${report.animal.toLowerCase()} photo ${i + 1}`}
-                  className="aspect-square w-full rounded-lg object-cover"
-                />
-              ))}
-            </div>
+            <ReportImageGallery
+              images={report.images}
+              alt={`${report.condition} ${report.animal.toLowerCase()} photo`}
+            />
           </section>
 
           <section className="card-surface p-4">
