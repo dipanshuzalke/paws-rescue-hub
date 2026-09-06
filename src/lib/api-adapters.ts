@@ -256,7 +256,7 @@ export function adaptReport(r: ApiReport): RescueReport {
     reporterId: idOf(r.reporter),
     reporterName: reporter?.name ?? "Citizen",
     reporterPhone: reporter?.phone ?? "",
-    rescuerId: rescuer ? idOf(r.assignedRescuer) : undefined,
+    rescuerId: r.assignedRescuer ? idOf(r.assignedRescuer) : undefined,
     rescuerName: rescuer?.name,
     ngoId: org?._id,
     ngoName: org?.name,

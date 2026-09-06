@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { mockRescuers } from "@/data/mockUsers";
 import { useAsync } from "@/hooks/use-async";
-import { ngoService } from "@/services/ngoService";
+import { rescueService } from "@/services/rescueService";
 import { useApp } from "@/store/app-store";
 import type { Rescuer } from "@/types";
 
@@ -10,18 +10,32 @@ import type { Rescuer } from "@/types";
 export function useCurrentRescuer(): Rescuer {
   const { user, apiMode } = useApp();
 
-  const { data } = useAsync(
+  const { data: stats } = useAsync(
     () =>
       apiMode
-        ? ngoService.getRescuers({ limit: 200 }).then((r) => r.items)
-        : Promise.resolve(mockRescuers),
-    [apiMode],
+        ? rescueService.getRescuerStats()
+        : Promise.resolve(null),
+    [apiMode, user?.id],
   );
 
   return useMemo(() => {
-    const list = data ?? mockRescuers;
-    return list.find((r) => r.id === user?.id) ?? list[0]!;
-  }, [data, user]);
+    if (!apiMode) {
+      return mockRescuers.find((r) => r.id === user?.id) ?? mockRescuers[0]!;
+    }
+
+    return {
+      ...(user as Rescuer),
+      role: "rescuer",
+      availability: "Offline",
+      distanceKm: 0,
+      activeCases: stats?.activeRescues ?? 0,
+      completedCases: stats?.completedRescues ?? 0,
+      avgResponseMins: 0,
+      rating: 0,
+      ngoId: user?.organization ?? "",
+      coords: { lat: 21.1458, lng: 79.0882 },
+    };
+  }, [apiMode, stats, user]);
 }
 
 export function elapsedLabel(iso: string) {

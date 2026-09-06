@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Phone, MessageSquare, Send, XCircle } from "lucide-react";
+import { Loader2, Phone, MessageSquare, Send, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { StatusTimeline } from "@/components/shared/status-timeline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime, initials, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
@@ -27,12 +28,21 @@ export const Route = createFileRoute("/citizen/reports/$id")({
 
 function CitizenReportDetail() {
   const { id } = Route.useParams();
-  const { reports, addNote, updateStatus } = useApp();
+  const { reports, addNote, updateStatus, loading, authReady } = useApp();
   const report = reports.find((r) => r.id === id);
 
   const [note, setNote] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [imageOpen, setImageOpen] = useState(false);
+
+  if (!authReady || loading) {
+    return (
+      <div className="card-surface flex min-h-48 items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" aria-label="Loading report" />
+      </div>
+    );
+  }
 
   if (!report) {
     return (
@@ -85,13 +95,18 @@ function CitizenReportDetail() {
         <div className="space-y-6 xl:col-span-2">
           {report.images.length > 0 ? (
             <div className="card-surface p-3">
-              <div className="aspect-video overflow-hidden rounded-lg bg-muted">
+              <button
+                type="button"
+                className="block aspect-video w-full overflow-hidden rounded-lg bg-muted"
+                onClick={() => setImageOpen(true)}
+                aria-label="View report image full screen"
+              >
                 <img
                   src={report.images[activeImg]}
                   alt={`${report.condition} ${report.animal} in ${report.area}`}
                   className="h-full w-full object-cover"
                 />
-              </div>
+              </button>
               {report.images.length > 1 ? (
                 <div className="mt-3 flex gap-2">
                   {report.images.map((img, i) => (
@@ -110,6 +125,19 @@ function CitizenReportDetail() {
               ) : null}
             </div>
           ) : null}
+
+          <Dialog open={imageOpen} onOpenChange={setImageOpen}>
+            <DialogContent className="h-dvh w-screen max-w-none rounded-none border-0 bg-black/95 p-2 text-white [&>button]:text-white [&>button]:opacity-100 sm:h-[95vh] sm:w-[95vw] sm:rounded-lg">
+              <DialogTitle className="sr-only">Report image</DialogTitle>
+              <div className="flex h-full items-center justify-center">
+                <img
+                  src={report.images[activeImg]}
+                  alt={`${report.condition} ${report.animal} in ${report.area}`}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="card-surface p-5">
             <h2 className="font-display text-lg font-bold text-foreground">Details</h2>

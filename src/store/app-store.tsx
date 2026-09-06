@@ -121,7 +121,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         current.role === "citizen"
           ? reportService.getMyReports({ limit: 100 })
           : current.role === "rescuer"
-            ? rescueService.getAvailableRequests({ limit: 100 })
+            ? Promise.all([
+                rescueService.getAvailableRequests({ limit: 100 }),
+                rescueService.getActiveRescues({ limit: 100 }),
+              ]).then(([available, active]) => ({
+                items: Array.from(
+                  new Map([...available.items, ...active.items].map((report) => [report.id, report])).values(),
+                ),
+                pagination: available.pagination,
+              }))
             : current.role === "ngo"
               ? ngoService.getReports({ limit: 100 })
               : reportService.getReports({ limit: 100 }),

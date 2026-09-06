@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useCurrentRescuer } from "@/components/rescuer/use-current-rescuer";
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,8 +24,6 @@ export const Route = createFileRoute("/rescuer/profile")({
   component: RescuerProfile,
 });
 
-const skills = ["Wound care", "Large animal handling", "Bird rescue", "Two-wheeler unit"];
-
 function RescuerProfile() {
   const rescuer = useCurrentRescuer();
   const [form, setForm] = useState({
@@ -34,9 +31,19 @@ function RescuerProfile() {
     phone: rescuer.phone,
     email: rescuer.email,
     location: rescuer.location,
-    vehicle: "Two-wheeler ambulance unit",
-    bio: "Experienced field rescuer specialising in road-accident and injury cases.",
+    vehicle: "",
+    bio: "",
   });
+
+  useEffect(() => {
+    setForm((current) => ({
+      ...current,
+      name: rescuer.name,
+      phone: rescuer.phone,
+      email: rescuer.email,
+      location: rescuer.location,
+    }));
+  }, [rescuer.email, rescuer.location, rescuer.name, rescuer.phone]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,13 +73,7 @@ function RescuerProfile() {
           </div>
           <div className="mt-5">
             <SectionHeading title="Skills" />
-            <div className="flex flex-wrap gap-1.5">
-              {skills.map((s) => (
-                <Badge key={s} variant="secondary">
-                  {s}
-                </Badge>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">No skills added yet.</p>
           </div>
           <div className="mt-5">
             <SectionHeading title="Service area" />
