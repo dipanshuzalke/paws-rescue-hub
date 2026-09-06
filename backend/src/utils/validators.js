@@ -87,7 +87,7 @@ export const reportQuerySchema = z.object({
  * ------------------------------------------------------------------ */
 
 export const checkDuplicatesSchema = z.object({
-  animalType: z.enum(ANIMAL_TYPES),
+  animalType: z.string().trim().min(1, "Animal type is required").max(50),
   latitude: numberFromAny(z.number().min(-90).max(90)),
   longitude: numberFromAny(z.number().min(-180).max(180)),
   condition: z.enum(CONDITIONS).optional(),
