@@ -31,12 +31,12 @@ export function ActivityList({
             <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full", meta.cls)}>
               <Icon className="h-4 w-4" aria-hidden="true" />
             </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm text-foreground">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p className="break-words text-sm text-foreground [overflow-wrap:anywhere]">
                 <span className="font-semibold">{entry.actor}</span> {entry.action}{" "}
                 <span className="font-semibold">{entry.target}</span>
               </p>
-              <p className="text-xs text-muted-foreground">{timeAgo(entry.at)}</p>
+              <p className="break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">{timeAgo(entry.at)}</p>
             </div>
           </li>
         );

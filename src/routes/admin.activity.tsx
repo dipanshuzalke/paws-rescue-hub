@@ -72,12 +72,12 @@ function AdminActivity() {
           value={search}
           onChange={setSearch}
           placeholder="Search by actor, action or target…"
-          className="flex-1 sm:min-w-[240px]"
+          className="flex-1 sm:min-w-60"
         />
         <FilterSelect value={kind} onChange={setKind} label="Type" options={kindOptions} />
       </FilterBar>
 
-      <div className="card-surface p-5">
+      <div className="card-surface min-w-0 overflow-hidden p-5">
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
