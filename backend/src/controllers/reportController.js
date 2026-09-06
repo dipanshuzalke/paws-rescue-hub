@@ -48,6 +48,8 @@ export const createReport = asyncHandler(async (req, res) => {
     address: body.address,
     area: body.area,
     city: body.city,
+    duplicateWarningShown: Boolean(body.duplicateWarningShown),
+    duplicateOverride: Boolean(body.duplicateOverride),
   });
 
   await recordHistory({ report, user: req.user, previousStatus: "NONE", newStatus: "REPORTED", note: "Report created" });

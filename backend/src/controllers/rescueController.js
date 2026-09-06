@@ -157,6 +157,18 @@ export const updateRescueStatus = asyncHandler(async (req, res) => {
   }
 
   const { status, note } = req.body;
+
+  // Phase 3 guard: completion and closure must go through the evidence workflow.
+  const evidenceStatus = report.rescueEvidence?.verificationStatus || "NONE";
+  if (status === "RESCUED" && req.user.role === "RESCUER") {
+    throw ApiError.badRequest(
+      "Submit rescue evidence to complete this rescue — it will then await verification",
+    );
+  }
+  if (status === "CLOSED" && evidenceStatus !== "VERIFIED") {
+    throw ApiError.conflict("This case can only be closed after its rescue evidence is verified");
+  }
+
   const updated = await transitionReport({ report, newStatus: status, user: req.user, note });
   return ok(res, updated, "Status updated");
 });

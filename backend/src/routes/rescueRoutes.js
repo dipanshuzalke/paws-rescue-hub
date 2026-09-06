@@ -3,7 +3,22 @@ import { authenticateUser } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { uploadImages } from "../middleware/uploadMiddleware.js";
-import { reportQuerySchema, statusUpdateSchema, noteSchema } from "../utils/validators.js";
+import {
+  reportQuerySchema,
+  statusUpdateSchema,
+  noteSchema,
+  evidenceSubmitSchema,
+  evidenceVerifySchema,
+  evidenceRejectSchema,
+} from "../utils/validators.js";
+import { MAX_EVIDENCE_IMAGES } from "../utils/constants.js";
+import {
+  postEvidence,
+  pendingVerification,
+  getEvidence,
+  approveEvidence,
+  denyEvidence,
+} from "../controllers/evidenceController.js";
 import {
   availableRescues,
   activeRescues,
@@ -30,6 +45,12 @@ router.get("/history", authorizeRoles("RESCUER"), validate(reportQuerySchema, "q
 router.get("/rescuer-stats", authorizeRoles("RESCUER"), rescuerStats);
 router.get("/my-active", authorizeRoles("CITIZEN"), validate(reportQuerySchema, "query"), myActive);
 router.get("/my-history", authorizeRoles("CITIZEN"), validate(reportQuerySchema, "query"), myHistory);
+router.get(
+  "/pending-verification",
+  authorizeRoles("NGO", "ADMIN"),
+  validate(reportQuerySchema, "query"),
+  pendingVerification,
+);
 router.patch("/availability", authorizeRoles("RESCUER"), setAvailability);
 
 router.post("/:reportId/accept", authorizeRoles("RESCUER"), acceptRescue);
@@ -40,6 +61,28 @@ router.post(
   authorizeRoles("RESCUER"),
   uploadImages("images"),
   uploadRescueProof,
+);
+
+// --- Phase 3: rescue evidence & verification ----------------------------
+router.post(
+  "/:reportId/evidence",
+  authorizeRoles("RESCUER"),
+  uploadImages("photos", MAX_EVIDENCE_IMAGES),
+  validate(evidenceSubmitSchema),
+  postEvidence,
+);
+router.get("/:reportId/evidence", getEvidence);
+router.post(
+  "/:reportId/evidence/verify",
+  authorizeRoles("NGO", "ADMIN"),
+  validate(evidenceVerifySchema),
+  approveEvidence,
+);
+router.post(
+  "/:reportId/evidence/reject",
+  authorizeRoles("NGO", "ADMIN"),
+  validate(evidenceRejectSchema),
+  denyEvidence,
 );
 
 router.get("/:id", authorizeRoles("RESCUER", "NGO", "ADMIN"), getRescueDetail);
