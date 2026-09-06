@@ -65,14 +65,14 @@ export function UserDetailDialog({
             <dd className="text-foreground">Joined {formatDate(user.joinedAt)}</dd>
           </div>
         </dl>
-        <div className="mt-2 grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-muted p-3 text-center">
+        <div className="mt-2 grid min-w-0 grid-cols-2 gap-3">
+          <div className="min-w-0 rounded-lg bg-muted p-3 text-center">
             <p className="text-xs font-medium text-muted-foreground">Total cases</p>
             <p className="mt-1 text-xl font-bold text-foreground">{user.cases}</p>
           </div>
-          <div className="rounded-lg bg-muted p-3 text-center">
+          <div className="min-w-0 rounded-lg bg-muted p-3 text-center">
             <p className="text-xs font-medium text-muted-foreground">User ID</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{user.id}</p>
+            <p className="mt-1 break-all text-sm font-bold text-foreground">{user.id}</p>
           </div>
         </div>
       </DialogContent>
