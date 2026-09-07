@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { initials } from "@/lib/format";
+import { authService } from "@/services/authService";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/rescuer/profile")({
   head: () => ({
@@ -26,6 +28,8 @@ export const Route = createFileRoute("/rescuer/profile")({
 
 function RescuerProfile() {
   const rescuer = useCurrentRescuer();
+  const { apiMode } = useApp();
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: rescuer.name,
     phone: rescuer.phone,
@@ -45,9 +49,37 @@ function RescuerProfile() {
     }));
   }, [rescuer.email, rescuer.location, rescuer.name, rescuer.phone]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Profile updated successfully.");
+    setSaving(true);
+    try {
+      if (apiMode) {
+        const location = await new Promise<{ address: string; coordinates?: [number, number] }>(
+          (resolve) => {
+            if (!navigator.geolocation) return resolve({ address: form.location });
+            navigator.geolocation.getCurrentPosition(
+              (position) =>
+                resolve({
+                  address: form.location,
+                  coordinates: [position.coords.longitude, position.coords.latitude],
+                }),
+              () => resolve({ address: form.location }),
+              { enableHighAccuracy: true, timeout: 8000 },
+            );
+          },
+        );
+        await authService.updateProfile({
+          name: form.name,
+          phone: form.phone,
+          location,
+        });
+      }
+      toast.success("Profile updated successfully. Distance will appear when coordinates are available.");
+    } catch {
+      toast.error("Could not update your profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -142,7 +174,7 @@ function RescuerProfile() {
             </div>
           </div>
           <div className="flex justify-end">
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
           </div>
         </form>
       </div>

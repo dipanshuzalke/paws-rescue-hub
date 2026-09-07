@@ -10,6 +10,7 @@ export interface RescuerStats {
   activeRescues: number;
   completedRescues: number;
   criticalCases: number;
+  avgResponseMins: number;
 }
 
 async function adaptedList(url: string, query?: ReportQuery): Promise<Paginated<RescueReport>> {

@@ -49,17 +49,27 @@ export const rescueHistoryList = asyncHandler(async (req, res) => {
 /** GET /api/rescues/rescuer-stats */
 export const rescuerStats = asyncHandler(async (req, res) => {
   const rescuerId = req.user._id;
-  const [availableRequests, activeCases, completedCases, criticalCases] = await Promise.all([
+  const [availableRequests, activeCases, completedCases, criticalCases, responseRows] = await Promise.all([
     RescueReport.countDocuments({ status: "REPORTED" }),
     RescueReport.countDocuments({ assignedRescuer: rescuerId, status: { $in: ["ACCEPTED", "IN_PROGRESS"] } }),
     RescueReport.countDocuments({ assignedRescuer: rescuerId, status: { $in: ["RESCUED", "CLOSED"] } }),
     RescueReport.countDocuments({ status: { $in: ["REPORTED", "ASSIGNED"] }, emergencyLevel: "CRITICAL" }),
+    RescueReport.aggregate([
+      { $match: { assignedRescuer: rescuerId, reportedAt: { $ne: null }, assignedAt: { $ne: null } } },
+      {
+        $group: {
+          _id: null,
+          average: { $avg: { $divide: [{ $subtract: ["$assignedAt", "$reportedAt"] }, 60000] } },
+        },
+      },
+    ]),
   ]);
   return ok(res, {
     availableRequests,
     activeRescues: activeCases,
     completedRescues: completedCases,
     criticalCases,
+    avgResponseMins: Math.round(responseRows[0]?.average || 0),
   });
 });
 

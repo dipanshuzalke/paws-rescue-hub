@@ -14,6 +14,19 @@ const ACTIVE_STATUSES = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 const ASSIGNABLE_STATUSES = ["REPORTED", "ASSIGNED"];
 const PRESENCE_WINDOW_MS = 90 * 1000;
 
+function distanceKm(from, to) {
+  if (!from || !to || from.length < 2 || to.length < 2) return null;
+  const [fromLng, fromLat] = from;
+  const [toLng, toLat] = to;
+  const radians = (value) => (value * Math.PI) / 180;
+  const latDelta = radians(toLat - fromLat);
+  const lngDelta = radians(toLng - fromLng);
+  const a =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(radians(fromLat)) * Math.cos(radians(toLat)) * Math.sin(lngDelta / 2) ** 2;
+  return Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+}
+
 const REPORT_POPULATE = [
   { path: "reporter", select: "name email phone" },
   { path: "assignedRescuer", select: "name email phone availability" },
@@ -106,9 +119,14 @@ export const getRescuers = asyncHandler(async (req, res) => {
     ? { role: "RESCUER", $or: [{ organization: org }, { organization: null }] }
     : { role: "RESCUER" };
 
-  const rescuers = await User.find(filter).sort({ name: 1 });
+  const [rescuers, organization] = await Promise.all([
+    User.find(filter).sort({ name: 1 }),
+    org ? Organization.findById(org).select("location") : null,
+  ]);
+  const organizationCoords = organization?.location?.coordinates;
   const shaped = rescuers.map((r) => ({
     ...r.toObject(),
+    distanceKm: distanceKm(organizationCoords, r.location?.coordinates),
     avgResponseMins: r.avgResponseMins,
     isOnline:
       r.availability !== "OFFLINE" &&

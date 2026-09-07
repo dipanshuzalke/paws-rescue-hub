@@ -103,6 +103,14 @@ export const updateMe = asyncHandler(async (req, res) => {
     if (req.body[key] !== undefined) updates[key] = req.body[key];
   }
 
+  if (req.body.location) {
+    updates.location = {
+      ...(req.user.location?.toObject?.() ?? req.user.location ?? {}),
+      ...req.body.location,
+      type: "Point",
+    };
+  }
+
   const user = await User.findByIdAndUpdate(req.user._id, updates, {
     new: true,
     runValidators: true,

@@ -129,7 +129,9 @@ function NgoRescuers() {
                   <p className="text-[11px] text-muted-foreground">Completed</p>
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-foreground">{r.distanceKm} km</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {r.distanceKm > 0 ? `${r.distanceKm} km` : "—"}
+                  </p>
                   <p className="text-[11px] text-muted-foreground">Distance</p>
                 </div>
               </div>
@@ -186,7 +188,9 @@ function NgoRescuers() {
                     <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-foreground">{detail.distanceKm} km</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {detail.distanceKm > 0 ? `${detail.distanceKm} km` : "—"}
+                    </p>
                     <p className="text-xs text-muted-foreground">Distance</p>
                   </div>
                 </div>

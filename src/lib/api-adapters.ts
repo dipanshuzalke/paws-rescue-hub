@@ -45,6 +45,7 @@ export interface ApiUser {
   isOnline?: boolean;
   activeCases?: number;
   completedCases?: number;
+  distanceKm?: number | null;
   reportCount?: number;
   ratedResponses?: number;
   avgResponseMins?: number;
@@ -235,7 +236,7 @@ export function adaptRescuer(u: ApiUser): Rescuer {
     role: "rescuer",
     availability:
       u.availability === "AVAILABLE" ? "Available" : u.availability === "BUSY" ? "Busy" : "Offline",
-    distanceKm: 0,
+    distanceKm: u.distanceKm ?? 0,
     activeCases: u.activeCases ?? 0,
     completedCases: u.completedCases ?? 0,
     avgResponseMins: u.avgResponseMins ?? 0,

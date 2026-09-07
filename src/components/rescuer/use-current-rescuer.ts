@@ -30,7 +30,7 @@ export function useCurrentRescuer(): Rescuer {
       distanceKm: 0,
       activeCases: stats?.activeRescues ?? 0,
       completedCases: stats?.completedRescues ?? 0,
-      avgResponseMins: 0,
+      avgResponseMins: stats?.avgResponseMins ?? 0,
       rating: 0,
       ngoId: user?.organization ?? "",
       coords: { lat: 21.1458, lng: 79.0882 },

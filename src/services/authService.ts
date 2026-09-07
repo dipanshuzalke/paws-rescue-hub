@@ -16,6 +16,10 @@ export interface RegisterInput {
   role: Role;
   organizationName?: string;
   organizationDescription?: string;
+  location?: {
+    address?: string;
+    coordinates?: [number, number];
+  };
 }
 
 export const authService = {
