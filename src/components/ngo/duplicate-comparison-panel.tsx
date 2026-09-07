@@ -50,7 +50,7 @@ export function DuplicateComparisonPanel({
 
     setProcessing(true);
     try {
-      await duplicateService.markDuplicate(report.id, selectedMatch.reportId, notes);
+      await duplicateService.markDuplicate(report.id, selectedMatch.id, notes);
       toast.success(`Linked to case #${selectedMatch.reportId}`);
       setLinkOpen(false);
       setSelectedMatch(null);
