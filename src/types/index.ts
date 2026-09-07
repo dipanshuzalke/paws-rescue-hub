@@ -113,7 +113,70 @@ export interface RescueReport {
   durationMins?: number | undefined;
   timeline: TimelineEntry[];
   notes: RescueNote[];
+  /** Phase 3 — rescue evidence & verification. */
+  evidence?: RescueEvidence | undefined;
+  /** Phase 3 — set when this report was linked to an existing case. */
+  duplicateOfId?: string | undefined;
 }
+
+export type EvidenceStatus = "NONE" | "PENDING" | "VERIFIED" | "REJECTED";
+
+export interface EvidenceEvent {
+  action: string;
+  byName?: string | undefined;
+  byRole?: string | undefined;
+  notes?: string | undefined;
+  photos: string[];
+  at: string;
+}
+
+export interface RescueEvidence {
+  status: EvidenceStatus;
+  photos: string[];
+  notes: string;
+  animalCondition: string;
+  treatmentNotes: string;
+  completionCoords?: GeoPoint | undefined;
+  submittedByName?: string | undefined;
+  submittedAt?: string | undefined;
+  submissionCount: number;
+  verifiedByName?: string | undefined;
+  verifiedAt?: string | undefined;
+  verificationNotes: string;
+  rejectionReason: string;
+  events: EvidenceEvent[];
+}
+
+export type DuplicateConfidence = "HIGH" | "POSSIBLE" | "LOW";
+
+export interface DuplicateMatch {
+  id: string;
+  reportId: string;
+  animal: AnimalType;
+  count: number;
+  condition: string;
+  emergency: Emergency;
+  status: RescueStatus;
+  description: string;
+  address: string;
+  area: string;
+  city: string;
+  images: string[];
+  distanceMeters: number;
+  minutesAgo: number;
+  createdAt: string;
+  score: number;
+  confidence: DuplicateConfidence;
+  reasons: string[];
+}
+
+export interface DuplicateCheckResult {
+  hasDuplicates: boolean;
+  radiusMeters: number;
+  windowHours: number;
+  matches: DuplicateMatch[];
+}
+
 
 export type NotificationKind = "rescue" | "system" | "assignment";
 

@@ -3,6 +3,10 @@ import type {
   AnimalType,
   AppNotification,
   Condition,
+  DuplicateCheckResult,
+  DuplicateConfidence,
+  RescueEvidence,
+
   Emergency,
   NGO,
   NotificationKind,
@@ -54,6 +58,32 @@ export interface ApiHistoryEntry {
   timestamp: string;
 }
 
+export interface ApiEvidenceEvent {
+  action: string;
+  byName?: string;
+  byRole?: string;
+  notes?: string;
+  photos?: ApiImage[];
+  at: string;
+}
+
+export interface ApiRescueEvidence {
+  photos?: ApiImage[];
+  notes?: string;
+  animalCondition?: string;
+  treatmentNotes?: string;
+  completionLocation?: { coordinates?: number[] };
+  submittedBy?: ApiUser | string | null;
+  submittedAt?: string;
+  submissionCount?: number;
+  verificationStatus?: "NONE" | "PENDING" | "VERIFIED" | "REJECTED";
+  verifiedBy?: ApiUser | string | null;
+  verifiedAt?: string;
+  verificationNotes?: string;
+  rejectionReason?: string;
+  events?: ApiEvidenceEvent[];
+}
+
 export interface ApiReport {
   _id: string;
   reportId: string;
@@ -82,6 +112,8 @@ export interface ApiReport {
   createdAt: string;
   updatedAt: string;
   totalDurationMins?: number | null;
+  rescueEvidence?: ApiRescueEvidence | null;
+  duplicateOf?: string | { _id: string } | null;
   rescueNotes?: {
     _id: string;
     text: string;
@@ -91,6 +123,7 @@ export interface ApiReport {
   }[];
   history?: ApiHistoryEntry[];
 }
+
 
 export interface ApiNotification {
   _id: string;
@@ -272,8 +305,99 @@ export function adaptReport(r: ApiReport): RescueReport {
       at: n.at,
       text: n.text,
     })),
+    evidence: adaptEvidence(r.rescueEvidence),
+    duplicateOfId: r.duplicateOf ? idOf(r.duplicateOf) : undefined,
   };
 }
+
+const nameOf = (value: unknown): string | undefined =>
+  isPopulated(value) ? value.name : undefined;
+
+export function adaptEvidence(e?: ApiRescueEvidence | null): RescueEvidence {
+  const coords = e?.completionLocation?.coordinates;
+  return {
+    status: e?.verificationStatus ?? "NONE",
+    photos: (e?.photos ?? []).map((p) => p.url),
+    notes: e?.notes ?? "",
+    animalCondition: e?.animalCondition ?? "",
+    treatmentNotes: e?.treatmentNotes ?? "",
+    completionCoords:
+      coords && coords.length === 2 ? { lat: coords[1] as number, lng: coords[0] as number } : undefined,
+    submittedByName: nameOf(e?.submittedBy),
+    submittedAt: e?.submittedAt,
+    submissionCount: e?.submissionCount ?? 0,
+    verifiedByName: nameOf(e?.verifiedBy),
+    verifiedAt: e?.verifiedAt,
+    verificationNotes: e?.verificationNotes ?? "",
+    rejectionReason: e?.rejectionReason ?? "",
+    events: (e?.events ?? []).map((ev) => ({
+      action: ev.action,
+      byName: ev.byName,
+      byRole: ev.byRole,
+      notes: ev.notes,
+      photos: (ev.photos ?? []).map((p) => p.url),
+      at: ev.at,
+    })),
+  };
+}
+
+/** Duplicate-detection candidates returned by the Phase 3 endpoints. */
+export interface ApiDuplicateMatch {
+  id: string;
+  reportId: string;
+  animalType: string;
+  animalCount: number;
+  condition: string;
+  emergencyLevel: Emergency;
+  status: RescueStatus;
+  description: string;
+  address: string;
+  area?: string;
+  city?: string;
+  images?: { url: string }[];
+  distanceMeters: number;
+  minutesAgo: number;
+  createdAt: string;
+  score: number;
+  confidence: DuplicateConfidence;
+  reasons: string[];
+}
+
+export interface ApiDuplicateResult {
+  hasDuplicates: boolean;
+  radiusMeters: number;
+  windowHours: number;
+  matches: ApiDuplicateMatch[];
+}
+
+export function adaptDuplicateResult(r: ApiDuplicateResult): DuplicateCheckResult {
+  return {
+    hasDuplicates: Boolean(r?.hasDuplicates),
+    radiusMeters: r?.radiusMeters ?? 0,
+    windowHours: r?.windowHours ?? 0,
+    matches: (r?.matches ?? []).map((m) => ({
+      id: m.id,
+      reportId: m.reportId,
+      animal: ANIMAL_TO_UI[m.animalType] ?? formatAnimalType(m.animalType),
+      count: m.animalCount ?? 1,
+      condition: CONDITION_TO_UI[m.condition] ?? "Other",
+      emergency: m.emergencyLevel,
+      status: m.status,
+      description: m.description,
+      address: m.address,
+      area: m.area ?? "",
+      city: m.city ?? "",
+      images: (m.images ?? []).map((i) => i.url),
+      distanceMeters: m.distanceMeters,
+      minutesAgo: m.minutesAgo,
+      createdAt: m.createdAt,
+      score: m.score,
+      confidence: m.confidence,
+      reasons: m.reasons ?? [],
+    })),
+  };
+}
+
 
 const NOTIFICATION_KIND: Record<string, NotificationKind> = {
   NEW_REPORT: "rescue",

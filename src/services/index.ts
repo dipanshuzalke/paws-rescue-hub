@@ -72,6 +72,8 @@ export { authService } from "./authService";
 export { userService } from "./userService";
 export { reportService } from "./reportService";
 export { rescueService } from "./rescueService";
+export { duplicateService } from "./duplicateService";
+export { evidenceService } from "./evidenceService";
 export { ngoService } from "./ngoService";
 export { adminService } from "./adminService";
 export { notificationService } from "./notificationService";
