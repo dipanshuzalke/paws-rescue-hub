@@ -92,14 +92,29 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
     if (!authReady) return undefined;
     if (user && user.role === role) return undefined;
     if (apiMode) {
-      if (typeof window !== "undefined" && user === null) {
-        window.location.assign("/login");
+      if (user === null) void navigate({ to: "/login", replace: true });
+      else {
+        const dashboardByRole: Record<Role, string> = {
+          citizen: "/citizen/dashboard",
+          rescuer: "/rescuer/dashboard",
+          ngo: "/ngo/dashboard",
+          admin: "/admin/dashboard",
+        };
+        void navigate({ to: dashboardByRole[user.role], replace: true });
       }
       return undefined;
     }
     void loginAs(role);
     return undefined;
-  }, [user, role, loginAs, apiMode, authReady]);
+  }, [user, role, loginAs, apiMode, authReady, navigate]);
+
+  if (!authReady || !user || user.role !== role) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-background px-4">
+        <p className="text-sm text-muted-foreground">Restoring your session...</p>
+      </div>
+    );
+  }
 
   const roleNotifications = notifications
     .filter((n) => n.role === role || n.role === "all")
