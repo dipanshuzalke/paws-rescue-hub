@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, Phone, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Link2, Loader2, MapPin, Phone, User as UserIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AssignDialog } from "@/components/ngo/assign-dialog";
+import { DuplicateComparisonPanel } from "@/components/ngo/duplicate-comparison-panel";
 import { MapView } from "@/components/maps/map-view";
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/states";
@@ -19,8 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDateTime, timeAgo } from "@/lib/format";
+import { duplicateService } from "@/services/duplicateService";
 import { useApp } from "@/store/app-store";
-import type { RescueStatus } from "@/types";
+import type { DuplicateMatch, RescueStatus } from "@/types";
 
 export const Route = createFileRoute("/ngo/requests/$id")({
   head: ({ params }) => ({
@@ -46,8 +48,28 @@ function NgoRequestDetail() {
   const { reports, updateStatus } = useApp();
   const navigate = useNavigate();
   const [assignOpen, setAssignOpen] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [loadingDuplicates, setLoadingDuplicates] = useState(false);
 
   const report = reports.find((r) => r.id === id);
+
+  useEffect(() => {
+    if (!report) return;
+
+    const loadDuplicates = async () => {
+      setLoadingDuplicates(true);
+      try {
+        const result = await duplicateService.forReport(report.id);
+        setDuplicates(result.matches);
+      } catch {
+        // Fail silently, duplicates are optional
+      } finally {
+        setLoadingDuplicates(false);
+      }
+    };
+
+    loadDuplicates();
+  }, [report]);
 
   if (!report) {
     return (
@@ -87,6 +109,26 @@ function NgoRequestDetail() {
           </>
         }
       />
+
+      {report.duplicateOfId ? (
+        <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+          <Link2 className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Linked as duplicate</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              This case is linked to{" "}
+              <Link
+                to="/ngo/requests/$id"
+                params={{ id: report.duplicateOfId }}
+                className="font-medium text-primary hover:underline"
+              >
+                #{report.duplicateOfId}
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
@@ -141,6 +183,23 @@ function NgoRequestDetail() {
             <SectionHeading title="Status timeline" />
             <StatusTimeline entries={report.timeline} />
           </div>
+
+          {loadingDuplicates ? (
+            <div className="card-surface p-5">
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Loading duplicates..." />
+              </div>
+            </div>
+          ) : duplicates.length > 0 ? (
+            <DuplicateComparisonPanel
+              report={report}
+              matches={duplicates}
+              onDuplicateLinked={() => {
+                setDuplicates([]);
+                navigate({ to: "/ngo/requests" });
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="space-y-6">

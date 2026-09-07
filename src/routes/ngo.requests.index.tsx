@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Link2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AssignDialog } from "@/components/ngo/assign-dialog";
@@ -264,7 +264,15 @@ function NgoRequests() {
                     >
                       #{r.id} · {r.title}
                     </Link>
-                    <p className="truncate text-xs text-muted-foreground">{r.reporterName}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-xs text-muted-foreground">{r.reporterName}</p>
+                      {r.duplicateOfId ? (
+                        <span className="inline-flex items-center gap-0.5 shrink-0 text-xs text-primary">
+                          <Link2 className="h-3 w-3" aria-hidden="true" />
+                          dup
+                        </span>
+                      ) : null}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <PriorityBadge level={r.emergency} />

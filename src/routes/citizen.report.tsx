@@ -19,6 +19,7 @@ import {
   EMERGENCY_OPTIONS,
   WizardStepper,
 } from "@/components/citizen/report-wizard-steps";
+import { DuplicateWarningDialog } from "@/components/citizen/duplicate-warning-dialog";
 import { MapView } from "@/components/maps/map-view";
 import { PriorityBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { duplicateService } from "@/services/duplicateService";
 import { useApp } from "@/store/app-store";
-import type { AnimalType, Condition, Emergency } from "@/types";
+import type { AnimalType, Condition, Emergency, DuplicateCheckResult } from "@/types";
 
 export const Route = createFileRoute("/citizen/report")({
   head: () => ({
@@ -73,6 +75,11 @@ function CitizenReport() {
   const [contactPhone, setContactPhone] = useState("");
   const [dragOver, setDragOver] = useState(false);
 
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
+  const [duplicateResult, setDuplicateResult] = useState<DuplicateCheckResult | null>(null);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  const [duplicateSawAndAcknowledged, setDuplicateSawAndAcknowledged] = useState(false);
+
   const errors: Partial<Record<number, string>> = {};
   if (step === 0 && (!animal || !condition || !emergency)) {
     errors[0] = "Select the animal type, condition and emergency level to continue.";
@@ -84,6 +91,48 @@ function CitizenReport() {
   }
 
   const canProceed = step === 0 ? !errors[0] : step === 1 ? !errors[1] : true;
+
+  const checkForDuplicates = async () => {
+    if (step !== 2 || !animal || !condition || !coords) return;
+
+    const animalType = animal === "Other" ? customAnimal.trim() : animal;
+    if (!animalType) return;
+
+    setCheckingDuplicates(true);
+    try {
+      const result = await duplicateService.check({
+        animal: animalType,
+        condition,
+        coords,
+      });
+
+      if (result.hasDuplicates && result.matches.length > 0) {
+        setDuplicateResult(result);
+        setDuplicateWarningOpen(true);
+        return;
+      }
+
+      // No duplicates, proceed to review
+      setDuplicateSawAndAcknowledged(true);
+      setStep(3);
+    } catch (err) {
+      // On error, allow user to proceed (fail-open)
+      setDuplicateSawAndAcknowledged(true);
+      setStep(3);
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  };
+
+  const handleDuplicateContinue = () => {
+    setDuplicateSawAndAcknowledged(true);
+    setDuplicateWarningOpen(false);
+    setStep(3);
+  };
+
+  const handleDuplicateCancel = () => {
+    setDuplicateWarningOpen(false);
+  };
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
@@ -171,6 +220,7 @@ function CitizenReport() {
         images: images.length ? images.map((i) => i.url) : [],
         files: images.map((i) => i.file),
         coords,
+        duplicateWarningShown: duplicateSawAndAcknowledged,
       });
       toast.success(`Report #${report.id} submitted successfully`);
       setSubmitted(report.id);
@@ -571,7 +621,19 @@ function CitizenReport() {
           Back
         </Button>
         {step < STEPS.length - 1 ? (
-          <Button onClick={() => canProceed && setStep((s) => s + 1)} disabled={!canProceed}>
+          <Button
+            onClick={() => {
+              if (step === 2) {
+                void checkForDuplicates();
+              } else if (canProceed) {
+                setStep((s) => s + 1);
+              }
+            }}
+            disabled={!canProceed || checkingDuplicates}
+          >
+            {checkingDuplicates ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />
+            ) : null}
             Next
           </Button>
         ) : (
@@ -581,6 +643,15 @@ function CitizenReport() {
           </Button>
         )}
       </div>
+
+      <DuplicateWarningDialog
+        open={duplicateWarningOpen}
+        onOpenChange={setDuplicateWarningOpen}
+        matches={duplicateResult?.matches ?? []}
+        onContinue={handleDuplicateContinue}
+        onCancel={handleDuplicateCancel}
+        isSubmitting={checkingDuplicates}
+      />
     </div>
   );
 }

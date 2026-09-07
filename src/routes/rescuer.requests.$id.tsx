@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { MapView, type MapMarker } from "@/components/maps/map-view";
 import { useCurrentRescuer } from "@/components/rescuer/use-current-rescuer";
+import { EvidenceSubmissionDialog } from "@/components/rescuer/evidence-submission-dialog";
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/states";
@@ -55,8 +56,18 @@ function RescuerRequestDetail() {
   const { reports, updateStatus, addNote, user } = useApp();
   const rescuer = useCurrentRescuer();
   const report = useMemo(() => reports.find((r) => r.id === id), [reports, id]);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [outcome, setOutcome] = useState("");
+
+  const handleEvidenceSuccess = (updated: typeof report) => {
+    if (updated) {
+      const idx = reports.findIndex((r) => r.id === id);
+      if (idx >= 0) {
+        reports[idx] = updated;
+      }
+    }
+  };
 
   if (!report) {
     return (
@@ -208,7 +219,7 @@ function RescuerRequestDetail() {
                 </Button>
               ) : null}
               {isMine && report.status === "IN_PROGRESS" ? (
-                <Button onClick={() => setCompleteOpen(true)}>Mark rescued</Button>
+                <Button onClick={() => setEvidenceOpen(true)}>Mark rescued</Button>
               ) : null}
               {report.status === "RESCUED" || report.status === "CLOSED" ? (
                 <p className="text-sm text-muted-foreground">
@@ -224,6 +235,15 @@ function RescuerRequestDetail() {
           </section>
         </div>
       </div>
+
+      {report ? (
+        <EvidenceSubmissionDialog
+          open={evidenceOpen}
+          onOpenChange={setEvidenceOpen}
+          report={report}
+          onSuccess={handleEvidenceSuccess}
+        />
+      ) : null}
 
       <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
         <DialogContent>

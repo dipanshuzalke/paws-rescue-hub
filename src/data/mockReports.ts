@@ -31,6 +31,7 @@ export function buildTimeline(
   status: RescueStatus,
   createdAt: string,
   actors: { reporter: string; ngo?: string | undefined; rescuer?: string | undefined },
+  evidence?: { status: string; submittedAt?: string; verifiedAt?: string } | null,
 ): TimelineEntry[] {
   const start = new Date(createdAt).getTime();
   const step = 22 * 60 * 1000;
@@ -52,7 +53,7 @@ export function buildTimeline(
     ];
   }
   const reachedIndex = STATUS_FLOW.indexOf(status);
-  return STATUS_FLOW.map((s, i) => ({
+  const timeline: TimelineEntry[] = STATUS_FLOW.map((s, i) => ({
     status: s,
     label: STATUS_LABELS[s],
     at: i <= reachedIndex ? new Date(start + i * step).toISOString() : null,
@@ -63,6 +64,44 @@ export function buildTimeline(
           ? (actors.ngo ?? "Coordination desk")
           : (actors.rescuer ?? "Rescue team"),
   }));
+
+  // Add evidence verification timeline entries if evidence exists
+  if (evidence && status === "CLOSED") {
+    const evidenceSubmittedTime = evidence.submittedAt
+      ? new Date(evidence.submittedAt).getTime()
+      : start + 5 * step;
+    const evidenceVerifiedTime = evidence.verifiedAt
+      ? new Date(evidence.verifiedAt).getTime()
+      : start + 6 * step;
+
+    // Find the RESCUED entry and insert evidence entries after it
+    const rescuedIndex = timeline.findIndex((t) => t.status === "RESCUED");
+    if (rescuedIndex >= 0) {
+      // Insert evidence submitted entry
+      if (evidence.status === "VERIFIED" || evidence.status === "PENDING") {
+        timeline.splice(rescuedIndex + 1, 0, {
+          status: "RESCUED", // Use RESCUED as base status, but customize display
+          label: "Evidence submitted",
+          at: new Date(evidenceSubmittedTime).toISOString(),
+          by: actors.rescuer ?? "Rescue team",
+          note: "Photos and rescue details submitted for verification",
+        } as unknown as TimelineEntry);
+      }
+
+      // Insert evidence verified entry if verified
+      if (evidence.status === "VERIFIED") {
+        timeline.splice(rescuedIndex + 2, 0, {
+          status: "RESCUED", // Use RESCUED as base status
+          label: "Evidence verified",
+          at: new Date(evidenceVerifiedTime).toISOString(),
+          by: actors.ngo ?? "Verification team",
+          note: "Rescue evidence approved and case closed",
+        } as unknown as TimelineEntry);
+      }
+    }
+  }
+
+  return timeline;
 }
 
 interface Seed {
@@ -551,13 +590,48 @@ const noteSets: Record<string, string[]> = {
   R1019: ["Wing cleaned and splinted. Bird kept under observation for 10 days."],
 };
 
+// Mock evidence data for some closed cases
+const evidenceData: Record<string, any> = {
+  R1019: {
+    status: "VERIFIED",
+    photos: [imageForAnimal("Bird", 8)],
+    notes: "Pigeon successfully rescued and treated. Wing fracture stabilized with splint. Bird released after recovery.",
+    animalCondition: "Wing fracture, conscious, alert",
+    treatmentNotes: "Cleaned wound, applied antiseptic, splinted wing. Pain management provided.",
+    submittedAt: new Date(NOW - 26 * 3600 * 1000 + 5 * 22 * 60 * 1000).toISOString(),
+    verifiedAt: new Date(NOW - 26 * 3600 * 1000 + 6 * 22 * 60 * 1000).toISOString(),
+    submittedByName: "Sanjay Rathod",
+    verifiedByName: "Dr. Priya Verma",
+    submissionCount: 1,
+    verificationNotes: "Evidence thoroughly reviewed and verified. Rescue completed successfully.",
+    rejectionReason: "",
+    events: [],
+  },
+  R1018: {
+    status: "VERIFIED",
+    photos: [imageForAnimal("Dog", 7)],
+    notes: "Dog brought to clinic for treatment of severe mange. Treated with antibiotics and medicated baths. Currently in shelter care.",
+    animalCondition: "Severe mange, open wounds on back, dehydrated",
+    treatmentNotes: "Antibiotics (Amoxicillin), Medicated baths (3 times), Nutritional support, Tetanus injection.",
+    submittedAt: new Date(NOW - 52 * 3600 * 1000 + 5 * 22 * 60 * 1000).toISOString(),
+    verifiedAt: new Date(NOW - 52 * 3600 * 1000 + 6 * 22 * 60 * 1000).toISOString(),
+    submittedByName: "Priya Patil",
+    verifiedByName: "Dr. Amit Sharma",
+    submissionCount: 1,
+    verificationNotes: "Evidence verified. Dog is recovering well in our care.",
+    rejectionReason: "",
+    events: [],
+  },
+};
+
 export const mockReports: RescueReport[] = seeds.map((s, i) => {
   const createdAt = new Date(NOW - s.hoursAgo * 3600 * 1000).toISOString();
+  const evidence = evidenceData[s.id];
   const timeline = buildTimeline(s.status, createdAt, {
     reporter: s.reporter[1],
     ngo: s.ngo?.[1],
     rescuer: s.rescuer?.[1],
-  });
+  }, evidence);
   const last = [...timeline].reverse().find((t) => t.at);
   return {
     id: s.id,
@@ -593,5 +667,21 @@ export const mockReports: RescueReport[] = seeds.map((s, i) => {
       at: new Date(new Date(createdAt).getTime() + (n + 2) * 20 * 60 * 1000).toISOString(),
       text,
     })),
+    evidence: evidence ? {
+      status: evidence.status,
+      photos: [evidence.photos].flat(),
+      notes: evidence.notes,
+      animalCondition: evidence.animalCondition,
+      treatmentNotes: evidence.treatmentNotes,
+      completionCoords: undefined,
+      submittedByName: evidence.submittedByName,
+      submittedAt: evidence.submittedAt,
+      submissionCount: evidence.submissionCount,
+      verifiedByName: evidence.verifiedByName,
+      verifiedAt: evidence.verifiedAt,
+      verificationNotes: evidence.verificationNotes,
+      rejectionReason: evidence.rejectionReason,
+      events: evidence.events,
+    } : undefined,
   };
 });

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, CheckCircle2, Clock, Inbox, Timer, Truck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Inbox, ShieldCheck, Timer, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -25,6 +25,7 @@ import { mockRescuers } from "@/data/mockUsers";
 import { useAsync } from "@/hooks/use-async";
 import { initials, timeAgo } from "@/lib/format";
 import { analyticsService } from "@/services/analyticsService";
+import { evidenceService } from "@/services/evidenceService";
 import { ngoService } from "@/services/ngoService";
 import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
@@ -73,6 +74,18 @@ function NgoDashboard() {
         : Promise.resolve(seriesForRange("6m")),
     [apiMode],
   );
+
+  const { data: pendingVerification, loading: pendingLoading } = useAsync(
+    () =>
+      apiMode
+        ? evidenceService.getPending({ limit: 100 }).then((r) => r.items)
+        : Promise.resolve(
+            reports.filter((r) => r.evidence?.status === "PENDING" || r.evidence?.status === "REJECTED"),
+          ),
+    [apiMode, reports],
+  );
+
+  const pendingCount = pendingVerification?.length ?? 0;
 
   const open = reports.filter((r) => r.status === "REPORTED");
   const assigned = reports.filter((r) => r.status === "ASSIGNED");
@@ -130,12 +143,18 @@ function NgoDashboard() {
       />
 
       {rescuersLoading ? (
-        <StatSkeletonRow count={5} />
+        <StatSkeletonRow count={6} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           <StatCard label="Open requests" value={open.length} icon={Inbox} tone="info" />
           <StatCard label="Assigned" value={assigned.length} icon={CheckCircle2} tone="primary" />
           <StatCard label="In progress" value={inProgress.length} icon={Truck} tone="warning" />
+          <StatCard
+            label="Pending verification"
+            value={pendingLoading ? "…" : pendingCount}
+            icon={ShieldCheck}
+            tone={pendingCount > 0 ? "warning" : "neutral"}
+          />
           <StatCard
             label="Rescued this month"
             value={rescuedThisMonth.length}
@@ -192,24 +211,51 @@ function NgoDashboard() {
         </div>
 
         <div className="card-surface p-5">
-          <SectionHeading title="Team availability" description="Rescuers in your network." />
-          <ul className="space-y-3">
-            {rescuers.slice(0, 6).map((r) => (
-              <li key={r.id} className="flex items-center gap-3">
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarFallback>{initials(r.name)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {r.activeCases} active · {r.distanceKm} km
-                  </p>
-                </div>
-                <AvailabilityBadge value={r.availability} />
-              </li>
-            ))}
-          </ul>
+          <SectionHeading
+            title="Evidence verification"
+            description="Rescue evidence awaiting your review."
+          />
+          {pendingLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : pendingCount > 0 ? (
+            <div className="space-y-3">
+              <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
+              <p className="text-sm text-muted-foreground">
+                case{pendingCount !== 1 ? "s" : ""} need verification
+              </p>
+              <Button asChild size="sm" className="w-full">
+                <Link to="/ngo/pending-verification">Review evidence</Link>
+              </Button>
+            </div>
+          ) : (
+            <EmptyState
+              title="All caught up"
+              description="No rescue evidence is waiting for review."
+              icon={ShieldCheck}
+              className="py-8"
+            />
+          )}
         </div>
+      </div>
+
+      <div className="card-surface p-5">
+        <SectionHeading title="Team availability" description="Rescuers in your network." />
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {rescuers.slice(0, 6).map((r) => (
+            <li key={r.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarFallback>{initials(r.name)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {r.activeCases} active · {r.distanceKm} km
+                </p>
+              </div>
+              <AvailabilityBadge value={r.availability} />
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">

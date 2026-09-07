@@ -47,6 +47,7 @@ import { Route as NgoAssignmentsRouteImport } from './routes/ngo.assignments'
 import { Route as NgoDashboardRouteImport } from './routes/ngo.dashboard'
 import { Route as NgoHistoryRouteImport } from './routes/ngo.history'
 import { Route as NgoNotificationsRouteImport } from './routes/ngo.notifications'
+import { Route as NgoPendingVerificationRouteImport } from './routes/ngo.pending-verification'
 import { Route as NgoProfileRouteImport } from './routes/ngo.profile'
 import { Route as NgoRescuersRouteImport } from './routes/ngo.rescuers'
 import { Route as NgoSettingsRouteImport } from './routes/ngo.settings'
@@ -63,6 +64,7 @@ import { Route as AdminReportsIndexRouteImport } from './routes/admin.reports.in
 import { Route as AdminReportsIdRouteImport } from './routes/admin.reports.$id'
 import { Route as CitizenReportsIndexRouteImport } from './routes/citizen.reports.index'
 import { Route as CitizenReportsIdRouteImport } from './routes/citizen.reports.$id'
+import { Route as NgoEvidenceReviewIdRouteImport } from './routes/ngo.evidence-review.$id'
 import { Route as NgoRequestsIndexRouteImport } from './routes/ngo.requests.index'
 import { Route as NgoRequestsIdRouteImport } from './routes/ngo.requests.$id'
 import { Route as RescuerRequestsIndexRouteImport } from './routes/rescuer.requests.index'
@@ -258,6 +260,11 @@ const NgoNotificationsRoute = NgoNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => NgoRoute,
 } as any)
+const NgoPendingVerificationRoute = NgoPendingVerificationRouteImport.update({
+  id: '/pending-verification',
+  path: '/pending-verification',
+  getParentRoute: () => NgoRoute,
+} as any)
 const NgoProfileRoute = NgoProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -338,6 +345,11 @@ const CitizenReportsIdRoute = CitizenReportsIdRouteImport.update({
   path: '/reports/$id',
   getParentRoute: () => CitizenRoute,
 } as any)
+const NgoEvidenceReviewIdRoute = NgoEvidenceReviewIdRouteImport.update({
+  id: '/evidence-review/$id',
+  path: '/evidence-review/$id',
+  getParentRoute: () => NgoRoute,
+} as any)
 const NgoRequestsIndexRoute = NgoRequestsIndexRouteImport.update({
   id: '/requests/',
   path: '/requests/',
@@ -398,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/ngo/dashboard': typeof NgoDashboardRoute
   '/ngo/history': typeof NgoHistoryRoute
   '/ngo/notifications': typeof NgoNotificationsRoute
+  '/ngo/pending-verification': typeof NgoPendingVerificationRoute
   '/ngo/profile': typeof NgoProfileRoute
   '/ngo/rescuers': typeof NgoRescuersRoute
   '/ngo/settings': typeof NgoSettingsRoute
@@ -412,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/rescue-cases/': typeof RescueCasesIndexRoute
   '/admin/reports/$id': typeof AdminReportsIdRoute
   '/citizen/reports/$id': typeof CitizenReportsIdRoute
+  '/ngo/evidence-review/$id': typeof NgoEvidenceReviewIdRoute
   '/ngo/requests/$id': typeof NgoRequestsIdRoute
   '/rescuer/requests/$id': typeof RescuerRequestsIdRoute
   '/admin/reports/': typeof AdminReportsIndexRoute
@@ -458,6 +472,7 @@ export interface FileRoutesByTo {
   '/ngo/dashboard': typeof NgoDashboardRoute
   '/ngo/history': typeof NgoHistoryRoute
   '/ngo/notifications': typeof NgoNotificationsRoute
+  '/ngo/pending-verification': typeof NgoPendingVerificationRoute
   '/ngo/profile': typeof NgoProfileRoute
   '/ngo/rescuers': typeof NgoRescuersRoute
   '/ngo/settings': typeof NgoSettingsRoute
@@ -472,6 +487,7 @@ export interface FileRoutesByTo {
   '/rescue-cases': typeof RescueCasesIndexRoute
   '/admin/reports/$id': typeof AdminReportsIdRoute
   '/citizen/reports/$id': typeof CitizenReportsIdRoute
+  '/ngo/evidence-review/$id': typeof NgoEvidenceReviewIdRoute
   '/ngo/requests/$id': typeof NgoRequestsIdRoute
   '/rescuer/requests/$id': typeof RescuerRequestsIdRoute
   '/admin/reports': typeof AdminReportsIndexRoute
@@ -519,6 +535,7 @@ export interface FileRoutesById {
   '/ngo/dashboard': typeof NgoDashboardRoute
   '/ngo/history': typeof NgoHistoryRoute
   '/ngo/notifications': typeof NgoNotificationsRoute
+  '/ngo/pending-verification': typeof NgoPendingVerificationRoute
   '/ngo/profile': typeof NgoProfileRoute
   '/ngo/rescuers': typeof NgoRescuersRoute
   '/ngo/settings': typeof NgoSettingsRoute
@@ -533,6 +550,7 @@ export interface FileRoutesById {
   '/rescue-cases/': typeof RescueCasesIndexRoute
   '/admin/reports/$id': typeof AdminReportsIdRoute
   '/citizen/reports/$id': typeof CitizenReportsIdRoute
+  '/ngo/evidence-review/$id': typeof NgoEvidenceReviewIdRoute
   '/ngo/requests/$id': typeof NgoRequestsIdRoute
   '/rescuer/requests/$id': typeof RescuerRequestsIdRoute
   '/admin/reports/': typeof AdminReportsIndexRoute
@@ -581,6 +599,7 @@ export interface FileRouteTypes {
     | '/ngo/dashboard'
     | '/ngo/history'
     | '/ngo/notifications'
+    | '/ngo/pending-verification'
     | '/ngo/profile'
     | '/ngo/rescuers'
     | '/ngo/settings'
@@ -595,6 +614,7 @@ export interface FileRouteTypes {
     | '/rescue-cases/'
     | '/admin/reports/$id'
     | '/citizen/reports/$id'
+    | '/ngo/evidence-review/$id'
     | '/ngo/requests/$id'
     | '/rescuer/requests/$id'
     | '/admin/reports/'
@@ -641,6 +661,7 @@ export interface FileRouteTypes {
     | '/ngo/dashboard'
     | '/ngo/history'
     | '/ngo/notifications'
+    | '/ngo/pending-verification'
     | '/ngo/profile'
     | '/ngo/rescuers'
     | '/ngo/settings'
@@ -655,6 +676,7 @@ export interface FileRouteTypes {
     | '/rescue-cases'
     | '/admin/reports/$id'
     | '/citizen/reports/$id'
+    | '/ngo/evidence-review/$id'
     | '/ngo/requests/$id'
     | '/rescuer/requests/$id'
     | '/admin/reports'
@@ -701,6 +723,7 @@ export interface FileRouteTypes {
     | '/ngo/dashboard'
     | '/ngo/history'
     | '/ngo/notifications'
+    | '/ngo/pending-verification'
     | '/ngo/profile'
     | '/ngo/rescuers'
     | '/ngo/settings'
@@ -715,6 +738,7 @@ export interface FileRouteTypes {
     | '/rescue-cases/'
     | '/admin/reports/$id'
     | '/citizen/reports/$id'
+    | '/ngo/evidence-review/$id'
     | '/ngo/requests/$id'
     | '/rescuer/requests/$id'
     | '/admin/reports/'
@@ -1010,6 +1034,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NgoNotificationsRouteImport
       parentRoute: typeof NgoRoute
     }
+    '/ngo/pending-verification': {
+      id: '/ngo/pending-verification'
+      path: '/pending-verification'
+      fullPath: '/ngo/pending-verification'
+      preLoaderRoute: typeof NgoPendingVerificationRouteImport
+      parentRoute: typeof NgoRoute
+    }
     '/ngo/profile': {
       id: '/ngo/profile'
       path: '/profile'
@@ -1122,6 +1153,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CitizenReportsIdRouteImport
       parentRoute: typeof CitizenRoute
     }
+    '/ngo/evidence-review/$id': {
+      id: '/ngo/evidence-review/$id'
+      path: '/evidence-review/$id'
+      fullPath: '/ngo/evidence-review/$id'
+      preLoaderRoute: typeof NgoEvidenceReviewIdRouteImport
+      parentRoute: typeof NgoRoute
+    }
     '/ngo/requests/': {
       id: '/ngo/requests/'
       path: '/requests'
@@ -1221,9 +1259,11 @@ interface NgoRouteChildren {
   NgoDashboardRoute: typeof NgoDashboardRoute
   NgoHistoryRoute: typeof NgoHistoryRoute
   NgoNotificationsRoute: typeof NgoNotificationsRoute
+  NgoPendingVerificationRoute: typeof NgoPendingVerificationRoute
   NgoProfileRoute: typeof NgoProfileRoute
   NgoRescuersRoute: typeof NgoRescuersRoute
   NgoSettingsRoute: typeof NgoSettingsRoute
+  NgoEvidenceReviewIdRoute: typeof NgoEvidenceReviewIdRoute
   NgoRequestsIdRoute: typeof NgoRequestsIdRoute
   NgoRequestsIndexRoute: typeof NgoRequestsIndexRoute
 }
@@ -1235,9 +1275,11 @@ const NgoRouteChildren: NgoRouteChildren = {
   NgoDashboardRoute: NgoDashboardRoute,
   NgoHistoryRoute: NgoHistoryRoute,
   NgoNotificationsRoute: NgoNotificationsRoute,
+  NgoPendingVerificationRoute: NgoPendingVerificationRoute,
   NgoProfileRoute: NgoProfileRoute,
   NgoRescuersRoute: NgoRescuersRoute,
   NgoSettingsRoute: NgoSettingsRoute,
+  NgoEvidenceReviewIdRoute: NgoEvidenceReviewIdRoute,
   NgoRequestsIdRoute: NgoRequestsIdRoute,
   NgoRequestsIndexRoute: NgoRequestsIndexRoute,
 }

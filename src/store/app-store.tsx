@@ -29,6 +29,8 @@ interface NewReportInput {
   images: string[];
   files?: File[];
   coords: { lat: number; lng: number };
+  /** Phase 3 — records that the citizen saw and dismissed a duplicate warning. */
+  duplicateWarningShown?: boolean;
 }
 
 interface AppState {
@@ -268,6 +270,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           area: input.area,
           coords: input.coords,
           files: input.files ?? [],
+          ...(input.duplicateWarningShown !== undefined
+            ? { duplicateWarningShown: input.duplicateWarningShown }
+            : {}),
         });
         setReports((prev) => [created, ...prev]);
         return created;
