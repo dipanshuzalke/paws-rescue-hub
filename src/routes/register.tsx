@@ -36,6 +36,12 @@ export const Route = createFileRoute("/register")({
 
 type SignupRole = Extract<Role, "citizen" | "rescuer" | "ngo">;
 
+const roleHome: Record<SignupRole, string> = {
+  citizen: "/citizen/dashboard",
+  rescuer: "/rescuer/dashboard",
+  ngo: "/ngo/dashboard",
+};
+
 const roleCards: { role: SignupRole; icon: LucideIcon; title: string; body: string }[] = [
   {
     role: "citizen",
@@ -119,7 +125,7 @@ function Register() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await signUp({
+      const user = await signUp({
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
@@ -135,10 +141,10 @@ function Register() {
       toast.success("Account created", {
         description:
           role === "ngo"
-            ? "We'll verify your organisation and email you once approved. Please sign in below."
-            : "Your account has been created. Please sign in to continue.",
+            ? "Your organization profile is pending admin verification."
+            : "You are now signed in.",
       });
-      void navigate({ to: "/login" });
+      void navigate({ to: roleHome[user.role as SignupRole] });
     } catch (err) {
       setErrors({ email: apiErrorMessage(err) });
     } finally {
