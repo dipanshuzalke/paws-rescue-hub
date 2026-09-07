@@ -18,7 +18,11 @@ export function setAuthCookie(res, token) {
 }
 
 export function clearAuthCookie(res) {
-  res.clearCookie(env.cookieName, { path: "/" });
+  res.clearCookie(env.cookieName, {
+    path: "/",
+    secure: env.isProd,
+    sameSite: env.isProd ? "none" : "lax",
+  });
 }
 
 function extractToken(req) {
