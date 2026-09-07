@@ -3,6 +3,10 @@ import type {
   AnimalType,
   AppNotification,
   Condition,
+  DuplicateCheckResult,
+  DuplicateConfidence,
+  RescueEvidence,
+
   Emergency,
   NGO,
   NotificationKind,
