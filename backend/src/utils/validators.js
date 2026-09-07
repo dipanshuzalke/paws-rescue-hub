@@ -30,6 +30,16 @@ export const updateProfileSchema = z
   })
   .partial();
 
+export const updateOrganizationProfileSchema = z.object({
+  name: z.string().trim().min(1).max(160).optional(),
+  registrationNumber: z.string().trim().max(120).optional(),
+  description: z.string().trim().max(2000).optional(),
+  email: z.string().trim().email().optional(),
+  phone: z.string().trim().min(1).max(24).optional(),
+  contactPerson: z.string().trim().max(120).optional(),
+  areasServed: z.string().trim().max(500).optional(),
+});
+
 const numberFromAny = (schema) =>
   z.preprocess((v) => (typeof v === "string" ? Number(v) : v), schema);
 
@@ -122,6 +132,7 @@ export const evidenceSubmitSchema = z.object({
 
 export const evidenceVerifySchema = z.object({
   notes: z.string().trim().max(2000).optional().default(""),
+  rescuerRating: numberFromAny(z.number().int().min(1).max(5)).optional(),
   close: z.preprocess((v) => (v === undefined ? true : v === true || v === "true"), z.boolean()).optional(),
 });
 

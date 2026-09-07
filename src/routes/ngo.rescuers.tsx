@@ -137,7 +137,7 @@ function NgoRescuers() {
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Star className="h-3.5 w-3.5 fill-caution text-caution" aria-hidden="true" />
-                  {r.rating.toFixed(1)}
+                  {r.rating > 0 ? r.rating.toFixed(1) : "Not rated"}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Timer className="h-3.5 w-3.5" aria-hidden="true" />

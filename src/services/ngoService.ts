@@ -1,6 +1,6 @@
 import { api, unwrap, unwrapList } from "@/lib/api-client";
-import { adaptReport, adaptRescuer } from "@/lib/api-adapters";
-import type { ApiReport, ApiUser } from "@/lib/api-adapters";
+import { adaptOrganization, adaptReport, adaptRescuer } from "@/lib/api-adapters";
+import type { ApiOrganization, ApiReport, ApiUser } from "@/lib/api-adapters";
 import type { ReportQuery } from "./reportService";
 
 export interface NgoStats {
@@ -13,6 +13,11 @@ export interface NgoStats {
 }
 
 export const ngoService = {
+  getProfile: async () => adaptOrganization(await unwrap<ApiOrganization>(api.get("/ngo/profile"))),
+
+  updateProfile: async (patch: Partial<ApiOrganization>) =>
+    adaptOrganization(await unwrap<ApiOrganization>(api.put("/ngo/profile", patch))),
+
   getStats: () => unwrap<NgoStats>(api.get("/ngo/stats")),
 
   async getReports(query?: ReportQuery) {

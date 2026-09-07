@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ngoById } from "@/data/mockNGOs";
 import { initials } from "@/lib/format";
+import { ngoService } from "@/services/ngoService";
 import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/ngo/profile")({
@@ -30,27 +31,70 @@ export const Route = createFileRoute("/ngo/profile")({
 });
 
 function NgoProfile() {
-  const { user } = useApp();
+  const { user, apiMode } = useApp();
   const ngo = ngoById(user?.organization ? undefined : undefined) ?? ngoById("NGO-01");
 
   const [form, setForm] = useState({
     name: user?.organization ?? ngo?.name ?? "",
-    regNumber: "REG-2023-00114",
+    regNumber: ngo?.registrationNumber ?? "REG-2023-00114",
     contactPerson: user?.name ?? ngo?.contactPerson ?? "",
     email: user?.email ?? ngo?.email ?? "",
     phone: user?.phone ?? ngo?.phone ?? "",
-    areasServed: "Dharampeth, Sadar, Sitabuldi, Manish Nagar",
+    areasServed: ngo?.areasServed ?? "Dharampeth, Sadar, Sitabuldi, Manish Nagar",
     description:
       ngo?.about ??
       "Nagpur-based animal welfare organisation coordinating field rescues and post-rescue care.",
   });
 
+  useEffect(() => {
+    if (!apiMode) return;
+    void ngoService
+      .getProfile()
+      .then((profile) => {
+        setForm({
+          name: profile.name,
+          regNumber: profile.registrationNumber ?? "",
+          contactPerson: profile.contactPerson,
+          email: profile.email,
+          phone: profile.phone,
+          areasServed: profile.areasServed ?? "",
+          description: profile.about,
+        });
+      })
+      .catch(() => toast.error("Could not load your organization profile."));
+  }, [apiMode]);
+
   const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Organization profile updated successfully.");
+    try {
+      if (apiMode) {
+        const profile = await ngoService.updateProfile({
+          name: form.name,
+          registrationNumber: form.regNumber,
+          contactPerson: form.contactPerson,
+          email: form.email,
+          phone: form.phone,
+          areasServed: form.areasServed,
+          description: form.description,
+        });
+        setForm((current) => ({
+          ...current,
+          name: profile.name,
+          regNumber: profile.registrationNumber ?? "",
+          contactPerson: profile.contactPerson,
+          email: profile.email,
+          phone: profile.phone,
+          areasServed: profile.areasServed ?? "",
+          description: profile.about,
+        }));
+      }
+      toast.success("Organization profile updated successfully.");
+    } catch {
+      toast.error("Could not update your organization profile. Please try again.");
+    }
   };
 
   return (

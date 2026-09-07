@@ -157,7 +157,7 @@ function AdminRescuers() {
       cell: (r) => (
         <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground">
           <Star className="h-3.5 w-3.5 fill-caution text-caution" aria-hidden="true" />
-          {r.rating.toFixed(1)}
+          {r.rating > 0 ? r.rating.toFixed(1) : "Not rated"}
         </span>
       ),
     },

@@ -45,6 +45,8 @@ export interface ApiUser {
   isOnline?: boolean;
   activeCases?: number;
   completedCases?: number;
+  reportCount?: number;
+  ratedResponses?: number;
   avgResponseMins?: number;
   rating?: number;
   createdAt?: string;
@@ -81,6 +83,8 @@ export interface ApiRescueEvidence {
   verifiedBy?: ApiUser | string | null;
   verifiedAt?: string;
   verificationNotes?: string;
+  rescuerRating?: number;
+  rescuerRatedAt?: string;
   rejectionReason?: string;
   events?: ApiEvidenceEvent[];
 }
@@ -140,11 +144,13 @@ export interface ApiNotification {
 export interface ApiOrganization {
   _id: string;
   name: string;
+  registrationNumber?: string;
   description?: string;
   email: string;
   phone: string;
   address?: string;
   contactPerson?: string;
+  areasServed?: string;
   website?: string;
   verificationStatus: "PENDING" | "VERIFIED" | "REJECTED";
   isActive?: boolean;
@@ -212,7 +218,7 @@ export function adaptUser(u: ApiUser): User {
     location: u.location?.address ?? "Nagpur",
     joinedAt: (u.createdAt ?? new Date().toISOString()).slice(0, 10),
     avatar: u.profileImage?.url,
-    cases: (u.completedCases ?? 0) + (u.activeCases ?? 0),
+    cases: u.reportCount ?? (u.completedCases ?? 0) + (u.activeCases ?? 0),
     organization:
       typeof u.organization === "object" && u.organization ? u.organization.name : undefined,
     availability:
@@ -233,7 +239,7 @@ export function adaptRescuer(u: ApiUser): Rescuer {
     activeCases: u.activeCases ?? 0,
     completedCases: u.completedCases ?? 0,
     avgResponseMins: u.avgResponseMins ?? 0,
-    rating: u.rating ?? 5,
+    rating: (u.ratedResponses ?? 0) > 0 ? (u.rating ?? 0) : 0,
     ngoId: idOf(u.organization),
     coords: { lat: coords?.[1] ?? 21.1458, lng: coords?.[0] ?? 79.0882 },
     isOnline: u.isOnline ?? false,
@@ -301,6 +307,7 @@ export function adaptReport(r: ApiReport): RescueReport {
     ngoName: org?.name,
     createdAt: r.reportedAt ?? r.createdAt,
     updatedAt: r.updatedAt,
+    rescuedAt: r.rescuedAt,
     closedAt: r.closedAt,
     durationMins: r.totalDurationMins ?? undefined,
     timeline: adaptTimeline(r),
@@ -335,6 +342,8 @@ export function adaptEvidence(e?: ApiRescueEvidence | null): RescueEvidence {
     verifiedByName: nameOf(e?.verifiedBy),
     verifiedAt: e?.verifiedAt,
     verificationNotes: e?.verificationNotes ?? "",
+    rescuerRating: e?.rescuerRating,
+    rescuerRatedAt: e?.rescuerRatedAt,
     rejectionReason: e?.rejectionReason ?? "",
     events: (e?.events ?? []).map((ev) => ({
       action: ev.action,
@@ -433,6 +442,7 @@ export function adaptOrganization(o: ApiOrganization): NGO {
   return {
     id: o._id,
     name: o.name,
+    registrationNumber: o.registrationNumber,
     location: o.address ?? "Nagpur",
     contactPerson: o.contactPerson ?? "—",
     email: o.email,
@@ -443,6 +453,7 @@ export function adaptOrganization(o: ApiOrganization): NGO {
     status: o.isActive === false ? "INACTIVE" : "ACTIVE",
     joinedAt: (o.createdAt ?? new Date().toISOString()).slice(0, 10),
     about: o.description ?? "",
+    areasServed: o.areasServed,
     isOnline: o.isOnline ?? false,
   };
 }

@@ -43,10 +43,14 @@ export const evidenceService = {
   },
 
   /** Approves the evidence; by default this also closes the case. */
-  async verify(reportId: string, notes?: string, close = true): Promise<RescueReport> {
+  async verify(reportId: string, notes?: string, close = true, rescuerRating?: number): Promise<RescueReport> {
     return adaptReport(
       await unwrap<ApiReport>(
-        api.post(`/rescues/${reportId}/evidence/verify`, { notes: notes ?? "", close }),
+        api.post(`/rescues/${reportId}/evidence/verify`, {
+          notes: notes ?? "",
+          close,
+          rescuerRating,
+        }),
       ),
     );
   },

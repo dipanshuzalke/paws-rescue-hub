@@ -71,6 +71,7 @@ export const approveEvidence = asyncHandler(async (req, res) => {
     report,
     user: req.user,
     notes: req.body?.notes || "",
+    rescuerRating: req.body?.rescuerRating,
     close: req.body?.close !== false,
   });
   return ok(res, updated, "Rescue evidence verified");

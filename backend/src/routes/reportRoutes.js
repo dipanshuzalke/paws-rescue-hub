@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateUser } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+import { authorizeRoles, requireVerifiedNgo } from "../middleware/roleMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { uploadImages } from "../middleware/uploadMiddleware.js";
 import {
@@ -33,7 +33,13 @@ const router = Router();
 
 router.use(authenticateUser);
 
-router.get("/", authorizeRoles("NGO", "ADMIN", "RESCUER"), validate(reportQuerySchema, "query"), listReports);
+router.get(
+  "/",
+  authorizeRoles("NGO", "ADMIN", "RESCUER"),
+  requireVerifiedNgo,
+  validate(reportQuerySchema, "query"),
+  listReports,
+);
 
 router.post(
   "/",
@@ -48,6 +54,7 @@ router.get("/my-stats", authorizeRoles("CITIZEN"), myStats);
 router.get(
   "/status/:status",
   authorizeRoles("NGO", "ADMIN", "RESCUER"),
+  requireVerifiedNgo,
   validate(reportQuerySchema, "query"),
   reportsByStatus,
 );
@@ -56,24 +63,27 @@ router.get(
 router.post(
   "/check-duplicates",
   authorizeRoles("CITIZEN", "NGO", "ADMIN"),
+  requireVerifiedNgo,
   validate(checkDuplicatesSchema),
   checkDuplicates,
 );
-router.get("/:id/duplicates", authorizeRoles("NGO", "ADMIN"), reportDuplicates);
+router.get("/:id/duplicates", authorizeRoles("NGO", "ADMIN"), requireVerifiedNgo, reportDuplicates);
 router.post(
   "/:id/mark-duplicate",
   authorizeRoles("NGO", "ADMIN"),
+  requireVerifiedNgo,
   validate(markDuplicateSchema),
   markDuplicate,
 );
 router.post(
   "/:id/keep-separate",
   authorizeRoles("NGO", "ADMIN"),
+  requireVerifiedNgo,
   validate(keepSeparateSchema),
   keepSeparate,
 );
 
-router.get("/:id", getReport);
+router.get("/:id", requireVerifiedNgo, getReport);
 router.put("/:id", authorizeRoles("CITIZEN"), validate(updateReportSchema), updateReport);
 router.post("/:id/cancel", cancelReport);
 router.delete("/:id", authorizeRoles("ADMIN"), deleteReport);

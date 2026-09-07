@@ -60,8 +60,10 @@ export interface Rescuer extends User {
 export interface NGO {
   id: string;
   name: string;
+  registrationNumber?: string | undefined;
   location: string;
   contactPerson: string;
+  areasServed?: string | undefined;
   email: string;
   phone: string;
   rescuers: number;
@@ -113,6 +115,7 @@ export interface RescueReport {
   ngoName?: string | undefined;
   createdAt: string;
   updatedAt: string;
+  rescuedAt?: string | undefined;
   closedAt?: string | undefined;
   durationMins?: number | undefined;
   timeline: TimelineEntry[];
@@ -143,6 +146,8 @@ export interface RescueEvidence {
   completionCoords?: GeoPoint | undefined;
   submittedByName?: string | undefined;
   submittedAt?: string | undefined;
+  rescuerRating?: number | undefined;
+  rescuerRatedAt?: string | undefined;
   submissionCount: number;
   verifiedByName?: string | undefined;
   verifiedAt?: string | undefined;

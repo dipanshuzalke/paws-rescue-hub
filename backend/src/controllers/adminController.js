@@ -65,7 +65,17 @@ export const getUsers = asyncHandler(async (req, res) => {
     User.countDocuments(filter),
   ]);
 
-  return list(res, items, buildPagination({ page, limit, total }));
+  const reportCounts = await RescueReport.aggregate([
+    { $match: { reporter: { $in: items.map((user) => user._id) } } },
+    { $group: { _id: "$reporter", count: { $sum: 1 } } },
+  ]);
+  const countsByReporter = new Map(reportCounts.map((row) => [String(row._id), row.count]));
+  const shapedItems = items.map((user) => ({
+    ...user.toJSON(),
+    reportCount: countsByReporter.get(String(user._id)) || 0,
+  }));
+
+  return list(res, shapedItems, buildPagination({ page, limit, total }));
 });
 
 export const getUserById = asyncHandler(async (req, res) => {

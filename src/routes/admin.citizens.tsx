@@ -77,18 +77,22 @@ function AdminCitizens() {
   const activeCount = list.filter((u) => u.status === "ACTIVE" || u.status === "VERIFIED").length;
   const totalReports = list.reduce((sum, u) => sum + (u.cases ?? 0), 0);
 
-  const toggleStatus = () => {
+  const toggleStatus = async () => {
     if (!confirm) return;
     const suspending = confirm.status !== "INACTIVE";
-    setOverrides((prev) =>
-      (prev ?? list).map((u) =>
-        u.id === confirm.id ? { ...u, status: suspending ? "INACTIVE" : "ACTIVE" } : u,
-      ),
-    );
-    toast.success(
-      suspending ? `${confirm.name} has been suspended.` : `${confirm.name} has been reactivated.`,
-    );
-    setConfirm(null);
+    const nextStatus: User["status"] = suspending ? "INACTIVE" : "ACTIVE";
+    try {
+      const updated = apiMode
+        ? await adminService.setUserStatus(confirm.id, nextStatus)
+        : { ...confirm, status: nextStatus };
+      setOverrides((prev) => (prev ?? list).map((u) => (u.id === confirm.id ? updated : u)));
+      toast.success(
+        suspending ? `${confirm.name} has been suspended.` : `${confirm.name} has been reactivated.`,
+      );
+      setConfirm(null);
+    } catch {
+      toast.error(`Could not ${suspending ? "suspend" : "reactivate"} ${confirm.name}. Please try again.`);
+    }
   };
 
   const columns: Column<User>[] = [

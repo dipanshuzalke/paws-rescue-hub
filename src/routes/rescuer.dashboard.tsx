@@ -135,7 +135,13 @@ function RescuerDashboard() {
           tone="info"
           animate={false}
         />
-        <StatCard label="Rating" value={rescuer.rating} icon={Star} tone="neutral" animate={false} />
+        <StatCard
+          label="Rating"
+          value={rescuer.rating > 0 ? rescuer.rating.toFixed(1) : "—"}
+          icon={Star}
+          tone="neutral"
+          animate={false}
+        />
       </div>
 
       {active ? (

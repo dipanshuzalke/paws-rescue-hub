@@ -55,7 +55,13 @@ function RescuerProfile() {
       <PageHeader title="My Profile" description="Your public rescuer profile and details." />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Rating" value={rescuer.rating} icon={Star} tone="neutral" animate={false} />
+        <StatCard
+          label="Rating"
+          value={rescuer.rating > 0 ? rescuer.rating.toFixed(1) : "—"}
+          icon={Star}
+          tone="neutral"
+          animate={false}
+        />
         <StatCard label="Completed" value={rescuer.completedCases} tone="success" />
         <StatCard label="Active" value={rescuer.activeCases} tone="warning" />
         <StatCard label="Avg Response" value={`${rescuer.avgResponseMins}m`} tone="info" animate={false} />

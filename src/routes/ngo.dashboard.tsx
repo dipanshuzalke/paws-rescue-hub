@@ -66,6 +66,14 @@ function NgoDashboard() {
   );
   const rescuers = rescuersData ?? [];
 
+  const { data: overview } = useAsync(
+    () =>
+      apiMode
+        ? analyticsService.getOverview()
+        : Promise.resolve(null),
+    [apiMode],
+  );
+
   useEffect(() => {
     if (!apiMode) return;
     const interval = window.setInterval(retryRescuers, 30_000);
@@ -107,9 +115,10 @@ function NgoDashboard() {
           new Date(r.updatedAt).getFullYear() === now.getFullYear()
         : false,
   );
-  const avgResponse = rescuers.length
+  const rescuerAverage = rescuers.length
     ? Math.round(rescuers.reduce((sum, r) => sum + r.avgResponseMins, 0) / rescuers.length)
     : 0;
+  const avgResponse = overview?.avgResponseMins ?? rescuerAverage;
 
   const urgentQueue = useMemo(
     () =>

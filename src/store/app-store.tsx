@@ -128,9 +128,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ? Promise.all([
                 rescueService.getAvailableRequests({ limit: 100 }),
                 rescueService.getActiveRescues({ limit: 100 }),
-              ]).then(([available, active]) => ({
+                rescueService.getHistory({ limit: 100 }),
+              ]).then(([available, active, history]) => ({
                 items: Array.from(
-                  new Map([...available.items, ...active.items].map((report) => [report.id, report])).values(),
+                  new Map(
+                    [...available.items, ...active.items, ...history.items].map((report) => [
+                      report.id,
+                      report,
+                    ]),
+                  ).values(),
                 ),
                 pagination: available.pagination,
               }))

@@ -1,5 +1,6 @@
 import { ApiError } from "../utils/apiError.js";
 import { RescueHistory } from "../models/RescueHistory.js";
+import { User } from "../models/User.js";
 import { notifyUsers, notifyRole } from "./notificationService.js";
 import { transitionReport, populateReport } from "./rescueService.js";
 import { MIN_EVIDENCE_IMAGES } from "../utils/constants.js";
@@ -108,7 +109,7 @@ export async function submitEvidence({ report, user, photos = [], payload = {} }
 }
 
 /** NGO / Admin approves the submitted evidence and closes the case. */
-export async function verifyEvidence({ report, user, notes = "", close = true }) {
+export async function verifyEvidence({ report, user, notes = "", rescuerRating, close = true }) {
   if (report.rescueEvidence?.verificationStatus !== "PENDING") {
     throw ApiError.conflict("There is no evidence awaiting verification on this rescue");
   }
@@ -118,6 +119,20 @@ export async function verifyEvidence({ report, user, notes = "", close = true })
   report.rescueEvidence.verifiedBy = user._id;
   report.rescueEvidence.verifiedAt = now;
   report.rescueEvidence.verificationNotes = notes;
+  if (rescuerRating !== undefined && report.assignedRescuer) {
+    const rescuer = await User.findById(report.assignedRescuer);
+    if (rescuer) {
+      const previousRatings = rescuer.ratedResponses || 0;
+      rescuer.rating = previousRatings
+        ? ((rescuer.rating || 0) * previousRatings + rescuerRating) / (previousRatings + 1)
+        : rescuerRating;
+      rescuer.ratedResponses = previousRatings + 1;
+      await rescuer.save();
+      report.rescueEvidence.rescuerRating = rescuerRating;
+      report.rescueEvidence.rescuerRatedBy = user._id;
+      report.rescueEvidence.rescuerRatedAt = now;
+    }
+  }
   report.rescueEvidence.events.push({
     action: "RESCUE_EVIDENCE_VERIFIED",
     by: user._id,

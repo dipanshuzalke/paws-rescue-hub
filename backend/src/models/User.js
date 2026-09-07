@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     completedCases: { type: Number, default: 0, min: 0 },
     totalResponseMins: { type: Number, default: 0, min: 0 },
     ratedResponses: { type: Number, default: 0, min: 0 },
-    rating: { type: Number, default: 5, min: 0, max: 5 },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
     status: { type: String, enum: USER_STATUS, default: "ACTIVE", index: true },
     isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },

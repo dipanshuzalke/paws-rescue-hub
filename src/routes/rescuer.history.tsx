@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { seriesForRange } from "@/data/mockAnalytics";
 import { formatDate, formatDuration } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 import type { Emergency } from "@/types";
@@ -70,7 +69,29 @@ function RescuerHistory() {
     [completed, emergency, search],
   );
 
-  const weekly = seriesForRange("7d");
+  const weekly = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - 6 + index);
+      return {
+        date,
+        period: date.toLocaleDateString("en-IN", { weekday: "short" }),
+        rescued: 0,
+      };
+    });
+
+    completed.forEach((report) => {
+      const completedAt = report.closedAt ?? report.rescuedAt ?? report.updatedAt;
+      const date = new Date(completedAt);
+      date.setHours(0, 0, 0, 0);
+      const day = days.find((item) => item.date.getTime() === date.getTime());
+      if (day) day.rescued += 1;
+    });
+
+    return days.map(({ period, rescued }) => ({ period, rescued }));
+  }, [completed]);
   const avgMins = completed.length
     ? Math.round(
         completed.reduce((sum, r) => sum + (r.durationMins ?? 0), 0) / completed.length,

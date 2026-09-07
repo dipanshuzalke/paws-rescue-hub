@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateUser } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+import { authorizeRoles, requireVerifiedNgo } from "../middleware/roleMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { uploadImages } from "../middleware/uploadMiddleware.js";
 import {
@@ -48,6 +48,7 @@ router.get("/my-history", authorizeRoles("CITIZEN"), validate(reportQuerySchema,
 router.get(
   "/pending-verification",
   authorizeRoles("NGO", "ADMIN"),
+  requireVerifiedNgo,
   validate(reportQuerySchema, "query"),
   pendingVerification,
 );
@@ -71,20 +72,22 @@ router.post(
   validate(evidenceSubmitSchema),
   postEvidence,
 );
-router.get("/:reportId/evidence", getEvidence);
+router.get("/:reportId/evidence", requireVerifiedNgo, getEvidence);
 router.post(
   "/:reportId/evidence/verify",
   authorizeRoles("NGO", "ADMIN"),
+  requireVerifiedNgo,
   validate(evidenceVerifySchema),
   approveEvidence,
 );
 router.post(
   "/:reportId/evidence/reject",
   authorizeRoles("NGO", "ADMIN"),
+  requireVerifiedNgo,
   validate(evidenceRejectSchema),
   denyEvidence,
 );
 
-router.get("/:id", authorizeRoles("RESCUER", "NGO", "ADMIN"), getRescueDetail);
+router.get("/:id", authorizeRoles("RESCUER", "NGO", "ADMIN"), requireVerifiedNgo, getRescueDetail);
 
 export default router;

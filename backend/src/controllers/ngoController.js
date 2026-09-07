@@ -1,4 +1,5 @@
 import { User } from "../models/User.js";
+import { Organization } from "../models/Organization.js";
 import { RescueReport } from "../models/RescueReport.js";
 import { RescueAssignment } from "../models/RescueAssignment.js";
 import { RescueHistory } from "../models/RescueHistory.js";
@@ -50,6 +51,22 @@ export const getStats = asyncHandler(async (req, res) => {
     criticalCases,
     rescuers,
   });
+});
+
+export const getProfile = asyncHandler(async (req, res) => {
+  const org = orgScope(req.user, { requireOrganization: true });
+  const profile = await Organization.findById(org);
+  if (!profile) throw ApiError.notFound("Organization not found");
+  return ok(res, profile);
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const org = orgScope(req.user, { requireOrganization: true });
+  const profile = await Organization.findById(org);
+  if (!profile) throw ApiError.notFound("Organization not found");
+  Object.assign(profile, req.body);
+  await profile.save();
+  return ok(res, profile, "Organization profile updated successfully");
 });
 
 export const getReports = asyncHandler(async (req, res) => {

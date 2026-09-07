@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticateUser } from "../middleware/authMiddleware.js";
+import { requireVerifiedNgo } from "../middleware/roleMiddleware.js";
 import {
   getOverview,
   getReportsByAnimal,
@@ -12,6 +13,7 @@ import {
 const router = Router();
 
 router.use(authenticateUser);
+router.use(requireVerifiedNgo);
 
 router.get("/overview", getOverview);
 router.get("/reports-by-animal", getReportsByAnimal);

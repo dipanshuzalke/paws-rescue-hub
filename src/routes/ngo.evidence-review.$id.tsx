@@ -67,6 +67,7 @@ function NgoPendingEvidenceReview() {
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [verifyNotes, setVerifyNotes] = useState("");
+  const [rescuerRating, setRescuerRating] = useState("5");
   const [rejectReason, setRejectReason] = useState("");
   const [processing, setProcessing] = useState(false);
 
@@ -138,7 +139,7 @@ function NgoPendingEvidenceReview() {
   const handleVerify = async () => {
     setProcessing(true);
     try {
-      const updated = await evidenceService.verify(report.id, verifyNotes);
+      await evidenceService.verify(report.id, verifyNotes, true, Number(rescuerRating));
       toast.success("Evidence verified and rescue closed");
       navigate({ to: "/ngo/pending-verification" });
     } catch (err) {
@@ -406,6 +407,19 @@ function NgoPendingEvidenceReview() {
               onChange={(e) => setVerifyNotes(e.target.value)}
               rows={3}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="rescuer-rating">Rate rescuer (1-5)</Label>
+            <select
+              id="rescuer-rating"
+              value={rescuerRating}
+              onChange={(e) => setRescuerRating(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {[5, 4, 3, 2, 1].map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setVerifyOpen(false)} disabled={processing}>

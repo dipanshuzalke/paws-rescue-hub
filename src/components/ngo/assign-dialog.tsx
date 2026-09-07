@@ -89,7 +89,7 @@ export function AssignDialog({
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
                   {r.organization} · {r.distanceKm} km away · {r.activeCases} active ·{" "}
-                  {r.rating}★ · avg {r.avgResponseMins}m
+                  {r.rating > 0 ? `${r.rating.toFixed(1)}★` : "Not rated"} · avg {r.avgResponseMins}m
                 </p>
               </div>
             </button>
