@@ -24,6 +24,7 @@ interface NewReportInput {
   condition: RescueReport["condition"];
   emergency: RescueReport["emergency"];
   description: string;
+  contactPhone: string,
   address: string;
   area: string;
   images: string[];
@@ -266,6 +267,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           condition: input.condition,
           emergency: input.emergency,
           description: input.description,
+          contactPhone: input.contactPhone,
           address: input.address,
           area: input.area,
           coords: input.coords,

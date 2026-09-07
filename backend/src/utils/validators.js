@@ -39,6 +39,7 @@ export const createReportSchema = z.object({
   condition: z.enum(CONDITIONS),
   emergencyLevel: z.enum(EMERGENCY_LEVELS),
   description: z.string().trim().min(10, "Description must be at least 10 characters"),
+  contactPhone: z.string().trim().min(1, "Contact number is required"),
   address: z.string().trim().min(1, "Address is required"),
   area: z.string().trim().optional().default(""),
   city: z.string().trim().optional().default("Nagpur"),

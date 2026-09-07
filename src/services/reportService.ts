@@ -47,6 +47,7 @@ export interface CreateReportInput {
   condition: Condition;
   emergency: Emergency;
   description: string;
+  contactPhone: string,
   address: string;
   area: string;
   city?: string;
@@ -80,6 +81,7 @@ async createReport(input: CreateReportInput): Promise<RescueReport> {
     form.append("emergencyLevel", input.emergency);
     const safeDescription = input.description.trim() || `Need rescue assistance for ${input.animal.toLowerCase()} at ${input.area || input.address}`;
     form.append("description", safeDescription);
+    form.append("contactPhone", input.contactPhone)
     form.append("address", input.address);
     form.append("area", input.area);
     form.append("city", input.city ?? "Nagpur");

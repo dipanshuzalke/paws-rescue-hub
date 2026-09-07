@@ -37,7 +37,7 @@ export const Route = createFileRoute("/citizen/report")({
   component: CitizenReport,
 });
 
-const STEPS = ["Animal details", "Location", "Photos", "Review & submit"];
+const STEPS = ["Animal details", "Location", "Review & submit"];
 
 interface WizardImage {
   id: string;
@@ -75,19 +75,48 @@ function CitizenReport() {
   const [duplicateSawAndAcknowledged, setDuplicateSawAndAcknowledged] = useState(false);
 
   const errors: Partial<Record<number, string>> = {};
-  if (step === 0 && (!animal || !condition || !emergency)) {
-    errors[0] = "Select the animal type, condition and emergency level to continue.";
-  } else if (step === 0 && animal === "Other" && !customAnimal.trim()) {
-    errors[0] = "Specify the animal type to continue.";
+
+  if (step === 0) {
+    if (!animal || !condition || !emergency) {
+      errors[0] = "Select the animal type, condition and emergency level to continue.";
+    } else if (animal === "Other" && !customAnimal.trim()) {
+      errors[0] = "Specify the animal type to continue.";
+    } else if (images.length === 0) {
+      errors[0] = "Please upload at least one photo of the animal.";
+    } else if (!contactPhone.trim()) {
+      errors[0] = "Please provide a contact number.";
+    }
   }
+
   if (step === 1 && (!address.trim() || !area.trim() || !coords)) {
-    errors[1] = "Add an address, area and location to continue.";
+    errors[1] = "Please detect your location and confirm the address and area to continue.";
   }
 
   const canProceed = step === 0 ? !errors[0] : step === 1 ? !errors[1] : true;
 
+  <Button
+    type="button"
+    onClick={() => {
+      if (step === 1) {
+        void checkForDuplicates();
+      } else if (canProceed) {
+        setStep((s) => s + 1);
+      }
+    }}
+    disabled={!canProceed || checkingDuplicates}
+  >
+    {checkingDuplicates ? (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+        Checking reports...
+      </>
+    ) : (
+      "Continue"
+    )}
+  </Button>;
+
   const checkForDuplicates = async () => {
-    if (step !== 2 || !animal || !condition || !coords) return;
+    if (step !== 1 || !animal || !condition || !coords) return;
 
     const animalType = animal === "Other" ? customAnimal.trim() : animal;
     if (!animalType) return;
@@ -108,11 +137,11 @@ function CitizenReport() {
 
       // No duplicates, proceed to review
       setDuplicateSawAndAcknowledged(true);
-      setStep(3);
+      setStep(2);
     } catch (err) {
       // On error, allow user to proceed (fail-open)
       setDuplicateSawAndAcknowledged(true);
-      setStep(3);
+      setStep(2);
     } finally {
       setCheckingDuplicates(false);
     }
@@ -121,7 +150,7 @@ function CitizenReport() {
   const handleDuplicateContinue = () => {
     setDuplicateSawAndAcknowledged(true);
     setDuplicateWarningOpen(false);
-    setStep(3);
+    setStep(2);
   };
 
   const handleDuplicateCancel = () => {
@@ -250,6 +279,7 @@ function CitizenReport() {
         condition,
         emergency,
         description,
+        contactPhone,
         address,
         area,
         images: images.length ? images.map((i) => i.url) : [],
@@ -322,116 +352,236 @@ function CitizenReport() {
       <div className="card-surface p-6">
         {step === 0 ? (
           <div className="space-y-6">
-            <div>
-              <Label className="mb-2 block">Animal type</Label>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                {ANIMAL_OPTIONS.map(({ value, label, icon: Icon }) => (
-                  <button
-                    key={value}
+            <div className="space-y-6">
+              <div className="space-y-6">
+                <Label className="mb-2 block">
+                  Animal type <span className="text-destructive">*</span>
+                </Label>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {ANIMAL_OPTIONS.map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setAnimal(value)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 rounded-xl border p-3 text-sm font-medium transition-colors",
+                        animal === value
+                          ? "border-primary bg-primary-soft text-primary ring-2 ring-primary/30"
+                          : "border-border hover:bg-muted",
+                      )}
+                      aria-pressed={animal === value}
+                    >
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {animal === "Other" ? (
+                <div>
+                  <Label className="mb-2 block" htmlFor="custom-animal">
+                    Specify the animal type <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="custom-animal"
+                    value={customAnimal}
+                    onChange={(e) => setCustomAnimal(e.target.value)}
+                    placeholder="e.g. Rabbit, Goat, or Monkey"
+                    autoFocus
+                  />
+                </div>
+              ) : null}
+
+              <div>
+                <Label className="mb-2 block" htmlFor="count">
+                  Number of animals <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex w-fit items-center gap-3 rounded-lg border border-border p-1.5">
+                  <Button
                     type="button"
-                    onClick={() => setAnimal(value)}
-                    className={cn(
-                      "flex flex-col items-center gap-2 rounded-xl border p-3 text-sm font-medium transition-colors",
-                      animal === value
-                        ? "border-primary bg-primary-soft text-primary ring-2 ring-primary/30"
-                        : "border-border hover:bg-muted",
-                    )}
-                    aria-pressed={animal === value}
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Decrease count"
+                    onClick={() => setCount((c) => Math.max(1, c - 1))}
                   >
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                    {label}
-                  </button>
-                ))}
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span id="count" className="w-8 text-center text-sm font-semibold">
+                    {count}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Increase count"
+                    onClick={() => setCount((c) => Math.min(20, c + 1))}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">
+                  Condition <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {CONDITION_OPTIONS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCondition(c)}
+                      className={cn(
+                        "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+                        condition === c
+                          ? "border-primary bg-primary-soft text-primary ring-2 ring-primary/30"
+                          : "border-border hover:bg-muted",
+                      )}
+                      aria-pressed={condition === c}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">
+                  Emergency level <span className="text-destructive">*</span>
+                </Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {EMERGENCY_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setEmergency(opt.value)}
+                      className={cn(
+                        "flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-colors",
+                        emergency === opt.value ? opt.activeCls : opt.cls,
+                      )}
+                      aria-pressed={emergency === opt.value}
+                    >
+                      <PriorityBadge level={opt.value} />
+                      <span className="text-xs text-muted-foreground">{opt.hint}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+            <div className="border-t border-border pt-6">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-foreground">Additional details</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Add photos and details to help the rescuer identify the animal.
+                </p>
+              </div>
 
-            {animal === "Other" ? (
+              {/* Photos */}
               <div>
-                <Label className="mb-2 block" htmlFor="custom-animal">
-                  Specify the animal type
+                <Label className="mb-2 block">
+                  Photos <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="custom-animal"
-                  value={customAnimal}
-                  onChange={(e) => setCustomAnimal(e.target.value)}
-                  placeholder="e.g. Rabbit, Goat, or Monkey"
-                  autoFocus
+
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    addFiles(e.dataTransfer.files);
+                  }}
+                  className={cn(
+                    "flex min-h-32 flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors",
+                    dragOver
+                      ? "border-primary bg-primary-soft/40"
+                      : "border-border hover:border-primary/50",
+                  )}
+                >
+                  <ImagePlus className="mb-2 h-7 w-7 text-muted-foreground" aria-hidden="true" />
+
+                  <p className="text-sm text-muted-foreground">
+                    Drag & drop photos or{" "}
+                    <button
+                      type="button"
+                      className="font-semibold text-primary hover:underline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      browse
+                    </button>
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">Up to 6 photos</p>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => addFiles(e.target.files)}
+                  />
+                </div>
+
+                {images.length > 0 ? (
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                    {images.map((img) => (
+                      <div
+                        key={img.id}
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-border"
+                      >
+                        <img
+                          src={img.url}
+                          alt="Uploaded animal"
+                          className="h-full w-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          aria-label="Remove photo"
+                          onClick={() => removeImage(img.id)}
+                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Description */}
+              <div className="mt-5">
+                <Label className="mb-2 block" htmlFor="description">
+                  Description <span className="text-destructive">*</span>
+                </Label>
+
+                <Textarea
+                  id="description"
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe the animal, its condition, exact spot, landmarks, or anything that may help the rescuer..."
                 />
               </div>
-            ) : null}
 
-            <div>
-              <Label className="mb-2 block" htmlFor="count">
-                Number of animals
-              </Label>
-              <div className="flex w-fit items-center gap-3 rounded-lg border border-border p-1.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Decrease count"
-                  onClick={() => setCount((c) => Math.max(1, c - 1))}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span id="count" className="w-8 text-center text-sm font-semibold">
-                  {count}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Increase count"
-                  onClick={() => setCount((c) => Math.min(20, c + 1))}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+              {/* Contact */}
+              <div className="mt-5 sm:max-w-sm">
+                <Label className="mb-2 block" htmlFor="phone">
+                  Contact number <span className="text-destructive">*</span>
+                </Label>
+
+                <Input
+                  id="phone"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="+91 90000 00000"
+                />
               </div>
             </div>
-
-            <div>
-              <Label className="mb-2 block">Condition</Label>
-              <div className="flex flex-wrap gap-2">
-                {CONDITION_OPTIONS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setCondition(c)}
-                    className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-                      condition === c
-                        ? "border-primary bg-primary-soft text-primary ring-2 ring-primary/30"
-                        : "border-border hover:bg-muted",
-                    )}
-                    aria-pressed={condition === c}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block">Emergency level</Label>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {EMERGENCY_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setEmergency(opt.value)}
-                    className={cn(
-                      "flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-colors",
-                      emergency === opt.value ? opt.activeCls : opt.cls,
-                    )}
-                    aria-pressed={emergency === opt.value}
-                  >
-                    <PriorityBadge level={opt.value} />
-                    <span className="text-xs text-muted-foreground">{opt.hint}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            {errors[0] ? <p className="text-sm text-destructive">{errors[0]}</p> : null}
           </div>
         ) : null}
 
@@ -440,7 +590,7 @@ function CitizenReport() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label className="mb-2 block" htmlFor="address">
-                  Address
+                  Address <span className="text-destructive">*</span>
                 </Label>
 
                 <Input
@@ -453,7 +603,7 @@ function CitizenReport() {
 
               <div>
                 <Label className="mb-2 block" htmlFor="area">
-                  Area
+                  Area <span className="text-destructive">*</span>
                 </Label>
 
                 <Input
@@ -520,98 +670,6 @@ function CitizenReport() {
 
         {step === 2 ? (
           <div className="space-y-5">
-            <div>
-              <Label className="mb-2 block">Photos (optional but recommended)</Label>
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragOver(false);
-                  addFiles(e.dataTransfer.files);
-                }}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition-colors",
-                  dragOver ? "border-primary bg-primary-soft/40" : "border-border",
-                )}
-              >
-                <ImagePlus className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-                <p className="text-sm text-muted-foreground">
-                  Drag & drop photos here, or{" "}
-                  <button
-                    type="button"
-                    className="font-semibold text-primary hover:underline"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    browse files
-                  </button>
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => addFiles(e.target.files)}
-                />
-              </div>
-              {images.length > 0 ? (
-                <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  {images.map((img) => (
-                    <div
-                      key={img.id}
-                      className="group relative aspect-square overflow-hidden rounded-lg border border-border"
-                    >
-                      <img
-                        src={img.url}
-                        alt="Uploaded animal"
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        aria-label="Remove photo"
-                        onClick={() => removeImage(img.id)}
-                        className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-foreground/70 text-background"
-                      >
-                        <X className="h-3.5 w-3.5" aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            <div>
-              <Label className="mb-2 block" htmlFor="description">
-                Description (optional)
-              </Label>
-              <Textarea
-                id="description"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Any details that could help the rescuer, e.g. behaviour, exact spot, landmarks..."
-              />
-            </div>
-            <div className="sm:w-1/2">
-              <Label className="mb-2 block" htmlFor="phone">
-                Contact number (optional)
-              </Label>
-              <Input
-                id="phone"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+91 90000 00000"
-              />
-            </div>
-          </div>
-        ) : null}
-
-        {step === 3 ? (
-          <div className="space-y-5">
             <h2 className="font-display text-lg font-bold text-foreground">Review your report</h2>
             <dl className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -668,7 +726,7 @@ function CitizenReport() {
         {step < STEPS.length - 1 ? (
           <Button
             onClick={() => {
-              if (step === 2) {
+              if (step === 1) {
                 void checkForDuplicates();
               } else if (canProceed) {
                 setStep((s) => s + 1);
