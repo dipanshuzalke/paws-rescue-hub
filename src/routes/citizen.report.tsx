@@ -1,16 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import {
-  CheckCircle2,
-  ImagePlus,
-  Loader2,
-  Locate,
-  MapPin,
-  Minus,
-  Plus,
-  X,
-} from "lucide-react";
+import { CheckCircle2, ImagePlus, Loader2, Locate, MapPin, Minus, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -37,7 +28,10 @@ export const Route = createFileRoute("/citizen/report")({
       { title: "Report an Animal · ResQ Paws" },
       { name: "description", content: "Report a stray or injured animal in a few quick steps." },
       { property: "og:title", content: "Report an Animal · ResQ Paws" },
-      { property: "og:description", content: "Report a stray or injured animal in a few quick steps." },
+      {
+        property: "og:description",
+        content: "Report a stray or injured animal in a few quick steps.",
+      },
     ],
   }),
   component: CitizenReport,
@@ -138,7 +132,11 @@ function CitizenReport() {
     if (!files) return;
     const next: WizardImage[] = Array.from(files)
       .filter((f) => f.type.startsWith("image/"))
-      .map((f) => ({ id: `${f.name}-${Date.now()}-${Math.random()}`, url: URL.createObjectURL(f), file: f }));
+      .map((f) => ({
+        id: `${f.name}-${Date.now()}-${Math.random()}`,
+        url: URL.createObjectURL(f),
+        file: f,
+      }));
     setImages((prev) => [...prev, ...next].slice(0, 6));
   };
 
@@ -159,7 +157,7 @@ function CitizenReport() {
     setLocating(true);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const nextCoords = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -167,18 +165,55 @@ function CitizenReport() {
 
         setCoords(nextCoords);
 
-        setLocating(false);
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${nextCoords.lat}&lon=${nextCoords.lng}`,
+            {
+              headers: {
+                Accept: "application/json",
+              },
+            },
+          );
 
-        toast.success("Your current location has been detected.");
+          if (!response.ok) {
+            throw new Error("Unable to detect address");
+          }
+
+          const data = await response.json();
+          const location = data.address ?? {};
+
+          const detectedArea =
+            location.suburb ||
+            location.neighbourhood ||
+            location.city_district ||
+            location.village ||
+            location.town ||
+            "";
+
+          const detectedAddress =
+            data.display_name ||
+            [location.road, location.neighbourhood, location.suburb, location.city]
+              .filter(Boolean)
+              .join(", ");
+
+          setAddress(detectedAddress);
+          setArea(detectedArea);
+
+          toast.success("Location and address detected.");
+        } catch (error) {
+          console.error("Reverse geocoding failed:", error);
+
+          toast.success("Location detected, but address could not be determined.");
+        } finally {
+          setLocating(false);
+        }
       },
       (error) => {
         setLocating(false);
 
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            toast.error(
-              "Location permission was denied. Please allow location access."
-            );
+            toast.error("Location permission was denied. Please allow location access.");
             break;
 
           case error.POSITION_UNAVAILABLE:
@@ -197,7 +232,7 @@ function CitizenReport() {
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 0,
-      }
+      },
     );
   };
 
@@ -239,11 +274,13 @@ function CitizenReport() {
         </span>
         <h1 className="mt-5 font-display text-2xl font-bold text-foreground">Report submitted!</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your rescue request <span className="font-semibold text-foreground">#{submitted}</span> has been
-          received. Rescuers in your area have been notified.
+          Your rescue request <span className="font-semibold text-foreground">#{submitted}</span>{" "}
+          has been received. Rescuers in your area have been notified.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Button onClick={() => navigate({ to: "/citizen/reports/$id", params: { id: submitted } })}>
+          <Button
+            onClick={() => navigate({ to: "/citizen/reports/$id", params: { id: submitted } })}
+          >
             Track this report
           </Button>
           <Button
@@ -410,7 +447,7 @@ function CitizenReport() {
                   id="address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="e.g. Near Shankar Nagar Square"
+                  placeholder="Address will be detected automatically"
                 />
               </div>
 
@@ -423,7 +460,7 @@ function CitizenReport() {
                   id="area"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
-                  placeholder="e.g. Dharampeth"
+                  placeholder="Area will be detected automatically"
                 />
               </div>
             </div>
@@ -440,9 +477,7 @@ function CitizenReport() {
                 <Locate className="h-4 w-4" aria-hidden="true" />
               )}
 
-              {locating
-                ? "Detecting location..."
-                : "Use my current location"}
+              {locating ? "Detecting location..." : "Use my current location"}
             </Button>
 
             <MapView
@@ -450,24 +485,23 @@ function CitizenReport() {
               markers={
                 coords
                   ? [
-                    {
-                      id: "animal-location",
-                      label: "Animal location",
-                      sub: address || "Reported location",
-                      coords,
-                      kind: "you",
-                    },
-                  ]
+                      {
+                        id: "animal-location",
+                        label: "Animal location",
+                        sub: address || "Reported location",
+                        coords,
+                        kind: "you",
+                      },
+                    ]
                   : []
               }
-              onSelect={() => { }}
+              onSelect={() => {}}
               caption={
                 coords
                   ? `Animal location: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
                   : "Use your current location to place the animal marker"
               }
             />
-
 
             {!coords ? (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -480,9 +514,7 @@ function CitizenReport() {
               </p>
             )}
 
-            {errors[1] ? (
-              <p className="text-sm text-destructive">{errors[1]}</p>
-            ) : null}
+            {errors[1] ? <p className="text-sm text-destructive">{errors[1]}</p> : null}
           </div>
         ) : null}
 
@@ -529,8 +561,15 @@ function CitizenReport() {
               {images.length > 0 ? (
                 <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
                   {images.map((img) => (
-                    <div key={img.id} className="group relative aspect-square overflow-hidden rounded-lg border border-border">
-                      <img src={img.url} alt="Uploaded animal" className="h-full w-full object-cover" />
+                    <div
+                      key={img.id}
+                      className="group relative aspect-square overflow-hidden rounded-lg border border-border"
+                    >
+                      <img
+                        src={img.url}
+                        alt="Uploaded animal"
+                        className="h-full w-full object-cover"
+                      />
                       <button
                         type="button"
                         aria-label="Remove photo"
@@ -596,7 +635,9 @@ function CitizenReport() {
                 </dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs font-semibold uppercase text-muted-foreground">Description</dt>
+                <dt className="text-xs font-semibold uppercase text-muted-foreground">
+                  Description
+                </dt>
                 <dd className="text-sm text-foreground">{description || "—"}</dd>
               </div>
             </dl>
@@ -617,7 +658,11 @@ function CitizenReport() {
       </div>
 
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+        <Button
+          variant="outline"
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          disabled={step === 0}
+        >
           Back
         </Button>
         {step < STEPS.length - 1 ? (
