@@ -54,6 +54,32 @@ export interface ApiHistoryEntry {
   timestamp: string;
 }
 
+export interface ApiEvidenceEvent {
+  action: string;
+  byName?: string;
+  byRole?: string;
+  notes?: string;
+  photos?: ApiImage[];
+  at: string;
+}
+
+export interface ApiRescueEvidence {
+  photos?: ApiImage[];
+  notes?: string;
+  animalCondition?: string;
+  treatmentNotes?: string;
+  completionLocation?: { coordinates?: number[] };
+  submittedBy?: ApiUser | string | null;
+  submittedAt?: string;
+  submissionCount?: number;
+  verificationStatus?: "NONE" | "PENDING" | "VERIFIED" | "REJECTED";
+  verifiedBy?: ApiUser | string | null;
+  verifiedAt?: string;
+  verificationNotes?: string;
+  rejectionReason?: string;
+  events?: ApiEvidenceEvent[];
+}
+
 export interface ApiReport {
   _id: string;
   reportId: string;
@@ -82,6 +108,8 @@ export interface ApiReport {
   createdAt: string;
   updatedAt: string;
   totalDurationMins?: number | null;
+  rescueEvidence?: ApiRescueEvidence | null;
+  duplicateOf?: string | { _id: string } | null;
   rescueNotes?: {
     _id: string;
     text: string;
@@ -91,6 +119,7 @@ export interface ApiReport {
   }[];
   history?: ApiHistoryEntry[];
 }
+
 
 export interface ApiNotification {
   _id: string;
