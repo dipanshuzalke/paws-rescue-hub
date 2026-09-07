@@ -52,6 +52,9 @@ export interface CreateReportInput {
   city?: string;
   coords: { lat: number; lng: number };
   files?: File[];
+  /** Phase 3 — records that the citizen saw and dismissed a duplicate warning. */
+  duplicateWarningShown?: boolean;
+  duplicateOverride?: boolean;
 }
 
 export const reportService = {
@@ -82,6 +85,8 @@ async createReport(input: CreateReportInput): Promise<RescueReport> {
     form.append("city", input.city ?? "Nagpur");
     form.append("latitude", String(input.coords.lat));
     form.append("longitude", String(input.coords.lng));
+    if (input.duplicateWarningShown) form.append("duplicateWarningShown", "true");
+    if (input.duplicateOverride) form.append("duplicateOverride", "true");
     (input.files ?? []).forEach((file) => form.append("images", file));
 
     const data = await unwrap<ApiReport>(api.post("/reports", form));
