@@ -8,6 +8,7 @@ import {
   getReportsByPriority,
   getMonthly,
   getPerformance,
+  getResponseTimeTrend,
 } from "../controllers/analyticsController.js";
 
 const router = Router();
@@ -21,5 +22,6 @@ router.get("/reports-by-status", getReportsByStatus);
 router.get("/reports-by-priority", getReportsByPriority);
 router.get("/monthly", getMonthly);
 router.get("/performance", getPerformance);
+router.get("/response-time-trend", getResponseTimeTrend);
 
 export default router;

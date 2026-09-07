@@ -60,7 +60,12 @@ interface AppState {
   loginAs: (role: Role) => Promise<User>;
   logout: () => Promise<void>;
   createReport: (input: NewReportInput) => Promise<RescueReport>;
-  assignRescuer: (reportId: string, rescuerId: string, rescuerName: string, ngo?: string) => void;
+  assignRescuer: (
+    reportId: string,
+    rescuerId: string,
+    rescuerName: string,
+    ngo?: string,
+  ) => Promise<void>;
   updateStatus: (reportId: string, status: RescueStatus, note?: string) => void;
   addNote: (reportId: string, text: string) => void;
   markRead: (id: string) => void;
@@ -209,6 +214,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const interval = window.setInterval(() => {
       void authService.heartbeat();
     }, 30_000);
+    return () => window.clearInterval(interval);
+  }, [isApiEnabled, user]);
+
+  useEffect(() => {
+    if (!isApiEnabled || !user) return;
+    const refreshNotifications = () => {
+      void notificationService
+        .getNotifications({ limit: 50 })
+        .then((result) => setNotifications(result.items))
+        .catch(() => undefined);
+    };
+    refreshNotifications();
+    const interval = window.setInterval(refreshNotifications, 5_000);
     return () => window.clearInterval(interval);
   }, [isApiEnabled, user]);
 
@@ -372,14 +390,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const assignRescuer = useCallback(
-    (reportId: string, rescuerId: string, rescuerName: string, ngo?: string) => {
+    async (reportId: string, rescuerId: string, rescuerName: string, ngo?: string) => {
       if (isApiEnabled) {
-        void ngoService
-          .assignRescuer(reportId, rescuerId)
-          .then((updated) =>
-            setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r))),
-          )
-          .catch((err) => setError(apiErrorMessage(err)));
+        try {
+          const updated = await ngoService.assignRescuer(reportId, rescuerId);
+          setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+        } catch (err) {
+          setError(apiErrorMessage(err));
+          throw err;
+        }
         return;
       }
       mutate(reportId, (r) => {
@@ -403,6 +422,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         role: "rescuer",
         link: `/rescuer/requests/${reportId}`,
       });
+      return Promise.resolve();
     },
     [mutate, pushNotification],
   );

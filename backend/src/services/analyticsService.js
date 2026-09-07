@@ -167,6 +167,35 @@ export async function performance(match = {}) {
   };
 }
 
+export async function responseTimeTrend(match = {}) {
+  const rows = await RescueReport.aggregate([
+    {
+      $match: {
+        ...baseMatch(match),
+        reportedAt: { $ne: null },
+        assignedAt: { $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: { year: { $year: "$reportedAt" }, month: { $month: "$reportedAt" } },
+        minutes: {
+          $avg: { $divide: [{ $subtract: ["$assignedAt", "$reportedAt"] }, 60000] },
+        },
+      },
+    },
+    { $sort: { "_id.year": 1, "_id.month": 1 } },
+  ]);
+
+  return rows.map((row) => ({
+    month: new Date(row._id.year, row._id.month - 1, 1).toLocaleString("en-US", {
+      month: "short",
+      year: "numeric",
+    }),
+    minutes: Math.round(row.minutes || 0),
+  }));
+}
+
 export default {
   overview,
   reportsByAnimal,
@@ -174,4 +203,5 @@ export default {
   reportsByPriority,
   monthly,
   performance,
+  responseTimeTrend,
 };

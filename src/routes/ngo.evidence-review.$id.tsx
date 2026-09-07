@@ -222,7 +222,7 @@ function NgoPendingEvidenceReview() {
                 <dl className="space-y-3 text-sm">
                   <div>
                     <dt className="text-xs font-semibold uppercase text-muted-foreground">Submitted by</dt>
-                    <dd className="text-foreground">{evidence.submittedByName || "Unknown rescuer"}</dd>
+                    <dd className="text-foreground">{evidence.submittedByName}</dd>
                   </div>
                   <div>
                     <dt className="text-xs font-semibold uppercase text-muted-foreground">Submitted at</dt>

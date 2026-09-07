@@ -13,6 +13,8 @@ async function populateReport(reportOrId) {
   return RescueReport.findById(id)
     .populate("reporter", POPULATE_USER_FIELDS)
     .populate("assignedRescuer", POPULATE_USER_FIELDS)
+    .populate("rescueEvidence.submittedBy", POPULATE_USER_FIELDS)
+    .populate("rescueEvidence.verifiedBy", POPULATE_USER_FIELDS)
     .populate("assignedOrganization");
 }
 
@@ -72,7 +74,6 @@ export async function transitionReport({ report, newStatus, user, note = "" }) {
           const mins = report.rescueDurationMins;
           if (typeof mins === "number") {
             rescuer.totalResponseMins = (rescuer.totalResponseMins || 0) + mins;
-            rescuer.ratedResponses = (rescuer.ratedResponses || 0) + 1;
           }
         }
       }
@@ -96,6 +97,32 @@ export async function transitionReport({ report, newStatus, user, note = "" }) {
   const recipients = [report.reporter];
   if (report.assignedRescuer) recipients.push(report.assignedRescuer);
   await notifyUsers(recipients, notifyPayload);
+
+  if (newStatus === "ACCEPTED" || newStatus === "IN_PROGRESS") {
+    let organizationId = report.assignedOrganization;
+    if (!organizationId && report.assignedRescuer) {
+      const assignedRescuer = await User.findById(report.assignedRescuer).select("organization");
+      organizationId = assignedRescuer?.organization;
+    }
+    if (organizationId) {
+      const ngoUsers = await User.find({
+        role: "NGO",
+        organization: organizationId,
+        isActive: true,
+      }).select("_id");
+      await notifyUsers(ngoUsers, {
+        report: report._id,
+        type: "STATUS_UPDATE",
+        title: newStatus === "ACCEPTED" ? "Rescuer accepted a request" : "Rescuer is on the way",
+        message:
+          newStatus === "ACCEPTED"
+            ? `A rescuer accepted report ${report.reportId}.`
+            : `${report.assignedRescuer ? "The assigned rescuer" : "A rescuer"} is on the way for report ${report.reportId}.`,
+        emergencyLevel: report.emergencyLevel,
+        link: `/ngo/requests/${report._id}`,
+      });
+    }
+  }
 
   return populateReport(report);
 }

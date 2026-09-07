@@ -28,6 +28,11 @@ export interface PerformanceStats {
   completionRate: number;
 }
 
+export interface ResponseTimePoint {
+  month: string;
+  minutes: number;
+}
+
 export const analyticsService = {
   getOverview: () => unwrap<AnalyticsOverview>(api.get("/analytics/overview")),
   getByAnimal: () => unwrap<Bucket[]>(api.get("/analytics/reports-by-animal")),
@@ -35,6 +40,7 @@ export const analyticsService = {
   getByPriority: () => unwrap<Bucket[]>(api.get("/analytics/reports-by-priority")),
   getMonthly: () => unwrap<MonthlyPoint[]>(api.get("/analytics/monthly")),
   getPerformance: () => unwrap<PerformanceStats>(api.get("/analytics/performance")),
+  getResponseTimeTrend: () => unwrap<ResponseTimePoint[]>(api.get("/analytics/response-time-trend")),
   /** Convenience wrapper used by the dashboard stat cards. */
   getDashboardStats: () => unwrap<AnalyticsOverview>(api.get("/analytics/overview")),
 };

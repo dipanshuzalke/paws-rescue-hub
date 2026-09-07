@@ -70,6 +70,8 @@ export const rescuerStats = asyncHandler(async (req, res) => {
     completedRescues: completedCases,
     criticalCases,
     avgResponseMins: Math.round(responseRows[0]?.average || 0),
+    rating: req.user.ratedResponses > 0 ? req.user.rating : 0,
+    ratedResponses: req.user.ratedResponses || 0,
   });
 });
 

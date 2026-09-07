@@ -46,16 +46,20 @@ export function AssignDialog({
 
   if (!report) return null;
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     const rescuer = rescuers.find((r) => r.id === selected);
     if (!rescuer) {
       toast.error("Choose a rescuer to assign this request.");
       return;
     }
-    assignRescuer(report.id, rescuer.id, rescuer.name, user?.organization);
-    toast.success(`${rescuer.name} has been assigned to rescue #${report.id}.`);
-    setSelected(null);
-    onOpenChange(false);
+    try {
+      await assignRescuer(report.id, rescuer.id, rescuer.name, user?.organization);
+      toast.success(`${rescuer.name} has been assigned to rescue #${report.id}.`);
+      setSelected(null);
+      onOpenChange(false);
+    } catch {
+      toast.error("Could not assign this request. Please try again.");
+    }
   };
 
   return (

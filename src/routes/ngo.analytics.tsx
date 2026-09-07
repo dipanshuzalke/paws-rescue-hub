@@ -21,6 +21,8 @@ import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { rangeOptions, responseTimeSeries, seriesForRange, type RangeKey } from "@/data/mockAnalytics";
 import { useApp } from "@/store/app-store";
+import { useAsync } from "@/hooks/use-async";
+import { analyticsService } from "@/services/analyticsService";
 
 export const Route = createFileRoute("/ngo/analytics")({
   head: () => ({
@@ -48,20 +50,52 @@ const emergencyColors: Record<string, string> = {
 };
 
 function NgoAnalytics() {
-  const { reports } = useApp();
+  const { reports, apiMode } = useApp();
   const [range, setRange] = useState<RangeKey["key"]>("30d");
+
+  const { data: overview } = useAsync(
+    () => (apiMode ? analyticsService.getOverview() : Promise.resolve(null)),
+    [apiMode],
+  );
+  const { data: monthly } = useAsync(
+    () => (apiMode ? analyticsService.getMonthly() : Promise.resolve(null)),
+    [apiMode],
+  );
+  const { data: responseTrend } = useAsync(
+    () => (apiMode ? analyticsService.getResponseTimeTrend() : Promise.resolve(null)),
+    [apiMode],
+  );
 
   const stats = useMemo(() => {
     const closed = reports.filter((r) => r.status === "RESCUED" || r.status === "CLOSED");
-    const resolutionRate = reports.length ? Math.round((closed.length / reports.length) * 100) : 0;
+    const resolutionRate = overview
+      ? overview.totalReports
+        ? Math.round((overview.completedRescues / overview.totalReports) * 100)
+        : 0
+      : reports.length
+        ? Math.round((closed.length / reports.length) * 100)
+        : 0;
     const durations = reports.filter((r) => r.durationMins).map((r) => r.durationMins!);
-    const avgResponse = durations.length
+    const avgResponse = overview?.avgResponseMins ?? (durations.length
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
-      : 0;
-    return { total: reports.length, resolutionRate, avgResponse };
-  }, [reports]);
+      : 0);
+    return { total: overview?.totalReports ?? reports.length, resolutionRate, avgResponse };
+  }, [overview, reports]);
 
-  const trend = seriesForRange(range);
+  const trend = useMemo(() => {
+    if (!apiMode || !monthly) return seriesForRange(range);
+    const points = monthly.map((point) => ({
+      period: point.month,
+      reported: point.reports,
+      rescued: point.rescued,
+    }));
+    if (range === "3m") return points.slice(-3);
+    if (range === "6m") return points.slice(-6);
+    if (range === "1y") return points;
+    return points.slice(-1);
+  }, [apiMode, monthly, range]);
+
+  const responseTimeData = apiMode ? responseTrend ?? [] : responseTimeSeries;
 
   const emergencyMix = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -202,9 +236,13 @@ function NgoAnalytics() {
           <SectionHeading title="Response time trend" description="Average minutes to respond" />
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={responseTimeSeries}>
+              <BarChart data={responseTimeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis dataKey="period" stroke="var(--color-muted-foreground)" fontSize={11} />
+                <XAxis
+                  dataKey={apiMode ? "month" : "period"}
+                  stroke="var(--color-muted-foreground)"
+                  fontSize={11}
+                />
                 <YAxis stroke="var(--color-muted-foreground)" fontSize={12} />
                 <Tooltip
                   contentStyle={{

@@ -46,3 +46,8 @@ export const getPerformance = asyncHandler(async (req, res) => {
   const data = await analyticsService.performance(scopeFor(req.user));
   return ok(res, data);
 });
+
+export const getResponseTimeTrend = asyncHandler(async (req, res) => {
+  const data = await analyticsService.responseTimeTrend(scopeFor(req.user));
+  return ok(res, data);
+});

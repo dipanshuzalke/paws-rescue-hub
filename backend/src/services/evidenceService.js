@@ -122,11 +122,26 @@ export async function verifyEvidence({ report, user, notes = "", rescuerRating, 
   if (rescuerRating !== undefined && report.assignedRescuer) {
     const rescuer = await User.findById(report.assignedRescuer);
     if (rescuer) {
-      const previousRatings = rescuer.ratedResponses || 0;
-      rescuer.rating = previousRatings
-        ? ((rescuer.rating || 0) * previousRatings + rescuerRating) / (previousRatings + 1)
-        : rescuerRating;
-      rescuer.ratedResponses = previousRatings + 1;
+      const previousRatings = await RescueReport.aggregate([
+        {
+          $match: {
+            assignedRescuer: rescuer._id,
+            "rescueEvidence.rescuerRating": { $gte: 1, $lte: 5 },
+            _id: { $ne: report._id },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            total: { $sum: "$rescueEvidence.rescuerRating" },
+          },
+        },
+      ]);
+      const count = (previousRatings[0]?.count || 0) + 1;
+      const total = (previousRatings[0]?.total || 0) + rescuerRating;
+      rescuer.rating = total / count;
+      rescuer.ratedResponses = count;
       await rescuer.save();
       report.rescueEvidence.rescuerRating = rescuerRating;
       report.rescueEvidence.rescuerRatedBy = user._id;

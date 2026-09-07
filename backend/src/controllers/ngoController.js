@@ -11,7 +11,7 @@ import { createNotification, notifyUsers } from "../services/notificationService
 import * as analyticsService from "../services/analyticsService.js";
 
 const ACTIVE_STATUSES = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
-const ASSIGNABLE_STATUSES = ["REPORTED", "ASSIGNED"];
+const ASSIGNABLE_STATUSES = ["REPORTED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 const PRESENCE_WINDOW_MS = 90 * 1000;
 
 function distanceKm(from, to) {
@@ -203,6 +203,33 @@ export const createAssignment = asyncHandler(async (req, res) => {
   }
 
   const organizationId = org || rescuer.organization || report.assignedOrganization || null;
+  const previousRescuerId = report.assignedRescuer ? String(report.assignedRescuer) : null;
+  const isReassignment = previousRescuerId && previousRescuerId !== String(rescuer._id);
+
+  if (isReassignment) {
+    if (report.assignment) {
+      const previousAssignment = await RescueAssignment.findById(report.assignment);
+      if (previousAssignment) {
+        previousAssignment.status = "REJECTED";
+        previousAssignment.rejectedAt = new Date();
+        await previousAssignment.save();
+      }
+    }
+    const previousRescuer = await User.findById(previousRescuerId);
+    if (previousRescuer) {
+      previousRescuer.activeCases = Math.max(0, (previousRescuer.activeCases || 0) - 1);
+      await previousRescuer.save();
+    }
+    await createNotification({
+      recipient: previousRescuerId,
+      report: report._id,
+      type: "ASSIGNMENT",
+      title: "Rescue assignment changed",
+      message: `Report ${report.reportId} has been reassigned to another rescuer.`,
+      emergencyLevel: report.emergencyLevel,
+      link: `/rescuer/requests/${report._id}`,
+    });
+  }
 
   const assignment = await RescueAssignment.create({
     report: report._id,
@@ -220,8 +247,10 @@ export const createAssignment = asyncHandler(async (req, res) => {
   report.assignedAt = new Date();
   await report.save();
 
-  rescuer.activeCases = (rescuer.activeCases || 0) + 1;
-  await rescuer.save();
+  if (!previousRescuerId || isReassignment) {
+    rescuer.activeCases = (rescuer.activeCases || 0) + 1;
+    await rescuer.save();
+  }
 
   await recordHistory({
     report,
@@ -236,8 +265,11 @@ export const createAssignment = asyncHandler(async (req, res) => {
     report: report._id,
     type: "ASSIGNMENT",
     title: "New rescue assignment",
-    message: `You have been assigned to report ${report.reportId}.`,
+    message: isReassignment
+      ? `Report ${report.reportId} has been reassigned to you. Please review it promptly.`
+      : `You have been assigned to report ${report.reportId}. Please review it promptly.`,
     emergencyLevel: report.emergencyLevel,
+    link: `/rescuer/requests/${report._id}`,
   });
 
   await notifyUsers([report.reporter], {
