@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { register, login, me, logout, updateMe } from "../controllers/authController.js";
+import { register, login, me, logout, updateMe, heartbeat } from "../controllers/authController.js";
 import { authenticateUser } from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validate.js";
 import { registerSchema, loginSchema, updateProfileSchema } from "../utils/validators.js";
@@ -20,5 +20,6 @@ router.post("/login", authLimiter, validate(loginSchema), login);
 router.get("/me", authenticateUser, me);
 router.post("/logout", authenticateUser, logout);
 router.put("/me", authenticateUser, validate(updateProfileSchema), updateMe);
+router.post("/heartbeat", authenticateUser, heartbeat);
 
 export default router;

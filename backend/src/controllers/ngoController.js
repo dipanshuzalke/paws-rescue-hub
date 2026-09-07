@@ -11,6 +11,7 @@ import * as analyticsService from "../services/analyticsService.js";
 
 const ACTIVE_STATUSES = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 const ASSIGNABLE_STATUSES = ["REPORTED", "ASSIGNED"];
+const PRESENCE_WINDOW_MS = 90 * 1000;
 
 const REPORT_POPULATE = [
   { path: "reporter", select: "name email phone" },
@@ -92,6 +93,9 @@ export const getRescuers = asyncHandler(async (req, res) => {
   const shaped = rescuers.map((r) => ({
     ...r.toObject(),
     avgResponseMins: r.avgResponseMins,
+    isOnline:
+      r.availability !== "OFFLINE" &&
+      Boolean(r.lastSeenAt && Date.now() - new Date(r.lastSeenAt).getTime() <= PRESENCE_WINDOW_MS),
   }));
 
   return ok(res, shaped);

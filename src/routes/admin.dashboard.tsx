@@ -9,7 +9,7 @@ import {
   Truck,
   Users,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -29,7 +29,8 @@ import { ActivityList } from "@/components/admin/activity-list";
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { StatSkeletonRow, TableSkeleton } from "@/components/shared/states";
-import { UserStatusBadge } from "@/components/shared/status-badge";
+import { AvailabilityBadge, UserStatusBadge } from "@/components/shared/status-badge";
+import { PresenceBadge } from "@/components/shared/presence-badge";
 import { Button } from "@/components/ui/button";
 import { useAsync } from "@/hooks/use-async";
 import { seriesForRange } from "@/data/mockAnalytics";
@@ -81,8 +82,22 @@ function AdminDashboard() {
     () => (apiMode ? adminService.getActivity(100) : getActivity()),
     [apiMode],
   );
+  const rescuersState = useAsync(
+    () => (apiMode ? adminService.getRescuers({ limit: 200 }).then((r) => r.items) : getUsers().then((users) => users.filter((u) => u.role === "rescuer"))),
+    [apiMode],
+  );
+
+  useEffect(() => {
+    if (!apiMode) return;
+    const interval = window.setInterval(() => {
+      rescuersState.retry();
+      ngosState.retry();
+    }, 30_000);
+    return () => window.clearInterval(interval);
+  }, [apiMode, rescuersState.retry, ngosState.retry]);
 
   const loading = usersState.loading || ngosState.loading || reportsState.loading;
+  const rescuers = rescuersState.data ?? [];
 
   const stats = useMemo(() => {
     const users = usersState.data ?? [];
@@ -295,6 +310,34 @@ function AdminDashboard() {
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="card-surface p-5">
           <SectionHeading
+            title="Rescuer availability"
+            description="Live availability and presence across the platform"
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/rescuers">View all</Link>
+              </Button>
+            }
+          />
+          {rescuersState.loading ? (
+            <TableSkeleton rows={3} cols={2} />
+          ) : rescuers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No rescuers found.</p>
+          ) : (
+            <ul className="space-y-2">
+              {rescuers.slice(0, 6).map((rescuer) => (
+                <li key={rescuer.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-2.5">
+                  <span className="min-w-0 truncate text-sm font-medium text-foreground">{rescuer.name}</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <AvailabilityBadge value={rescuer.availability ?? "Offline"} />
+                    <PresenceBadge online={rescuer.isOnline ?? false} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="card-surface p-5">
+          <SectionHeading
             title="Pending verifications"
             description="NGOs waiting for approval"
             actions={
@@ -315,7 +358,10 @@ function AdminDashboard() {
                     <p className="truncate text-sm font-semibold text-foreground">{ngo.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{ngo.location}</p>
                   </div>
-                  <UserStatusBadge status={ngo.status} />
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <UserStatusBadge status={ngo.status} />
+                    <PresenceBadge online={ngo.isOnline ?? false} />
+                  </div>
                 </li>
               ))}
             </ul>

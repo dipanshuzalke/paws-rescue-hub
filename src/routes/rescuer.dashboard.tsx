@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Activity, CheckCircle2, Clock, Star, Timer } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/states";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -42,9 +41,13 @@ export const Route = createFileRoute("/rescuer/dashboard")({
 const emergencyOrder: Record<Emergency, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
 function RescuerDashboard() {
-  const { reports, user } = useApp();
+  const { reports, user, updateAvailability } = useApp();
   const rescuer = useCurrentRescuer();
   const [availability, setAvailability] = useState(rescuer.availability);
+
+  useEffect(() => {
+    setAvailability(rescuer.availability);
+  }, [rescuer.availability]);
 
   const incoming = useMemo(
     () =>
@@ -83,9 +86,15 @@ function RescuerDashboard() {
     [incoming, rescuer.coords],
   );
 
-  const cycleAvailability = (value: string) => {
-    setAvailability(value as typeof availability);
-    toast.success(`You are now marked as ${value}`);
+  const cycleAvailability = async (value: string) => {
+    const next = value as typeof availability;
+    try {
+      const updated = await updateAvailability(next);
+      setAvailability(updated?.availability ?? next);
+      toast.success(`You are now marked as ${value}`);
+    } catch {
+      toast.error("Could not update your availability. Please try again.");
+    }
   };
 
   return (

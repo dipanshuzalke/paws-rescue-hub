@@ -24,6 +24,7 @@ const organizationSchema = new mongoose.Schema(
     contactPerson: { type: String, trim: true, default: "" },
     verificationStatus: { type: String, enum: VERIFICATION_STATUSES, default: "PENDING", index: true },
     isActive: { type: Boolean, default: true },
+    lastSeenAt: { type: Date, default: null, index: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true },

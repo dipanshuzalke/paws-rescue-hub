@@ -93,7 +93,11 @@ export const setAvailability = asyncHandler(async (req, res) => {
   if (!["AVAILABLE", "BUSY", "OFFLINE"].includes(availability)) {
     throw ApiError.badRequest("availability must be AVAILABLE, BUSY or OFFLINE");
   }
-  const user = await User.findByIdAndUpdate(req.user._id, { availability }, { new: true });
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { availability, lastSeenAt: new Date() },
+    { new: true, runValidators: true },
+  );
   return ok(res, { user }, "Availability updated");
 });
 

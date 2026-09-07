@@ -1,8 +1,8 @@
 import { api, unwrap, unwrapList } from "@/lib/api-client";
 import type { Paginated } from "@/lib/api-client";
-import { adaptReport } from "@/lib/api-adapters";
-import type { ApiReport } from "@/lib/api-adapters";
-import type { RescueReport, RescueStatus } from "@/types";
+import { adaptReport, adaptUser } from "@/lib/api-adapters";
+import type { ApiReport, ApiUser } from "@/lib/api-adapters";
+import type { RescueReport, RescueStatus, User } from "@/types";
 import type { ReportQuery } from "./reportService";
 
 export interface RescuerStats {
@@ -57,7 +57,10 @@ export const rescueService = {
     );
   },
 
-  async setAvailability(availability: "AVAILABLE" | "BUSY" | "OFFLINE"): Promise<void> {
-    await api.patch("/rescues/availability", { availability });
+  async setAvailability(availability: "AVAILABLE" | "BUSY" | "OFFLINE"): Promise<User> {
+    const data = await unwrap<{ user: ApiUser }>(
+      api.patch("/rescues/availability", { availability }),
+    );
+    return adaptUser(data.user);
   },
 };

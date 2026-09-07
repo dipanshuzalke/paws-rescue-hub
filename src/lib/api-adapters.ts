@@ -42,6 +42,7 @@ export interface ApiUser {
   location?: { coordinates?: number[]; address?: string };
   organization?: string | { _id: string; name: string };
   availability?: "AVAILABLE" | "BUSY" | "OFFLINE";
+  isOnline?: boolean;
   activeCases?: number;
   completedCases?: number;
   avgResponseMins?: number;
@@ -150,6 +151,7 @@ export interface ApiOrganization {
   createdAt?: string;
   rescuerCount?: number;
   caseCount?: number;
+  isOnline?: boolean;
 }
 
 /* ------------------------------------------------------------------ *
@@ -213,6 +215,9 @@ export function adaptUser(u: ApiUser): User {
     cases: (u.completedCases ?? 0) + (u.activeCases ?? 0),
     organization:
       typeof u.organization === "object" && u.organization ? u.organization.name : undefined,
+    availability:
+      u.availability === "AVAILABLE" ? "Available" : u.availability === "BUSY" ? "Busy" : "Offline",
+    isOnline: u.isOnline ?? false,
   };
 }
 
@@ -231,6 +236,7 @@ export function adaptRescuer(u: ApiUser): Rescuer {
     rating: u.rating ?? 5,
     ngoId: idOf(u.organization),
     coords: { lat: coords?.[1] ?? 21.1458, lng: coords?.[0] ?? 79.0882 },
+    isOnline: u.isOnline ?? false,
   };
 }
 
@@ -437,5 +443,6 @@ export function adaptOrganization(o: ApiOrganization): NGO {
     status: o.isActive === false ? "INACTIVE" : "ACTIVE",
     joinedAt: (o.createdAt ?? new Date().toISOString()).slice(0, 10),
     about: o.description ?? "",
+    isOnline: o.isOnline ?? false,
   };
 }

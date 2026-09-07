@@ -43,6 +43,10 @@ export const authService = {
     return adaptUser(data.user);
   },
 
+  async heartbeat(): Promise<void> {
+    await api.post("/auth/heartbeat");
+  },
+
   async logout(): Promise<void> {
     try {
       await api.post("/auth/logout");

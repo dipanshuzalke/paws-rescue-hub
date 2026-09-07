@@ -40,6 +40,8 @@ export interface User {
   avatar?: string | undefined;
   cases: number;
   organization?: string | undefined;
+  availability?: "Available" | "Busy" | "Offline";
+  isOnline?: boolean;
 }
 
 export interface Rescuer extends User {
@@ -52,6 +54,7 @@ export interface Rescuer extends User {
   rating: number;
   ngoId: string;
   coords: GeoPoint;
+  isOnline?: boolean;
 }
 
 export interface NGO {
@@ -67,6 +70,7 @@ export interface NGO {
   status: UserStatus;
   joinedAt: string;
   about: string;
+  isOnline?: boolean;
 }
 
 export interface TimelineEntry {

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, CheckCircle2, Eye, MoreHorizontal, ShieldCheck, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DataTable, type Column } from "@/components/admin/data-table";
@@ -10,6 +10,7 @@ import { FilterBar, FilterSelect, SearchBar } from "@/components/shared/filter-b
 import { PageHeader } from "@/components/shared/page-header";
 import { TableSkeleton } from "@/components/shared/states";
 import { AvailabilityBadge, UserStatusBadge } from "@/components/shared/status-badge";
+import { PresenceBadge } from "@/components/shared/presence-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -58,6 +59,12 @@ function AdminRescuers() {
   );
 
   const list = rescuers ?? data ?? [];
+
+  useEffect(() => {
+    if (!apiMode) return;
+    const interval = window.setInterval(retry, 30_000);
+    return () => window.clearInterval(interval);
+  }, [apiMode, retry]);
 
   const filtered = useMemo(() => {
     return list.filter((r) => {
@@ -120,6 +127,13 @@ function AdminRescuers() {
       sortable: true,
       accessor: (r) => r.availability,
       cell: (r) => <AvailabilityBadge value={r.availability} />,
+    },
+    {
+      key: "online",
+      header: "Live status",
+      sortable: true,
+      accessor: (r) => (r.isOnline ? "Online" : "Offline"),
+      cell: (r) => <PresenceBadge online={r.isOnline ?? false} />,
     },
     {
       key: "activeCases",

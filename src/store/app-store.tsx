@@ -46,6 +46,7 @@ interface AppState {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  updateAvailability: (availability: NonNullable<User["availability"]>) => Promise<User | null>;
   signIn: (email: string, password: string) => Promise<User>;
   signUp: (input: {
     name: string;
@@ -154,6 +155,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(() => loadFor(user), [loadFor, user]);
 
+  const updateAvailability = useCallback(
+    async (availability: NonNullable<User["availability"]>) => {
+      if (isApiEnabled) {
+        const updated = await rescueService.setAvailability(
+          availability === "Available" ? "AVAILABLE" : availability === "Busy" ? "BUSY" : "OFFLINE",
+        );
+        setUser(updated);
+        return updated;
+      }
+
+      let updated: User | null = null;
+      setUser((current) => {
+        updated = current ? { ...current, availability } : null;
+        return updated;
+      });
+      return updated;
+    },
+    [],
+  );
+
   // Restore the JWT session on first load when the backend is configured.
   useEffect(() => {
     if (!isApiEnabled) return;
@@ -175,6 +196,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [loadFor]);
+
+  useEffect(() => {
+    if (!isApiEnabled || !user) return;
+    void authService.heartbeat();
+    const interval = window.setInterval(() => {
+      void authService.heartbeat();
+    }, 30_000);
+    return () => window.clearInterval(interval);
+  }, [isApiEnabled, user]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -475,6 +505,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       refresh,
+      updateAvailability,
       signIn,
       signUp,
       loginAs,
@@ -495,6 +526,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       authReady,
       error,
       refresh,
+      updateAvailability,
       signIn,
       signUp,
       loginAs,

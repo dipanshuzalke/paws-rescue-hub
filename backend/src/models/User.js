@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     lastLoginAt: { type: Date, default: null },
+    lastSeenAt: { type: Date, default: null, index: true },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );

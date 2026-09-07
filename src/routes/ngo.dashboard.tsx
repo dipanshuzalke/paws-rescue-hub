@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Clock, Inbox, ShieldCheck, Timer, Truck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -14,6 +14,7 @@ import {
 import { AssignDialog } from "@/components/ngo/assign-dialog";
 import { MapView } from "@/components/maps/map-view";
 import { AvailabilityBadge, PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
+import { PresenceBadge } from "@/components/shared/presence-badge";
 import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState, StatSkeletonRow } from "@/components/shared/states";
@@ -56,7 +57,7 @@ function NgoDashboard() {
   const { reports, apiMode } = useApp();
   const [assignTarget, setAssignTarget] = useState<RescueReport | null>(null);
 
-  const { data: rescuersData, loading: rescuersLoading } = useAsync(
+  const { data: rescuersData, loading: rescuersLoading, retry: retryRescuers } = useAsync(
     () =>
       apiMode
         ? ngoService.getRescuers({ limit: 50 }).then((r) => r.items)
@@ -64,6 +65,12 @@ function NgoDashboard() {
     [apiMode],
   );
   const rescuers = rescuersData ?? [];
+
+  useEffect(() => {
+    if (!apiMode) return;
+    const interval = window.setInterval(retryRescuers, 30_000);
+    return () => window.clearInterval(interval);
+  }, [apiMode, retryRescuers]);
 
   const { data: monthlyData, loading: chartLoading } = useAsync(
     () =>
@@ -252,7 +259,10 @@ function NgoDashboard() {
                   {r.activeCases} active · {r.distanceKm} km
                 </p>
               </div>
-              <AvailabilityBadge value={r.availability} />
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <AvailabilityBadge value={r.availability} />
+                <PresenceBadge online={r.isOnline ?? false} />
+              </div>
             </li>
           ))}
         </ul>

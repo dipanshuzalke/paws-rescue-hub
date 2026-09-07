@@ -9,6 +9,7 @@ import * as analyticsService from "../services/analyticsService.js";
 
 const ACTIVE_STATUSES = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 const COMPLETED_STATUSES = ["RESCUED", "CLOSED"];
+const PRESENCE_WINDOW_MS = 90 * 1000;
 
 const REPORT_POPULATE = [
   { path: "reporter", select: "name email phone" },
@@ -104,10 +105,25 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 });
 
 export const getRescuers = asyncHandler(async (req, res) => {
+  const { page, limit, skip, sort } = parseQueryOptions(req.query, { defaultSort: "name" });
   const filter = { role: "RESCUER" };
   if (req.query.organization) filter.organization = req.query.organization;
-  const rescuers = await User.find(filter).sort({ name: 1 });
-  return ok(res, rescuers);
+  if (req.query.search) {
+    const rx = new RegExp(req.query.search, "i");
+    filter.$or = [{ name: rx }, { email: rx }, { phone: rx }];
+  }
+  const [rescuers, total] = await Promise.all([
+    User.find(filter).sort(sort).skip(skip).limit(limit),
+    User.countDocuments(filter),
+  ]);
+  const now = Date.now();
+  const items = rescuers.map((rescuer) => ({
+    ...rescuer.toJSON(),
+    isOnline:
+      rescuer.availability !== "OFFLINE" &&
+      Boolean(rescuer.lastSeenAt && now - new Date(rescuer.lastSeenAt).getTime() <= PRESENCE_WINDOW_MS),
+  }));
+  return list(res, items, buildPagination({ page, limit, total }));
 });
 
 export const getReports = asyncHandler(async (req, res) => {
@@ -145,10 +161,12 @@ export const getNgos = asyncHandler(async (req, res) => {
   const rescuerMap = new Map(rescuerCounts.map((r) => [String(r._id), r.count]));
   const caseMap = new Map(caseCounts.map((c) => [String(c._id), c.count]));
 
+  const now = Date.now();
   const items = orgs.map((org) => ({
     ...org.toObject(),
     rescuerCount: rescuerMap.get(String(org._id)) || 0,
     caseCount: caseMap.get(String(org._id)) || 0,
+    isOnline: Boolean(org.lastSeenAt && now - new Date(org.lastSeenAt).getTime() <= PRESENCE_WINDOW_MS),
   }));
 
   return list(res, items, buildPagination({ page, limit, total }));

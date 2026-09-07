@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, Building2, CheckCircle2, Eye, MoreHorizontal, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { NgoDetailDialog } from "@/components/admin/ngo-detail-dialog";
@@ -9,6 +9,7 @@ import { FilterBar, FilterSelect, SearchBar } from "@/components/shared/filter-b
 import { PageHeader } from "@/components/shared/page-header";
 import { CardSkeletonGrid, EmptyState } from "@/components/shared/states";
 import { UserStatusBadge } from "@/components/shared/status-badge";
+import { PresenceBadge } from "@/components/shared/presence-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +63,12 @@ function AdminNgos() {
 
   const list = ngos ?? data ?? [];
 
+  useEffect(() => {
+    if (!apiMode) return;
+    const interval = window.setInterval(retry, 30_000);
+    return () => window.clearInterval(interval);
+  }, [apiMode, retry]);
+
   const filtered = useMemo(() => {
     return list.filter((n) => {
       if (verification !== "all" && n.verification !== verification) return false;
@@ -75,17 +82,25 @@ function AdminNgos() {
     });
   }, [list, verification, search]);
 
-  const applyAction = () => {
+  const applyAction = async () => {
     if (!confirm) return;
     const { ngo, action } = confirm;
-    const verification = action === "approve" ? "VERIFIED" : "REJECTED";
-    setNgos((prev) =>
-      (prev ?? list).map((n) => (n.id === ngo.id ? { ...n, verification } : n)),
-    );
-    toast.success(
-      action === "approve" ? `${ngo.name} has been approved.` : `${ngo.name} has been rejected.`,
-    );
-    setConfirm(null);
+    const nextVerification: NGO["verification"] =
+      action === "approve" ? "VERIFIED" : "REJECTED";
+    try {
+      const updated: NGO = apiMode
+        ? action === "approve"
+          ? await adminService.verifyNgo(ngo.id)
+          : await adminService.rejectNgo(ngo.id)
+        : { ...ngo, verification: nextVerification };
+      setNgos((prev) => (prev ?? list).map((n) => (n.id === ngo.id ? updated : n)));
+      toast.success(
+        action === "approve" ? `${ngo.name} has been approved.` : `${ngo.name} has been rejected.`,
+      );
+      setConfirm(null);
+    } catch {
+      toast.error(`Could not ${action === "approve" ? "approve" : "reject"} ${ngo.name}. Please try again.`);
+    }
   };
 
   return (
@@ -162,6 +177,7 @@ function AdminNgos() {
               <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{ngo.about}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <UserStatusBadge status={ngo.status} />
+                <PresenceBadge online={ngo.isOnline ?? false} />
                 <Badge variant="outline" className={verificationTone[ngo.verification]}>
                   {ngo.verification}
                 </Badge>

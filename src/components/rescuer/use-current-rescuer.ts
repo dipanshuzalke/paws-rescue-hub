@@ -26,7 +26,7 @@ export function useCurrentRescuer(): Rescuer {
     return {
       ...(user as Rescuer),
       role: "rescuer",
-      availability: "Offline",
+      availability: user?.availability ?? "Offline",
       distanceKm: 0,
       activeCases: stats?.activeRescues ?? 0,
       completedCases: stats?.completedRescues ?? 0,
@@ -34,6 +34,7 @@ export function useCurrentRescuer(): Rescuer {
       rating: 0,
       ngoId: user?.organization ?? "",
       coords: { lat: 21.1458, lng: 79.0882 },
+      isOnline: user?.isOnline ?? false,
     };
   }, [apiMode, stats, user]);
 }

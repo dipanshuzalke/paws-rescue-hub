@@ -65,8 +65,12 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   user.lastLoginAt = new Date();
+  user.lastSeenAt = user.lastLoginAt;
   await user.save();
   await ensureOrganization(user);
+  if (user.role === "NGO" && user.organization) {
+    await Organization.findByIdAndUpdate(user.organization, { lastSeenAt: user.lastSeenAt });
+  }
 
   const token = signToken(user._id);
   setAuthCookie(res, token);
@@ -76,6 +80,15 @@ export const login = asyncHandler(async (req, res) => {
 
 export const me = asyncHandler(async (req, res) => {
   return ok(res, { user: req.user });
+});
+
+export const heartbeat = asyncHandler(async (req, res) => {
+  const now = new Date();
+  const user = await User.findByIdAndUpdate(req.user._id, { lastSeenAt: now }, { new: true });
+  if (user?.role === "NGO" && user.organization) {
+    await Organization.findByIdAndUpdate(user.organization, { lastSeenAt: now });
+  }
+  return ok(res, { lastSeenAt: now });
 });
 
 export const logout = asyncHandler(async (_req, res) => {
