@@ -79,7 +79,7 @@ const rescueReportSchema = new mongoose.Schema(
     animalCount: { type: Number, default: 1, min: 1, max: 100 },
     condition: { type: String, enum: CONDITIONS, required: true, index: true },
     emergencyLevel: { type: String, enum: EMERGENCY_LEVELS, required: true, index: true },
-    description: { type: String, required: true, trim: true, minlength: 0, maxlength: 4000 },
+    description: { type: String, default: "", trim: true, maxlength: 4000 },
     images: { type: [imageSchema], default: [] },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },

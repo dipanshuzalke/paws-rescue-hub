@@ -46,7 +46,7 @@ export interface CreateReportInput {
   count: number;
   condition: Condition;
   emergency: Emergency;
-  description: string;
+  description?: string;
   contactPhone: string,
   address: string;
   area: string;
@@ -79,8 +79,7 @@ async createReport(input: CreateReportInput): Promise<RescueReport> {
     form.append("animalCount", String(input.count));
     form.append("condition", toApiCondition(input.condition));
     form.append("emergencyLevel", input.emergency);
-    const safeDescription = input.description.trim() || `Need rescue assistance for ${input.animal.toLowerCase()} at ${input.area || input.address}`;
-    form.append("description", safeDescription);
+    form.append("description", input.description?.trim() ?? "");
     form.append("contactPhone", input.contactPhone)
     form.append("address", input.address);
     form.append("area", input.area);

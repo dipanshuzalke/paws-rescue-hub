@@ -92,7 +92,7 @@ function CitizenReport() {
     errors[1] = "Please detect your location and confirm the address and area to continue.";
   }
 
-  const canProceed = step === 0 ? !errors[0] : step === 1 ? !errors[1] : true;
+  const canProceed = !errors[step];
 
   <Button
     type="button"
@@ -556,7 +556,7 @@ function CitizenReport() {
               {/* Description */}
               <div className="mt-5">
                 <Label className="mb-2 block" htmlFor="description">
-                  Description <span className="text-destructive">*</span>
+                  Description <span className="text-muted-foreground">(optional)</span>
                 </Label>
 
                 <Textarea
@@ -740,7 +740,7 @@ function CitizenReport() {
             Next
           </Button>
         ) : (
-          <Button onClick={() => void handleSubmit()} disabled={submitting}>
+          <Button onClick={() => void handleSubmit()} disabled={submitting || !canProceed}>
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             Submit report
           </Button>

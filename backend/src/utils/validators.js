@@ -54,7 +54,7 @@ export const createReportSchema = z.object({
   animalCount: numberFromAny(z.number().int().min(1).max(100)).optional().default(1),
   condition: z.enum(CONDITIONS),
   emergencyLevel: z.enum(EMERGENCY_LEVELS),
-  description: z.string().trim().min(10, "Description must be at least 10 characters"),
+  description: z.string().trim().max(4000).optional().default(""),
   contactPhone: z.string().trim().min(1, "Contact number is required"),
   address: z.string().trim().min(1, "Address is required"),
   area: z.string().trim().optional().default(""),

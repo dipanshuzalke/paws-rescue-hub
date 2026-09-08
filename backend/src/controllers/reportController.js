@@ -42,7 +42,7 @@ export const createReport = asyncHandler(async (req, res) => {
     animalCount: body.animalCount,
     condition: body.condition,
     emergencyLevel: body.emergencyLevel,
-    description: body.description,
+    description: body.description || "",
     contactPhone: body.contactPhone,
     images,
     location: { type: "Point", coordinates: [body.longitude, body.latitude] },

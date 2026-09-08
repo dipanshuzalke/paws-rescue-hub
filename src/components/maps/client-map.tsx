@@ -47,7 +47,7 @@ function MapCenterController({
             [first.coords.lat, first.coords.lng],
             16,
             {
-                animate: true,
+                animate: false,
             },
         );
     }, [markers, map]);

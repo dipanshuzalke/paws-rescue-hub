@@ -23,7 +23,7 @@ interface NewReportInput {
   count: number;
   condition: RescueReport["condition"];
   emergency: RescueReport["emergency"];
-  description: string;
+  description?: string;
   contactPhone: string,
   address: string;
   area: string;
@@ -320,7 +320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           count: input.count,
           condition: input.condition,
           emergency: input.emergency,
-          description: input.description,
+          description: input.description ?? "",
           contactPhone: input.contactPhone,
           address: input.address,
           area: input.area,
@@ -345,7 +345,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         emergency: input.emergency,
         status: "REPORTED",
         title: `${input.condition} ${input.animal}`,
-        description: input.description,
+        description: input.description ?? "",
         images: input.images,
         address: input.address,
         area: input.area,
