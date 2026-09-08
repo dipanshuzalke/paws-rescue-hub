@@ -1,7 +1,18 @@
 import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { CheckCircle2, ImagePlus, Loader2, Locate, MapPin, Minus, Plus, X } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  Locate,
+  MapPin,
+  Minus,
+  Plus,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -49,6 +60,7 @@ function CitizenReport() {
   const { createReport } = useApp();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState<string | null>(null);
@@ -159,14 +171,23 @@ function CitizenReport() {
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
-    const next: WizardImage[] = Array.from(files)
-      .filter((f) => f.type.startsWith("image/"))
-      .map((f) => ({
-        id: `${f.name}-${Date.now()}-${Math.random()}`,
-        url: URL.createObjectURL(f),
-        file: f,
-      }));
-    setImages((prev) => [...prev, ...next].slice(0, 6));
+
+    setImages((prev) => {
+      const remainingSlots = 6 - prev.length;
+
+      if (remainingSlots <= 0) return prev;
+
+      const next: WizardImage[] = Array.from(files)
+        .filter((f) => f.type.startsWith("image/"))
+        .slice(0, remainingSlots)
+        .map((f) => ({
+          id: `${f.name}-${Date.now()}-${Math.random()}`,
+          url: URL.createObjectURL(f),
+          file: f,
+        }));
+
+      return [...prev, ...next];
+    });
   };
 
   const removeImage = (id: string) => {
@@ -495,38 +516,92 @@ function CitizenReport() {
                     addFiles(e.dataTransfer.files);
                   }}
                   className={cn(
-                    "flex min-h-32 flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors",
+                    "rounded-xl border-2 border-dashed p-6 transition-colors",
                     dragOver
                       ? "border-primary bg-primary-soft/40"
                       : "border-border hover:border-primary/50",
                   )}
                 >
-                  <ImagePlus className="mb-2 h-7 w-7 text-muted-foreground" aria-hidden="true" />
+                  {/* Icon */}
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <ImagePlus className="mb-2 h-7 w-7 text-muted-foreground" aria-hidden="true" />
 
-                  <p className="text-sm text-muted-foreground">
-                    Drag & drop photos or{" "}
-                    <button
+                    <p className="text-sm font-medium">Add photos of the animal</p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Capture a live photo or upload existing photos
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
+                    {/* Take Photo */}
+                    <Button
                       type="button"
-                      className="font-semibold text-primary hover:underline"
-                      onClick={() => fileInputRef.current?.click()}
+                      variant="default"
+                      disabled={images.length >= 6}
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="gap-2"
                     >
-                      browse
-                    </button>
+                      <Camera className="h-4 w-4" aria-hidden="true" />
+                      Take Photo
+                    </Button>
+
+                    {/* Upload Photos */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={images.length >= 6}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      <Upload className="h-4 w-4" aria-hidden="true" />
+                      Upload Photos
+                    </Button>
+                  </div>
+
+                  {/* Drag & Drop text */}
+                  <p className="mt-4 text-center text-xs text-muted-foreground">
+                    You can also drag & drop photos here
                   </p>
 
-                  <p className="mt-1 text-xs text-muted-foreground">Up to 6 photos</p>
+                  <p className="mt-1 text-center text-xs text-muted-foreground">
+                    {images.length}/6 photos added
+                  </p>
 
+                  {/* Normal Upload Input */}
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     multiple
                     className="hidden"
-                    onChange={(e) => addFiles(e.target.files)}
+                    onChange={(e) => {
+                      addFiles(e.target.files);
+
+                      // Allow selecting the same file again later
+                      e.target.value = "";
+                    }}
+                  />
+
+                  {/* Camera Input */}
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      addFiles(e.target.files);
+
+                      // Allow capturing another photo after deleting/reselecting
+                      e.target.value = "";
+                    }}
                   />
                 </div>
 
-                {images.length > 0 ? (
+                {/* Image Preview */}
+                {images.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {images.map((img) => (
                       <div
@@ -550,7 +625,7 @@ function CitizenReport() {
                       </div>
                     ))}
                   </div>
-                ) : null}
+                )}
               </div>
 
               {/* Description */}
