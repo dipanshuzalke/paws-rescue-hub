@@ -109,13 +109,9 @@ api.interceptors.response.use(
     const requestUrl = error.config?.url ?? "";
     const isSessionProbe = requestUrl.endsWith("/auth/me");
 
-    if (
-      error.response?.status === 401 &&
-      !isSessionProbe &&
-      typeof window !== "undefined"
-    ) {
+    if (error.response?.status === 401 && typeof window !== "undefined") {
       setToken(null);
-      if (!window.location.pathname.startsWith("/login")) {
+      if (!isSessionProbe && !window.location.pathname.startsWith("/login")) {
         window.location.assign("/login");
       }
     }

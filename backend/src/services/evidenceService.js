@@ -1,5 +1,6 @@
 import { ApiError } from "../utils/apiError.js";
 import { RescueHistory } from "../models/RescueHistory.js";
+import { RescueReport } from "../models/RescueReport.js";
 import { User } from "../models/User.js";
 import { notifyUsers, notifyRole } from "./notificationService.js";
 import { transitionReport, populateReport } from "./rescueService.js";
