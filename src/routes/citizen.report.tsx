@@ -172,18 +172,31 @@ function CitizenReport() {
   const addFiles = (files: FileList | null) => {
     if (!files) return;
 
+    const selectedFiles = Array.from(files);
+    const imageFiles = selectedFiles.filter((file) => {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+      return (
+        file.type.startsWith("image/") ||
+        ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(extension ?? "")
+      );
+    });
+
+    if (imageFiles.length === 0) {
+      toast.error("The captured file could not be read as an image. Please try again.");
+      return;
+    }
+
     setImages((prev) => {
       const remainingSlots = 6 - prev.length;
 
       if (remainingSlots <= 0) return prev;
 
-      const next: WizardImage[] = Array.from(files)
-        .filter((f) => f.type.startsWith("image/"))
+      const next: WizardImage[] = imageFiles
         .slice(0, remainingSlots)
-        .map((f) => ({
-          id: `${f.name}-${Date.now()}-${Math.random()}`,
-          url: URL.createObjectURL(f),
-          file: f,
+        .map((file) => ({
+          id: `${file.name}-${Date.now()}-${Math.random()}`,
+          url: URL.createObjectURL(file),
+          file,
         }));
 
       return [...prev, ...next];
