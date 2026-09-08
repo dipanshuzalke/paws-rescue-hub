@@ -105,7 +105,7 @@ function Register() {
     if (!form.name.trim()) next.name = "Full name is required.";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Enter a valid email address.";
     if (!/^[+\d][\d\s-]{7,}$/.test(form.phone)) next.phone = "Enter a valid phone number.";
-    if (form.password.length < 6) next.password = "Password must be at least 6 characters.";
+    if (form.password.length < 8) next.password = "Password must be at least 8 characters.";
     if (form.confirmPassword !== form.password) next.confirmPassword = "Passwords do not match.";
     if (!form.location.trim()) next.location = "Location is required.";
     if (role === "rescuer" && !form.organization.trim())
@@ -298,6 +298,7 @@ function Register() {
             <Input
               id="password"
               type="password"
+              minLength={8}
               value={form.password}
               onChange={(e) => set("password", e.target.value)}
             />
@@ -308,6 +309,7 @@ function Register() {
             <Input
               id="confirmPassword"
               type="password"
+              minLength={8}
               value={form.confirmPassword}
               onChange={(e) => set("confirmPassword", e.target.value)}
             />

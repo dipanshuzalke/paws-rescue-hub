@@ -38,8 +38,8 @@ const roleHome: Record<Role, string> = {
 function Login() {
   const { signIn } = useApp();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("citizen@demo.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
