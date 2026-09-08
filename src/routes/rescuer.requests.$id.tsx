@@ -197,12 +197,14 @@ function RescuerRequestDetail() {
                   <Phone className="h-4 w-4" aria-hidden="true" /> Call
                 </a>
               </Button>
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => toast("Messaging is not available in this demo.")}
-              >
-                <MessageCircle className="h-4 w-4" aria-hidden="true" /> Message
+              <Button variant="outline" className="flex-1" asChild disabled={!report.reporterPhone}>
+                <a
+                  href={`sms:${report.reporterPhone}?body=${encodeURIComponent(
+                    `Hello ${report.reporterName}, this is ${user?.name ?? "your rescuer"} from ResQ Paws regarding report #${report.id}.`,
+                  )}`}
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" /> Message
+                </a>
               </Button>
             </div>
           </section>
