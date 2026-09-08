@@ -180,7 +180,7 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] p-0">
+                <SheetContent side="left" className="z-[100] h-dvh w-[280px] overflow-y-auto bg-background p-0">
                   <SheetTitle className="sr-only">Dashboard navigation</SheetTitle>
                   <div className="border-b border-border p-4">
                     <Logo />

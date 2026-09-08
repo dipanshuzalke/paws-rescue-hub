@@ -101,7 +101,7 @@ export function DuplicateWarningDialog({
                 </p>
 
                 <p className="text-xs text-muted-foreground mt-1">
-                  Reported {Math.round(match.minutesAgo / 60)} hours ago · Report #{match.reportId}
+                  Reported {Math.round(match.minutesAgo / 60)} hours ago 
                 </p>
 
                 {match.reasons.length > 0 ? (

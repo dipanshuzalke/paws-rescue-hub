@@ -11,7 +11,9 @@ import { ACTIVE_REPORT_STATUSES } from "../utils/constants.js";
  *  Time proximity       0 - 15  (linear decay across the configured window)
  *  Condition match          5
  *
- *  >= 75  HIGH        >= 50  POSSIBLE        else LOW
+ *  A candidate is returned only when every duplicate signal matches. The
+ *  score remains useful for explaining confidence, but no single signal can
+ *  trigger a duplicate warning by itself.
  */
 const WEIGHTS = { distance: 45, animal: 35, time: 15, condition: 5 };
 
@@ -131,7 +133,14 @@ export async function findDuplicateCandidates({
         ],
       };
     })
-    .filter((m) => m.score >= threshold)
+    .filter(
+      (m) =>
+        m.score >= threshold &&
+        m.reasons.includes("Same animal type") &&
+        m.reasons.includes("Same reported condition") &&
+        m.distanceMeters <= cfg.radiusMeters &&
+        m.minutesAgo <= cfg.windowHours * 60,
+    )
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 

@@ -92,7 +92,7 @@ export function ClientMap({
 
     return (
         <div
-            className={`relative overflow-hidden rounded-xl ${height}`}
+            className={`relative isolate z-0 overflow-hidden rounded-xl ${height}`}
         >
             <MapContainer
                 center={center}
