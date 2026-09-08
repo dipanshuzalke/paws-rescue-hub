@@ -53,7 +53,7 @@ function NgoAnalytics() {
   const { reports, apiMode } = useApp();
   const [range, setRange] = useState<RangeKey["key"]>("30d");
 
-  const { data: overview } = useAsync(
+  const { data: overview, loading: overviewLoading } = useAsync(
     () => (apiMode ? analyticsService.getOverview() : Promise.resolve(null)),
     [apiMode],
   );
@@ -72,15 +72,19 @@ function NgoAnalytics() {
       ? overview.totalReports
         ? Math.round((overview.completedRescues / overview.totalReports) * 100)
         : 0
-      : reports.length
+      : !apiMode && reports.length
         ? Math.round((closed.length / reports.length) * 100)
         : 0;
     const durations = reports.filter((r) => r.durationMins).map((r) => r.durationMins!);
     const avgResponse = overview?.avgResponseMins ?? (durations.length
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
       : 0);
-    return { total: overview?.totalReports ?? reports.length, resolutionRate, avgResponse };
-  }, [overview, reports]);
+    return {
+      total: overview?.totalReports ?? (apiMode ? 0 : reports.length),
+      resolutionRate,
+      avgResponse,
+    };
+  }, [apiMode, overview, reports]);
 
   const trend = useMemo(() => {
     if (!apiMode || !monthly) return seriesForRange(range);
@@ -126,7 +130,6 @@ function NgoAnalytics() {
             value={range}
             onChange={(v) => setRange(v as RangeKey["key"])}
             label="Range"
-            allLabel="30 Days"
             options={rangeOptions.map((r) => ({ value: r.key, label: r.label }))}
             className="w-[150px]"
           />
@@ -134,9 +137,24 @@ function NgoAnalytics() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total cases" value={stats.total} icon={Activity} tone="neutral" />
-        <StatCard label="Resolution rate" value={`${stats.resolutionRate}%`} icon={ShieldCheck} tone="success" />
-        <StatCard label="Avg response time" value={`${stats.avgResponse} min`} icon={Timer} tone="warning" />
+        <StatCard
+          label="Total cases"
+          value={overviewLoading && apiMode ? "…" : stats.total}
+          icon={Activity}
+          tone="neutral"
+        />
+        <StatCard
+          label="Resolution rate"
+          value={overviewLoading && apiMode ? "…" : `${stats.resolutionRate}%`}
+          icon={ShieldCheck}
+          tone="success"
+        />
+        <StatCard
+          label="Avg response time"
+          value={overviewLoading && apiMode ? "…" : `${stats.avgResponse} min`}
+          icon={Timer}
+          tone="warning"
+        />
         <StatCard label="Areas covered" value={areaBreakdown.length} icon={Building2} tone="info" />
       </div>
 

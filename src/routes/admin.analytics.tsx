@@ -63,6 +63,11 @@ function AdminAnalytics() {
     [apiMode],
   );
   const [range, setRange] = useState<RangeKey["key"]>("30d");
+  const overviewState = useAsync(
+    () => (apiMode ? analyticsService.getOverview() : Promise.resolve(null)),
+    [apiMode],
+  );
+  const overview = overviewState.data;
 
   const loading = reportsState.loading || ngosState.loading;
   const reports = reportsState.data ?? [];
@@ -70,19 +75,25 @@ function AdminAnalytics() {
 
   const stats = useMemo(() => {
     const closed = reports.filter((r) => r.status === "RESCUED" || r.status === "CLOSED");
-    const resolutionRate = reports.length ? Math.round((closed.length / reports.length) * 100) : 0;
+    const resolutionRate = overview
+      ? overview.totalReports
+        ? Math.round((overview.completedRescues / overview.totalReports) * 100)
+        : 0
+      : reports.length
+        ? Math.round((closed.length / reports.length) * 100)
+        : 0;
     const durations = reports.filter((r) => r.durationMins).map((r) => r.durationMins!);
     const avgResponse = durations.length
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
       : 0;
-    const critical = reports.filter((r) => r.emergency === "CRITICAL").length;
+    const critical = overview?.criticalCases ?? reports.filter((r) => r.emergency === "CRITICAL").length;
     return {
-      total: reports.length,
+      total: overview?.totalReports ?? reports.length,
       resolutionRate,
-      avgResponse,
+      avgResponse: overview?.avgResponseMins ?? avgResponse,
       critical,
     };
-  }, [reports]);
+  }, [overview, reports]);
 
   const trendState = useAsync(
     () =>
@@ -133,7 +144,6 @@ function AdminAnalytics() {
             value={range}
             onChange={(v) => setRange(v as RangeKey["key"])}
             label="Range"
-            allLabel="30 Days"
             options={rangeOptions.map((r) => ({ value: r.key, label: r.label }))}
             className="w-[150px]"
           />

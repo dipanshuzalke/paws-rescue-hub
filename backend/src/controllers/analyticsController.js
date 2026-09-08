@@ -8,7 +8,11 @@ function scopeFor(user) {
     case "ADMIN":
       return {};
     case "NGO":
-      return { assignedOrganization: user.organization };
+      // NGO operations include both their assigned cases and the shared
+      // unassigned queue shown on the NGO requests/dashboard pages.
+      return {
+        $or: [{ assignedOrganization: null }, { assignedOrganization: user.organization }],
+      };
     case "RESCUER":
       return { assignedRescuer: user._id };
     case "CITIZEN":
