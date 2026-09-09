@@ -76,8 +76,11 @@ function NgoNotifications() {
           {filtered.map((n) => (
             <li
               key={n.id}
+              onClick={() => {
+                if (!n.read) markRead(n.id);
+              }}
               className={cn(
-                "card-surface flex items-start gap-3 p-4",
+                "card-surface flex cursor-pointer items-start gap-3 p-4",
                 !n.read && "border-primary/30 bg-primary-soft/20",
               )}
             >
@@ -97,7 +100,10 @@ function NgoNotifications() {
                   size="sm"
                   variant="ghost"
                   aria-label="Mark as read"
-                  onClick={() => markRead(n.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    markRead(n.id);
+                  }}
                 >
                   <Check className="h-4 w-4" aria-hidden="true" />
                 </Button>

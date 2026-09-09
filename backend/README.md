@@ -39,6 +39,14 @@ For Gmail, use an [App Password](https://support.google.com/accounts/answer/1858
 rather than your normal password. `CLIENT_URL` must be the public frontend URL so
 the link in the email opens the reset-password page.
 
+In production, set `CLIENT_URL` to your deployed frontend URL and use an SMTP
+provider reachable from your host. Gmail uses `smtp.gmail.com`, port `587`, and
+`SMTP_SECURE=false`; port `465` requires `SMTP_SECURE=true`. The server limits
+mail connection, greeting, and socket waits to 10–15 seconds by default so a
+blocked SMTP connection does not outlast the frontend request. Override these
+with `SMTP_CONNECTION_TIMEOUT_MS`, `SMTP_GREETING_TIMEOUT_MS`, and
+`SMTP_SOCKET_TIMEOUT_MS` only when needed.
+
 ## Database Seeding
 
 The project includes a comprehensive seeding script to populate the database with demo data (Nagpur area).

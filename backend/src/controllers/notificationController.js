@@ -1,6 +1,30 @@
 import { Notification } from "../models/Notification.js";
 import { asyncHandler, ApiError } from "../utils/apiError.js";
 import { ok, list, buildPagination, parseQueryOptions } from "../utils/apiResponse.js";
+import { subscribeToNotifications } from "../services/realtimeNotificationService.js";
+
+/** Keeps an authenticated client open and pushes newly persisted notifications. */
+export const streamNotifications = (req, res) => {
+  res.status(200).set({
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+  res.flushHeaders();
+  res.write("retry: 3000\n\n");
+
+  const unsubscribe = subscribeToNotifications(req.user._id, (payload) => {
+    res.write(`event: notification\ndata: ${payload}\n\n`);
+  });
+  const heartbeat = setInterval(() => res.write(": keep-alive\n\n"), 25_000);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+    res.end();
+  });
+};
 
 export const getNotifications = asyncHandler(async (req, res) => {
   const { page, limit, skip, sort } = parseQueryOptions(req.query, { defaultSort: "createdAt" });

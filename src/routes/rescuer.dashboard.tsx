@@ -7,6 +7,7 @@ import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/states";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -41,13 +42,19 @@ export const Route = createFileRoute("/rescuer/dashboard")({
 const emergencyOrder: Record<Emergency, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
 function RescuerDashboard() {
-  const { reports, user, updateAvailability } = useApp();
+  const { reports, user, updateAvailability, updateStatus, refresh } = useApp();
   const rescuer = useCurrentRescuer();
   const [availability, setAvailability] = useState(rescuer.availability);
 
   useEffect(() => {
     setAvailability(rescuer.availability);
   }, [rescuer.availability]);
+
+  // Reconcile assignments when the dashboard opens, including cases assigned
+  // while the rescuer was offline.
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const incoming = useMemo(
     () =>
@@ -189,11 +196,7 @@ function RescuerDashboard() {
             <ul className="space-y-3">
               {incoming.map((r) => (
                 <li key={r.id}>
-                  <Link
-                    to="/rescuer/requests/$id"
-                    params={{ id: r.id }}
-                    className="card-surface flex items-center gap-3 p-3 transition-shadow hover:shadow-[var(--shadow-pop)]"
-                  >
+                  <div className="card-surface flex items-center gap-3 p-3 transition-shadow hover:shadow-[var(--shadow-pop)]">
                     <img
                       src={r.images[0]}
                       alt=""
@@ -206,7 +209,25 @@ function RescuerDashboard() {
                       </p>
                     </div>
                     <PriorityBadge level={r.emergency} className="shrink-0" />
-                  </Link>
+                    {r.status === "ASSIGNED" && r.rescuerId === user?.id ? (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          updateStatus(r.id, "ACCEPTED", `Accepted by ${user?.name ?? "rescuer"}.`);
+                          toast.success("Rescue accepted. Open the case to begin.");
+                        }}
+                      >
+                        Accept
+                      </Button>
+                    ) : null}
+                    <Link
+                      to="/rescuer/requests/$id"
+                      params={{ id: r.id }}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      View
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>

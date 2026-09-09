@@ -3,6 +3,7 @@ import { authenticateUser } from "../middleware/authMiddleware.js";
 import {
   getNotifications,
   getUnread,
+  streamNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
@@ -13,6 +14,7 @@ const router = Router();
 router.use(authenticateUser);
 
 router.get("/", getNotifications);
+router.get("/stream", streamNotifications);
 router.get("/unread", getUnread);
 router.patch("/read-all", markAllAsRead);
 router.patch("/:id/read", markAsRead);

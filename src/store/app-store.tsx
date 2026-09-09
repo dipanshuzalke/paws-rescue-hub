@@ -10,6 +10,7 @@ import { reportService } from "@/services/reportService";
 import { rescueService } from "@/services/rescueService";
 import { ngoService } from "@/services/ngoService";
 import { notificationService } from "@/services/notificationService";
+import { toast } from "sonner";
 import type {
   AppNotification,
   RescueReport,
@@ -219,15 +220,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isApiEnabled || !user) return;
-    const refreshNotifications = () => {
-      void notificationService
-        .getNotifications({ limit: 50 })
-        .then((result) => setNotifications(result.items))
-        .catch(() => undefined);
+    let stopped = false;
+    let hasCompletedInitialSync = false;
+    const knownNotificationIds = new Set<string>();
+
+    const receiveNotification = (notification: AppNotification, showToast: boolean) => {
+      if (knownNotificationIds.has(notification.id)) return;
+      knownNotificationIds.add(notification.id);
+      setNotifications((previous) => [notification, ...previous].sort(
+        (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+      ));
+      if (!showToast) return;
+      // A streamed notification is new to this browser session, so surface it
+      // immediately regardless of its type or the recipient's role.
+      toast(notification.title, {
+        description: notification.body,
+        duration: notification.kind === "assignment" ? 10_000 : 6_000,
+      });
+
+      if (user.role === "rescuer" && notification.kind === "assignment") {
+        const reportId = notification.link?.split("/").filter(Boolean).at(-1);
+        if (reportId) {
+          void rescueService
+            .getRescueById(reportId)
+            .then((report) =>
+              setReports((previous) => [
+                report,
+                ...previous.filter((item) => item.id !== report.id),
+              ]),
+            )
+          .catch(() => undefined);
+        }
+      }
     };
-    refreshNotifications();
-    const interval = window.setInterval(refreshNotifications, 5_000);
-    return () => window.clearInterval(interval);
+
+    const syncNotifications = async () => {
+      try {
+        const { items } = await notificationService.getNotifications({ limit: 50 });
+        if (stopped) return;
+        if (!hasCompletedInitialSync) {
+          hasCompletedInitialSync = true;
+          items.forEach((notification) => knownNotificationIds.add(notification.id));
+          setNotifications(items);
+          return;
+        }
+        items.forEach((notification) => receiveNotification(notification, true));
+        setNotifications(items);
+      } catch {
+        // The stream continues to provide updates when an occasional fetch fails.
+      }
+    };
+
+    const unsubscribe = notificationService.subscribe((notification) => receiveNotification(notification, true));
+    void syncNotifications();
+    const interval = window.setInterval(() => void syncNotifications(), 5_000);
+    return () => {
+      stopped = true;
+      window.clearInterval(interval);
+      unsubscribe();
+    };
   }, [isApiEnabled, user]);
 
   const signIn = useCallback(
@@ -505,14 +556,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const markRead = useCallback((id: string) => {
-    if (isApiEnabled) void notificationService.markRead(id).catch(() => undefined);
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    // Ignore repeated clicks so an already-read item cannot issue another API call.
+    setNotifications((prev) => {
+      const notification = prev.find((item) => item.id === id);
+      if (!notification || notification.read) return prev;
+      return prev.map((item) => (item.id === id ? { ...item, read: true } : item));
+    });
+    if (isApiEnabled) {
+      void notificationService.markRead(id).catch(() => {
+        // Restore the unread state when the server did not persist the change.
+        setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, read: false } : item)));
+        toast.error("Could not mark notification as read. Please try again.");
+      });
+    }
   }, []);
 
   const markAllRead = useCallback(() => {
-    if (isApiEnabled) void notificationService.markAllRead().catch(() => undefined);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
+    if (isApiEnabled) {
+      void notificationService.markAllRead().catch(() => {
+        void refresh();
+        toast.error("Could not mark all notifications as read. Please try again.");
+      });
+    }
+  }, [refresh]);
 
   const deleteReport = useCallback((id: string) => {
     if (isApiEnabled) void reportService.deleteReport(id).catch(() => undefined);
@@ -525,7 +592,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       role: user?.role ?? null,
       reports,
       notifications,
-      unreadCount: notifications.filter((n) => !n.read).length,
+      unreadCount: notifications.filter(
+        (notification) =>
+          !notification.read &&
+          (notification.role === user?.role || notification.role === "all"),
+      ).length,
       apiMode: isApiEnabled,
       authReady,
       loading,

@@ -1,11 +1,12 @@
 import { Notification } from "../models/Notification.js";
 import { User } from "../models/User.js";
+import { publishNotification } from "./realtimeNotificationService.js";
 
 /** Creates a single notification. Never throws — logs and swallows failures. */
 export async function createNotification({ recipient, report, type, title, message, emergencyLevel, link }) {
   try {
     if (!recipient) return null;
-    return await Notification.create({
+    const notification = await Notification.create({
       recipient,
       report: report || null,
       type: type || "SYSTEM",
@@ -14,6 +15,8 @@ export async function createNotification({ recipient, report, type, title, messa
       emergencyLevel: emergencyLevel || null,
       link: link || "",
     });
+    publishNotification(notification);
+    return notification;
   } catch (err) {
     console.error("[notificationService] createNotification failed:", err.message);
     return null;

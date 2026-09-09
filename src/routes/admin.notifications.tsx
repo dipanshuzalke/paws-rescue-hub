@@ -76,8 +76,11 @@ function AdminNotifications() {
           {filtered.map((n) => (
             <li
               key={n.id}
+              onClick={() => {
+                if (!n.read) markRead(n.id);
+              }}
               className={cn(
-                "card-surface flex items-start gap-3 p-4",
+                "card-surface flex cursor-pointer items-start gap-3 p-4",
                 !n.read && "border-primary/30 bg-primary-soft/20",
               )}
             >
@@ -93,7 +96,15 @@ function AdminNotifications() {
                 <p className="mt-1 text-xs text-muted-foreground">{timeAgo(n.at)}</p>
               </div>
               {!n.read ? (
-                <Button size="sm" variant="ghost" aria-label="Mark as read" onClick={() => markRead(n.id)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Mark as read"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    markRead(n.id);
+                  }}
+                >
                   <Check className="h-4 w-4" aria-hidden="true" />
                 </Button>
               ) : null}

@@ -204,7 +204,14 @@ export function DashboardLayout({ role, children }: { role: Role; children: Reac
             </div>
 
             <div className="flex items-center gap-1.5">
-              <DropdownMenu>
+              <DropdownMenu
+                onOpenChange={(open) => {
+                  if (!open) return;
+                  roleNotifications.filter((notification) => !notification.read).forEach((notification) => {
+                    markRead(notification.id);
+                  });
+                }}
+              >
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications, ${unreadCount} unread`}>
                     <Bell className="h-5 w-5" />

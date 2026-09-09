@@ -35,10 +35,15 @@ function RescuerNotifications() {
   );
 
   const filtered = useMemo(() => {
-    if (tab === "unread") return mine.filter((n) => !n.read);
-    if (tab === "assignment") return mine.filter((n) => n.kind === "assignment");
-    if (tab === "system") return mine.filter((n) => n.kind === "system");
-    return mine;
+    const matching =
+      tab === "unread"
+        ? mine.filter((n) => !n.read)
+        : tab === "assignment"
+          ? mine.filter((n) => n.kind === "assignment")
+          : tab === "system"
+            ? mine.filter((n) => n.kind === "system")
+            : mine;
+    return [...matching].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }, [mine, tab]);
 
   const unreadCount = mine.filter((n) => !n.read).length;
@@ -71,8 +76,11 @@ function RescuerNotifications() {
           {filtered.map((n) => (
             <li
               key={n.id}
+              onClick={() => {
+                if (!n.read) markRead(n.id);
+              }}
               className={cn(
-                "card-surface flex items-start gap-3 p-4",
+                "card-surface flex cursor-pointer items-start gap-3 p-4",
                 !n.read && "border-primary/30 bg-primary-soft/20",
               )}
             >
@@ -92,7 +100,10 @@ function RescuerNotifications() {
                   size="sm"
                   variant="ghost"
                   aria-label="Mark as read"
-                  onClick={() => markRead(n.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    markRead(n.id);
+                  }}
                 >
                   <Check className="h-4 w-4" aria-hidden="true" />
                 </Button>

@@ -55,7 +55,10 @@ export const createReport = asyncHandler(async (req, res) => {
 
   await recordHistory({ report, user: req.user, previousStatus: "NONE", newStatus: "REPORTED", note: "Report created" });
 
-  await notifyRole(["NGO", "ADMIN"], {
+  // A newly reported case is also visible in the rescuer's available queue,
+  // so alert active rescuers immediately instead of waiting for an NGO to
+  // manually assign the case.
+  await notifyRole(["NGO", "ADMIN", "RESCUER"], {
     report: report._id,
     type: "NEW_REPORT",
     title: `New ${report.emergencyLevel} priority report`,
