@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Building2, CheckCircle2, Loader2, ShieldCheck, Users } from "lucide-react";
+import { Building2, CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck, Users } from "lucide-react";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -94,6 +94,7 @@ function Register() {
   const { signUp } = useApp();
   const [role, setRole] = useState<SignupRole>("citizen");
   const [form, setForm] = useState<FormState>(initialForm);
+  const [show, setShow] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [loading, setLoading] = useState(false);
 
@@ -182,7 +183,9 @@ function Register() {
             <span
               className={cn(
                 "grid h-9 w-9 place-items-center rounded-lg",
-                role === r.role ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                role === r.role
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               <r.icon className="h-4.5 w-4.5" aria-hidden="true" />
@@ -272,7 +275,9 @@ function Register() {
                   onChange={(e) => set("regNumber", e.target.value)}
                   placeholder="e.g. NGO/2019/00452"
                 />
-                {errors.regNumber ? <p className="text-xs text-destructive">{errors.regNumber}</p> : null}
+                {errors.regNumber ? (
+                  <p className="text-xs text-destructive">{errors.regNumber}</p>
+                ) : null}
               </div>
             </div>
             <div className="space-y-2">
@@ -295,13 +300,31 @@ function Register() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              minLength={8}
-              value={form.password}
-              onChange={(e) => set("password", e.target.value)}
-            />
+
+            <div className="relative">
+              <Input
+                id="password"
+                type={show ? "text" : "password"}
+                minLength={8}
+                value={form.password}
+                onChange={(e) => set("password", e.target.value)}
+                className="pr-10"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                aria-label={show ? "Hide password" : "Show password"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:text-foreground"
+              >
+                {show ? (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
             {errors.password ? <p className="text-xs text-destructive">{errors.password}</p> : null}
           </div>
           <div className="space-y-2">
@@ -340,7 +363,11 @@ function Register() {
         {errors.terms ? <p className="text-xs text-destructive">{errors.terms}</p> : null}
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+          )}
           Create {role === "ngo" ? "organisation" : role} account
         </Button>
       </form>

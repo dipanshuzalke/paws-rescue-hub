@@ -130,30 +130,6 @@ function Login() {
           Sign in
         </Button>
       </form>
-
-      <div className="mt-8">
-        {/* <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Demo accounts — one click
-        </p>
-        <div className="mt-3 grid gap-2">
-          {demoAccounts.map((a) => (
-            <button
-              key={a.role}
-              type="button"
-              onClick={() => void enterAsRole(a.role)}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:border-primary hover:bg-primary-soft/40"
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-foreground capitalize">
-                  {a.role} · {a.name}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">{a.blurb}</span>
-              </span>
-              <span className="shrink-0 text-xs font-medium text-primary">Enter</span>
-            </button>
-          ))}
-        </div> */}
-      </div>
     </AuthShell>
   );
 }
