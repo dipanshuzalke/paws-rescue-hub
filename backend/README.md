@@ -31,6 +31,14 @@ Sign up at [Cloudinary](https://cloudinary.com/) and obtain your API credentials
 
 ```
 
+### Password-reset email
+
+Password reset links are sent through SMTP. Copy `.env.example` to `.env` and set
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`.
+For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833)
+rather than your normal password. `CLIENT_URL` must be the public frontend URL so
+the link in the email opens the reset-password page.
+
 ## Database Seeding
 
 The project includes a comprehensive seeding script to populate the database with demo data (Nagpur area).

@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema(
     },
     phone: { type: String, required: [true, "Phone is required"], trim: true, maxlength: 24 },
     password: { type: String, required: true, minlength: 4, select: false },
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpiresAt: { type: Date, select: false },
     role: { type: String, enum: ROLES, default: "CITIZEN", index: true },
     profileImage: { url: String, publicId: String },
     location: { type: pointSchema, default: undefined },

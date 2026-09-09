@@ -37,6 +37,14 @@ export const authService = {
     return adaptUser(data.user);
   },
 
+  async forgotPassword(email: string): Promise<void> {
+    await unwrap(api.post("/auth/forgot-password", { email }));
+  },
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    await unwrap(api.post("/auth/reset-password", { token, password }));
+  },
+
   async me(): Promise<User> {
     const data = await unwrap<{ user: ApiUser }>(api.get("/auth/me"));
     return adaptUser(data.user);

@@ -3,6 +3,9 @@ import { Organization } from "../models/Organization.js";
 import { ApiError, asyncHandler } from "../utils/apiError.js";
 import { ok, created } from "../utils/apiResponse.js";
 import { signToken, setAuthCookie, clearAuthCookie } from "../middleware/authMiddleware.js";
+import crypto from "crypto";
+import { env } from "../config/env.js";
+import { sendPasswordResetEmail } from "../services/emailService.js";
 
 /**
  * NGO accounts must be backed by an Organization document, otherwise they show up
@@ -76,6 +79,50 @@ export const login = asyncHandler(async (req, res) => {
   setAuthCookie(res, token);
 
   return ok(res, { user, token }, "Logged in successfully");
+});
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const email = req.body.email.toLowerCase();
+  const user = await User.findOne({ email }).select("+passwordResetToken +passwordResetExpiresAt");
+
+  // Always use the same response so this endpoint cannot be used to discover accounts.
+  if (!user) return ok(res, null, "If an account exists for this email, a reset link is on its way.");
+
+  const token = crypto.randomBytes(32).toString("hex");
+  user.passwordResetToken = crypto.createHash("sha256").update(token).digest("hex");
+  user.passwordResetExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
+  await user.save({ validateBeforeSave: false });
+
+  const clientBaseUrl = env.clientUrl.split(",")[0].trim().replace(/\/$/, "");
+  const resetUrl = `${clientBaseUrl}/reset-password?token=${token}`;
+  try {
+    await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+  } catch (error) {
+    console.error("[auth] Password reset email delivery failed:", error);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpiresAt = undefined;
+    await user.save({ validateBeforeSave: false });
+    throw new ApiError(500, "We could not send the reset email. Please try again later.");
+  }
+
+  return ok(res, null, "If an account exists for this email, a reset link is on its way.");
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const tokenHash = crypto.createHash("sha256").update(req.body.token).digest("hex");
+  const user = await User.findOne({
+    passwordResetToken: tokenHash,
+    passwordResetExpiresAt: { $gt: new Date() },
+  }).select("+password +passwordResetToken +passwordResetExpiresAt");
+
+  if (!user) throw ApiError.badRequest("This reset link is invalid or has expired. Request a new one.");
+
+  user.password = req.body.password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpiresAt = undefined;
+  await user.save();
+
+  return ok(res, null, "Password reset successfully");
 });
 
 export const me = asyncHandler(async (req, res) => {

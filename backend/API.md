@@ -31,6 +31,16 @@ Manage user sessions and profiles.
 - **Role**: Public
 - **Body**: `{ email, password }`
 
+### `POST /api/auth/forgot-password`
+- **Role**: Public
+- **Body**: `{ email }`
+- **Description**: Sends a one-hour, single-use reset link if the account exists.
+
+### `POST /api/auth/reset-password`
+- **Role**: Public
+- **Body**: `{ token, password }`
+- **Description**: Updates the password for a valid reset link.
+
 ### `GET /api/auth/me`
 - **Role**: Authenticated
 - **Response Data**: Current user object.

@@ -6,6 +6,8 @@ import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiErrorMessage } from "@/lib/api-client";
+import { authService } from "@/services/authService";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -30,11 +32,16 @@ function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const token = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("token") ?? "";
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (!token) {
+      setError("This reset link is invalid or incomplete. Request a new one.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (password !== confirm) {
@@ -43,10 +50,14 @@ function ResetPassword() {
     }
     setError(null);
     setLoading(true);
-    window.setTimeout(() => {
+    try {
+      await authService.resetPassword(token, password);
       setLoading(false);
       setDone(true);
-    }, 800);
+    } catch (requestError) {
+      setLoading(false);
+      setError(apiErrorMessage(requestError));
+    }
   };
 
   if (done) {

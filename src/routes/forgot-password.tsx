@@ -6,6 +6,8 @@ import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiErrorMessage } from "@/lib/api-client";
+import { authService } from "@/services/authService";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -28,7 +30,7 @@ function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError("Enter a valid email address.");
@@ -36,10 +38,14 @@ function ForgotPassword() {
     }
     setError(null);
     setLoading(true);
-    window.setTimeout(() => {
+    try {
+      await authService.forgotPassword(email.trim());
       setLoading(false);
       setSent(true);
-    }, 800);
+    } catch (requestError) {
+      setLoading(false);
+      setError(apiErrorMessage(requestError));
+    }
   };
 
   if (sent) {
@@ -61,9 +67,6 @@ function ForgotPassword() {
             If an account exists for <span className="font-semibold">{email}</span>, a reset link is on
             its way. It usually arrives within a couple of minutes.
           </p>
-          <Button asChild className="mt-6 w-full">
-            <Link to="/reset-password">Simulate opening reset link</Link>
-          </Button>
         </div>
       </AuthShell>
     );

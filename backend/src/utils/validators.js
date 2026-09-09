@@ -22,6 +22,15 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email("A valid email is required"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().length(64, "Invalid reset link"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+});
+
 export const updateProfileSchema = z
   .object({
     name: z.string().trim().min(1).max(120).optional(),
