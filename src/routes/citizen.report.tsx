@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Camera,
   CheckCircle2,
@@ -61,6 +61,12 @@ function CitizenReport() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState<string | null>(null);
@@ -127,6 +133,101 @@ function CitizenReport() {
     )}
   </Button>;
 
+  const openCamera = async () => {
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+
+      setCameraStream(stream);
+      setCameraOpen(true);
+
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      });
+    } catch (error) {
+      console.error("Camera access failed:", error);
+      cameraInputRef.current?.click();
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) return;
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    if (!width || !height) return;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) return;
+
+    context.drawImage(video, 0, 0, width, height);
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+
+        const file = new File([blob], `animal-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+
+        const fileList = new DataTransfer();
+
+        fileList.items.add(file);
+
+        addFiles(fileList.files);
+
+        closeCamera();
+      },
+      "image/jpeg",
+      0.9,
+    );
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setCameraStream(null);
+    setCameraOpen(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => {
+          track.stop();
+        });
+      }
+    };
+  }, [cameraStream]);
+
   const checkForDuplicates = async () => {
     if (step !== 1 || !animal || !condition || !coords) return;
 
@@ -191,13 +292,11 @@ function CitizenReport() {
 
       if (remainingSlots <= 0) return prev;
 
-      const next: WizardImage[] = imageFiles
-        .slice(0, remainingSlots)
-        .map((file) => ({
-          id: `${file.name}-${Date.now()}-${Math.random()}`,
-          url: URL.createObjectURL(file),
-          file,
-        }));
+      const next: WizardImage[] = imageFiles.slice(0, remainingSlots).map((file) => ({
+        id: `${file.name}-${Date.now()}-${Math.random()}`,
+        url: URL.createObjectURL(file),
+        file,
+      }));
 
       return [...prev, ...next];
     });
@@ -553,12 +652,73 @@ function CitizenReport() {
                       type="button"
                       variant="default"
                       disabled={images.length >= 6}
-                      onClick={() => cameraInputRef.current?.click()}
+                      onClick={openCamera}
                       className="gap-2"
                     >
                       <Camera className="h-4 w-4" aria-hidden="true" />
                       Take Photo
                     </Button>
+
+                    {cameraOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                        <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-background shadow-2xl">
+                          {/* Header */}
+                          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                            <div>
+                              <h2 className="text-base font-semibold">Take Animal Photo</h2>
+
+                              <p className="text-xs text-muted-foreground">
+                                Position the animal inside the camera frame
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={closeCamera}
+                              className="grid h-9 w-9 place-items-center rounded-full hover:bg-muted"
+                              aria-label="Close camera"
+                            >
+                              <X className="h-5 w-5" />
+                            </button>
+                          </div>
+
+                          {/* Camera */}
+                          <div className="relative aspect-video w-full bg-black">
+                            <video
+                              ref={videoRef}
+                              autoPlay
+                              playsInline
+                              muted
+                              className="h-full w-full object-cover"
+                            />
+
+                            {/* Camera frame */}
+                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                              <div className="h-3/4 w-3/4 rounded-2xl border-2 border-white/70" />
+                            </div>
+                          </div>
+
+                          {/* Controls */}
+                          <div className="flex items-center justify-center gap-4 px-4 py-5">
+                            <Button type="button" variant="outline" onClick={closeCamera}>
+                              Cancel
+                            </Button>
+
+                            <Button
+                              type="button"
+                              onClick={capturePhoto}
+                              disabled={images.length >= 6}
+                              className="gap-2"
+                            >
+                              <Camera className="h-4 w-4" />
+                              Capture Photo
+                            </Button>
+                          </div>
+                        </div>
+
+                        <canvas ref={canvasRef} className="hidden" />
+                      </div>
+                    )}
 
                     {/* Upload Photos */}
                     <Button
