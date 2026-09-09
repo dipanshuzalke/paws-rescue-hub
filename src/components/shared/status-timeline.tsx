@@ -16,9 +16,15 @@ export function StatusTimeline({
   return (
     <ol className="relative space-y-0">
       {entries.map((entry, i) => {
-        const done = Boolean(entry.at) && i < currentIndex;
-        const current = i === currentIndex;
+        const isClosed =
+          entry.status.toUpperCase() === "CLOSED" || entry.label.toUpperCase() === "CLOSED";
+
+        const done = Boolean(entry.at) && (i < currentIndex || (isClosed && i === currentIndex));
+
+        const current = i === currentIndex && !isClosed;
+
         const last = i === entries.length - 1;
+
         return (
           <li key={entry.status} className="relative flex gap-3 pb-5 last:pb-0">
             {!last ? (
@@ -30,6 +36,7 @@ export function StatusTimeline({
                 )}
               />
             ) : null}
+
             <span
               className={cn(
                 "relative z-10 grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-colors",
@@ -46,6 +53,7 @@ export function StatusTimeline({
                 <Circle className="h-2 w-2" aria-hidden="true" />
               )}
             </span>
+
             <div className="min-w-0 pt-0.5">
               <p
                 className={cn(
@@ -54,12 +62,14 @@ export function StatusTimeline({
                 )}
               >
                 {entry.label}
+
                 {current ? (
                   <span className="ml-2 rounded-full bg-primary-soft px-2 py-0.5 text-[11px] font-semibold text-primary">
                     Current
                   </span>
                 ) : null}
               </p>
+
               {entry.at ? (
                 <p className="text-xs text-muted-foreground">
                   {formatDateTime(entry.at)}
@@ -68,6 +78,7 @@ export function StatusTimeline({
               ) : (
                 <p className="text-xs text-muted-foreground">Pending</p>
               )}
+
               {entry.note ? (
                 <p className="mt-1 text-xs text-muted-foreground">{entry.note}</p>
               ) : null}
