@@ -47,6 +47,9 @@ blocked SMTP connection does not outlast the frontend request. Override these
 with `SMTP_CONNECTION_TIMEOUT_MS`, `SMTP_GREETING_TIMEOUT_MS`, and
 `SMTP_SOCKET_TIMEOUT_MS` only when needed.
 
+The SMTP transport prefers IPv4 because some managed hosts resolve Gmail's
+IPv6 address even when their runtime has no outbound IPv6 route.
+
 ## Database Seeding
 
 The project includes a comprehensive seeding script to populate the database with demo data (Nagpur area).

@@ -1,5 +1,10 @@
 import nodemailer from "nodemailer";
+import { setDefaultResultOrder } from "node:dns";
 import { env } from "../config/env.js";
+
+// Render may return an IPv6 address for Gmail despite having no route to it.
+// Prefer IPv4 before Nodemailer opens the SMTP connection.
+setDefaultResultOrder("ipv4first");
 
 function getTransport() {
   const { host, port, secure, user, pass } = env.smtp;
