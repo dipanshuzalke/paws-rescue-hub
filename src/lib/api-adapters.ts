@@ -360,7 +360,7 @@ export function adaptEvidence(e?: ApiRescueEvidence | null): RescueEvidence {
 /** Duplicate-detection candidates returned by the Phase 3 endpoints. */
 export interface ApiDuplicateMatch {
   id: string;
-  reportId: string;
+  reportId: string | ApiDuplicateReport;
   animalType: string;
   animalCount: number;
   condition: string;
@@ -379,6 +379,34 @@ export interface ApiDuplicateMatch {
   reasons: string[];
 }
 
+/**
+ * Some duplicate endpoints return the matching report nested under
+ * `reportId`, while others return its fields directly.  Keep the wire format
+ * flexible here and expose one consistent, display-safe shape to the UI.
+ */
+interface ApiDuplicateReport {
+  _id?: string;
+  id?: string;
+  reportId?: string;
+  animalType?: string;
+  animalCount?: number;
+  condition?: string;
+  emergencyLevel?: Emergency;
+  status?: RescueStatus;
+  description?: string;
+  address?: string;
+  area?: string;
+  city?: string;
+  images?: Array<{ url?: string } | string>;
+  distanceMeters?: number;
+  minutesAgo?: number;
+  createdAt?: string;
+  reportedAt?: string;
+  score?: number;
+  confidence?: DuplicateConfidence;
+  reasons?: string[];
+}
+
 export interface ApiDuplicateResult {
   hasDuplicates: boolean;
   radiusMeters: number;
@@ -391,26 +419,40 @@ export function adaptDuplicateResult(r: ApiDuplicateResult): DuplicateCheckResul
     hasDuplicates: Boolean(r?.hasDuplicates),
     radiusMeters: r?.radiusMeters ?? 0,
     windowHours: r?.windowHours ?? 0,
-    matches: (r?.matches ?? []).map((m) => ({
-      id: m.id,
-      reportId: m.reportId,
-      animal: ANIMAL_TO_UI[m.animalType] ?? formatAnimalType(m.animalType),
-      count: m.animalCount ?? 1,
-      condition: CONDITION_TO_UI[m.condition] ?? "Other",
-      emergency: m.emergencyLevel,
-      status: m.status,
-      description: m.description,
-      address: m.address,
-      area: m.area ?? "",
-      city: m.city ?? "",
-      images: (m.images ?? []).map((i) => i.url),
-      distanceMeters: m.distanceMeters,
-      minutesAgo: m.minutesAgo,
-      createdAt: m.createdAt,
-      score: m.score,
-      confidence: m.confidence,
-      reasons: m.reasons ?? [],
-    })),
+    matches: (r?.matches ?? []).map((m) => {
+      const nestedReport =
+        m.reportId && typeof m.reportId === "object" ? m.reportId : undefined;
+      const source = (nestedReport ?? m) as ApiDuplicateReport;
+      const reportId =
+        (typeof m.reportId === "string" ? m.reportId : undefined) ??
+        source.reportId ??
+        source.id ??
+        source._id ??
+        m.id;
+
+      return {
+        id: source._id ?? source.id ?? m.id,
+        reportId,
+        animal: ANIMAL_TO_UI[source.animalType ?? ""] ?? formatAnimalType(source.animalType ?? ""),
+        count: source.animalCount ?? 1,
+        condition: CONDITION_TO_UI[source.condition ?? ""] ?? "Other",
+        emergency: source.emergencyLevel ?? m.emergencyLevel,
+        status: source.status ?? m.status,
+        description: source.description ?? "",
+        address: source.address ?? "",
+        area: source.area ?? "",
+        city: source.city ?? "",
+        images: (source.images ?? []).map((image) =>
+          typeof image === "string" ? image : image.url ?? "",
+        ).filter(Boolean),
+        distanceMeters: source.distanceMeters ?? m.distanceMeters,
+        minutesAgo: source.minutesAgo ?? m.minutesAgo,
+        createdAt: source.createdAt ?? source.reportedAt ?? m.createdAt,
+        score: source.score ?? m.score,
+        confidence: source.confidence ?? m.confidence,
+        reasons: source.reasons ?? m.reasons ?? [],
+      };
+    }),
   };
 }
 
