@@ -165,7 +165,7 @@ function RescuerDashboard() {
             <div className="min-w-0">
               <p className="truncate font-semibold text-foreground">{active.title}</p>
               <p className="truncate text-sm text-muted-foreground">
-                {active.area}, {active.city} · {active.distanceKm} km away
+                {active.area}, {active.city} 
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -205,7 +205,7 @@ function RescuerDashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-foreground">{r.title}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {r.area} · {r.distanceKm} km · {timeAgo(r.createdAt)}
+                        {r.area} · {timeAgo(r.createdAt)}
                       </p>
                     </div>
                     <PriorityBadge level={r.emergency} className="shrink-0" />
