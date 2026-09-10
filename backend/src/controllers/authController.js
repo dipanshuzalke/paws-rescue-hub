@@ -1,5 +1,9 @@
 import { User } from "../models/User.js";
 import { Organization } from "../models/Organization.js";
+import { Notification } from "../models/Notification.js";
+import { RescueAssignment } from "../models/RescueAssignment.js";
+import { RescueHistory } from "../models/RescueHistory.js";
+import { RescueReport } from "../models/RescueReport.js";
 import { ApiError, asyncHandler } from "../utils/apiError.js";
 import { ok, created } from "../utils/apiResponse.js";
 import { signToken, setAuthCookie, clearAuthCookie } from "../middleware/authMiddleware.js";
@@ -141,6 +145,65 @@ export const heartbeat = asyncHandler(async (req, res) => {
 export const logout = asyncHandler(async (_req, res) => {
   clearAuthCookie(res);
   return ok(res, null, "Logged out successfully");
+});
+
+/** Permanently removes the signed-in user's account and its owned data. */
+export const deleteMe = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  // A citizen owns their submitted reports, so remove those reports and their
+  // dependent operational records before deleting the account.
+  const ownedReports = await RescueReport.find({ reporter: userId }).select("_id").lean();
+  const reportIds = ownedReports.map((report) => report._id);
+  if (reportIds.length) {
+    await Promise.all([
+      RescueAssignment.deleteMany({ report: { $in: reportIds } }),
+      RescueHistory.deleteMany({ report: { $in: reportIds } }),
+      Notification.deleteMany({ report: { $in: reportIds } }),
+      RescueReport.deleteMany({ _id: { $in: reportIds } }),
+    ]);
+  }
+
+  // Remove assignments involving this user and clear any assignment pointers
+  // left on cases, rather than leaving orphaned ObjectId references.
+  const assignments = await RescueAssignment.find({
+    $or: [{ rescuer: userId }, { assignedBy: userId }],
+  }).select("_id").lean();
+  const assignmentIds = assignments.map((assignment) => assignment._id);
+  if (assignmentIds.length) {
+    await Promise.all([
+      RescueAssignment.deleteMany({ _id: { $in: assignmentIds } }),
+      RescueReport.updateMany(
+        { assignment: { $in: assignmentIds } },
+        { $set: { assignment: null, assignedRescuer: null } },
+      ),
+    ]);
+  }
+
+  await Promise.all([
+    Notification.deleteMany({ recipient: userId }),
+    RescueHistory.updateMany({ changedBy: userId }, { $set: { changedBy: null } }),
+    RescueReport.updateMany(
+      { $or: [{ assignedRescuer: userId }, { duplicateResolvedBy: userId }] },
+      { $set: { assignedRescuer: null, duplicateResolvedBy: null } },
+    ),
+  ]);
+
+  // An NGO coordinator owns its organization record. Detach team members and
+  // cases first so none of them retain a reference to a deleted organization.
+  if (req.user.role === "NGO" && req.user.organization) {
+    const organizationId = req.user.organization;
+    await Promise.all([
+      User.updateMany({ organization: organizationId }, { $set: { organization: null } }),
+      RescueAssignment.updateMany({ organization: organizationId }, { $set: { organization: null } }),
+      RescueReport.updateMany({ assignedOrganization: organizationId }, { $set: { assignedOrganization: null } }),
+      Organization.findByIdAndDelete(organizationId),
+    ]);
+  }
+
+  await User.findByIdAndDelete(userId);
+  clearAuthCookie(res);
+  return ok(res, null, "Account permanently deleted");
 });
 
 export const updateMe = asyncHandler(async (req, res) => {

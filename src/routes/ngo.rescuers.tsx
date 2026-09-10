@@ -96,7 +96,7 @@ function NgoRescuers() {
       {loading ? null : filtered.length === 0 ? (
         <EmptyState title="No rescuers found" description="Try adjusting your search or filters." />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
           {filtered.map((r) => (
             <button
               key={r.id}
@@ -119,7 +119,7 @@ function NgoRescuers() {
                 <AvailabilityBadge value={r.availability} />
               </div>
 
-              <div className="grid grid-cols-3 gap-2 rounded-lg border border-border p-2 text-center">
+              <div className="grid grid-cols-2 gap-2 rounded-lg border border-border p-2 text-center">
                 <div>
                   <p className="text-sm font-bold text-foreground">{r.activeCases}</p>
                   <p className="text-[11px] text-muted-foreground">Active</p>
@@ -128,12 +128,12 @@ function NgoRescuers() {
                   <p className="text-sm font-bold text-foreground">{r.completedCases}</p>
                   <p className="text-[11px] text-muted-foreground">Completed</p>
                 </div>
-                <div>
+                {/* <div>
                   <p className="text-sm font-bold text-foreground">
                     {r.distanceKm > 0 ? `${r.distanceKm} km` : "—"}
                   </p>
                   <p className="text-[11px] text-muted-foreground">Distance</p>
-                </div>
+                </div> */}
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -187,12 +187,12 @@ function NgoRescuers() {
                     <p className="text-lg font-bold text-foreground">{detail.completedCases}</p>
                     <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
-                  <div>
+                  {/* <div>
                     <p className="text-lg font-bold text-foreground">
                       {detail.distanceKm > 0 ? `${detail.distanceKm} km` : "—"}
                     </p>
                     <p className="text-xs text-muted-foreground">Distance</p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </>

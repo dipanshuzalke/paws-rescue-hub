@@ -8,6 +8,8 @@ import { PageHeader, SectionHeading } from "@/components/shared/page-header";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { apiErrorMessage } from "@/lib/api-client";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
@@ -81,7 +83,8 @@ const rolePermissions = [
 
 function AdminSettings() {
   const [toggles, setToggles] = useState(toggleDefaults);
-  const [dangerAction, setDangerAction] = useState<"reset" | "purge" | null>(null);
+  const [dangerAction, setDangerAction] = useState<"reset" | "purge" | "delete-account" | null>(null);
+  const { deleteAccount } = useApp();
 
   const onToggle = (key: string, value: boolean) => {
     setToggles((prev) => prev.map((t) => (t.key === key ? { ...t, checked: value } : t)));
@@ -89,7 +92,11 @@ function AdminSettings() {
   };
 
   const confirmDanger = () => {
-    if (dangerAction === "reset") {
+    if (dangerAction === "delete-account") {
+      void deleteAccount()
+        .then(() => toast.success("Account permanently deleted"))
+        .catch((error) => toast.error(apiErrorMessage(error)));
+    } else if (dangerAction === "reset") {
       toast.success("Demo data has been reset.");
     } else if (dangerAction === "purge") {
       toast.success("Closed cases older than 90 days have been purged.");
@@ -148,6 +155,15 @@ function AdminSettings() {
           description="Irreversible actions. Proceed with caution."
         />
         <ul className="space-y-3">
+          <li className="flex flex-col gap-3 rounded-lg border border-destructive/25 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Delete my account</p>
+              <p className="text-sm text-muted-foreground">Permanently remove your admin account. You will not be able to log in again.</p>
+            </div>
+            <Button variant="destructive" onClick={() => setDangerAction("delete-account")}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete account
+            </Button>
+          </li>
           <li className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">Reset demo data</p>
@@ -172,13 +188,15 @@ function AdminSettings() {
       <ConfirmDialog
         open={!!dangerAction}
         onOpenChange={(v) => !v && setDangerAction(null)}
-        title={dangerAction === "reset" ? "Reset all demo data?" : "Purge closed cases?"}
+        title={dangerAction === "delete-account" ? "Delete your admin account?" : dangerAction === "reset" ? "Reset all demo data?" : "Purge closed cases?"}
         description={
-          dangerAction === "reset"
+          dangerAction === "delete-account"
+            ? "This permanently removes your account and ends your session. This cannot be undone."
+            : dangerAction === "reset"
             ? "This will restore all mock data to its original state. Any changes made during this session will be lost."
             : "This will permanently delete all closed and cancelled cases older than 90 days. This cannot be undone."
         }
-        confirmLabel={dangerAction === "reset" ? "Reset" : "Purge"}
+        confirmLabel={dangerAction === "delete-account" ? "Delete account" : dangerAction === "reset" ? "Reset" : "Purge"}
         destructive
         onConfirm={confirmDanger}
       >

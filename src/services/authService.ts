@@ -55,6 +55,14 @@ export const authService = {
     return adaptUser(data.user);
   },
 
+  async deleteAccount(): Promise<void> {
+    try {
+      await unwrap(api.delete("/auth/me"));
+    } finally {
+      setToken(null);
+    }
+  },
+
   async heartbeat(): Promise<void> {
     await api.post("/auth/heartbeat");
   },

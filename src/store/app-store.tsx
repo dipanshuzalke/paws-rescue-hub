@@ -60,6 +60,7 @@ interface AppState {
   }) => Promise<User>;
   loginAs: (role: Role) => Promise<User>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   createReport: (input: NewReportInput) => Promise<RescueReport>;
   cancelReport: (reportId: string, reason?: string) => Promise<void>;
   assignRescuer: (
@@ -614,6 +615,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    authVersion.current += 1;
+    if (!isApiEnabled) {
+      throw new Error("Account deletion requires the API to be configured.");
+    }
+    await authService.deleteAccount();
+    setReports([]);
+    setNotifications([]);
+    setUser(null);
+  }, []);
+
   const markAllRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     if (isApiEnabled) {
@@ -650,6 +662,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       signUp,
       loginAs,
       logout,
+      deleteAccount,
       createReport,
       cancelReport,
       assignRescuer,
@@ -672,6 +685,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       signUp,
       loginAs,
       logout,
+      deleteAccount,
       createReport,
       cancelReport,
       assignRescuer,

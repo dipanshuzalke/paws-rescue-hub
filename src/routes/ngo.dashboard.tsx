@@ -265,7 +265,7 @@ function NgoDashboard() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {r.activeCases} active · {r.distanceKm} km
+                  {r.activeCases} active 
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">

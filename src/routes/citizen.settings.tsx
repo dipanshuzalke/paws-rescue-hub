@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useApp } from "@/store/app-store";
+import { apiErrorMessage } from "@/lib/api-client";
 
 export const Route = createFileRoute("/citizen/settings")({
   head: () => ({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/citizen/settings")({
 });
 
 function CitizenSettings() {
-  const { logout } = useApp();
+  const { deleteAccount } = useApp();
   const [prefs, setPrefs] = useState({
     push: true,
     email: true,
@@ -117,9 +118,9 @@ function CitizenSettings() {
         confirmLabel="Delete account"
         destructive
         onConfirm={() => {
-          setDeleteOpen(false);
-          toast.success("Account deleted");
-          logout();
+          void deleteAccount()
+            .then(() => toast.success("Account permanently deleted"))
+            .catch((error) => toast.error(apiErrorMessage(error)));
         }}
       />
     </div>

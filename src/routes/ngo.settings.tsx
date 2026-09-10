@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { apiErrorMessage } from "@/lib/api-client";
+import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/ngo/settings")({
   head: () => ({
@@ -41,6 +43,7 @@ function NgoSettings() {
   });
   const [maxRadius, setMaxRadius] = useState([10]);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const { deleteAccount } = useApp();
 
   return (
     <div className="space-y-6">
@@ -117,20 +120,21 @@ function NgoSettings() {
       <section className="card-surface border-destructive/30 p-5">
         <SectionHeading title="Danger zone" description="Irreversible organization actions." />
         <Button variant="destructive" onClick={() => setConfirmDeactivate(true)}>
-          Deactivate organization
+          Delete my account
         </Button>
       </section>
 
       <ConfirmDialog
         open={confirmDeactivate}
         onOpenChange={setConfirmDeactivate}
-        title="Deactivate your organization?"
-        description="Your NGO will stop receiving new rescue requests and your rescuer team will be hidden from citizens."
-        confirmLabel="Deactivate"
+        title="Delete your NGO account?"
+        description="This permanently removes your account and organization. You will not be able to log in again."
+        confirmLabel="Delete account"
         destructive
         onConfirm={() => {
-          setConfirmDeactivate(false);
-          toast("Organization deactivation is disabled in this demo.");
+          void deleteAccount()
+            .then(() => toast.success("Account permanently deleted"))
+            .catch((error) => toast.error(apiErrorMessage(error)));
         }}
       />
     </div>
