@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ReportImageGallery } from "@/components/shared/report-image-gallery";
 import { formatDateTime, initials, timeAgo } from "@/lib/format";
+import { apiErrorMessage } from "@/lib/api-client";
 import { useApp } from "@/store/app-store";
 
 export const Route = createFileRoute("/citizen/reports/$id")({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/citizen/reports/$id")({
 
 function CitizenReportDetail() {
   const { id } = Route.useParams();
-  const { reports, addNote, updateStatus, loading, authReady } = useApp();
+  const { reports, addNote, cancelReport, loading, authReady } = useApp();
   const report = reports.find((r) => r.id === id);
 
   const [note, setNote] = useState("");
@@ -54,7 +55,8 @@ function CitizenReportDetail() {
     );
   }
 
-  const canCancel = !["RESCUED", "CLOSED", "CANCELLED"].includes(report.status);
+  // The API permits owner cancellation only until a rescuer has started work.
+  const canCancel = ["REPORTED", "ASSIGNED", "ACCEPTED"].includes(report.status);
 
   const handleAddNote = () => {
     if (!note.trim()) return;
@@ -63,10 +65,14 @@ function CitizenReportDetail() {
     toast.success("Note added");
   };
 
-  const handleCancel = () => {
-    updateStatus(report.id, "CANCELLED", "Cancelled by reporter.");
-    setCancelOpen(false);
-    toast.success("Report cancelled");
+  const handleCancel = async () => {
+    try {
+      await cancelReport(report.id, "Cancelled by reporter.");
+      setCancelOpen(false);
+      toast.success("Report cancelled");
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   };
 
   return (

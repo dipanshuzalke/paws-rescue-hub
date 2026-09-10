@@ -61,6 +61,7 @@ interface AppState {
   loginAs: (role: Role) => Promise<User>;
   logout: () => Promise<void>;
   createReport: (input: NewReportInput) => Promise<RescueReport>;
+  cancelReport: (reportId: string, reason?: string) => Promise<void>;
   assignRescuer: (
     reportId: string,
     rescuerId: string,
@@ -478,6 +479,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [mutate, pushNotification],
   );
 
+  const cancelReport = useCallback(
+    async (reportId: string, reason = "Cancelled by reporter.") => {
+      if (isApiEnabled) {
+        try {
+          const updated = await reportService.cancelReport(reportId, reason);
+          setReports((prev) => prev.map((report) => (report.id === updated.id ? updated : report)));
+        } catch (err) {
+          setError(apiErrorMessage(err));
+          throw err;
+        }
+        return;
+      }
+
+      mutate(reportId, (report) => {
+        const now = new Date().toISOString();
+        const hasCancelledStep = report.timeline.some((entry) => entry.status === "CANCELLED");
+        return {
+          ...report,
+          status: "CANCELLED",
+          updatedAt: now,
+          closedAt: now,
+          timeline: hasCancelledStep
+            ? report.timeline.map((entry) =>
+                entry.status === "CANCELLED" ? { ...entry, at: now, note: reason } : entry,
+              )
+            : [
+                ...report.timeline,
+                { status: "CANCELLED", label: STATUS_LABELS.CANCELLED, at: now, note: reason },
+              ],
+        };
+      });
+      pushNotification({
+        title: "Report cancelled",
+        body: `Rescue #${reportId} has been cancelled.`,
+        kind: "rescue",
+        role: "citizen",
+        link: `/citizen/reports/${reportId}`,
+      });
+    },
+    [mutate, pushNotification],
+  );
+
   const updateStatus = useCallback(
     (reportId: string, status: RescueStatus, note?: string) => {
       if (isApiEnabled) {
@@ -608,6 +651,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loginAs,
       logout,
       createReport,
+      cancelReport,
       assignRescuer,
       updateStatus,
       addNote,
@@ -629,6 +673,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loginAs,
       logout,
       createReport,
+      cancelReport,
       assignRescuer,
       updateStatus,
       addNote,
