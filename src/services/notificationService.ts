@@ -30,7 +30,10 @@ export const notificationService = {
         while (!stopped) {
           const { value, done } = await reader.read();
           if (done) break;
-          buffer += decoder.decode(value, { stream: true });
+          // SSE servers and proxies are free to use CRLF line endings. Normalize
+          // them before splitting events so a valid notification is never left in
+          // the buffer (and therefore never reaches the toast handler).
+          buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
           const events = buffer.split("\n\n");
           buffer = events.pop() ?? "";
           for (const event of events) {

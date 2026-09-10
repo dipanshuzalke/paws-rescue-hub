@@ -60,16 +60,19 @@ const statusMap: Record<RescueStatus, { label: string; icon: LucideIcon; cls: st
 export function StatusBadge({
   status,
   className,
+  awaitingAcceptance = false,
 }: {
   status: RescueStatus;
   className?: string;
+  /** Citizen-facing copy for a rescuer assignment that is not yet accepted. */
+  awaitingAcceptance?: boolean;
 }) {
   const meta = statusMap[status];
   const Icon = meta.icon;
   return (
     <span className={cn(base, meta.cls, className)}>
       <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-      {meta.label}
+      {awaitingAcceptance && status === "ASSIGNED" ? "Awaiting acceptance" : meta.label}
     </span>
   );
 }

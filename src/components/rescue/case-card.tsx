@@ -46,7 +46,7 @@ export function CaseCard({
           </span>
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StatusBadge status={report.status} />
+          <StatusBadge status={report.status} awaitingAcceptance={user?.role === "citizen"} />
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" aria-hidden="true" />
             {timeAgo(report.createdAt)}

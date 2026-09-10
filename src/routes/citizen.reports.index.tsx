@@ -173,7 +173,7 @@ function CitizenReports() {
                   <TableCell className="truncate">{r.animal} · {r.condition}</TableCell>
                   <TableCell className="truncate">{r.area}</TableCell>
                   <TableCell><PriorityBadge level={r.emergency} /></TableCell>
-                  <TableCell><StatusBadge status={r.status} /></TableCell>
+                  <TableCell><StatusBadge status={r.status} awaitingAcceptance /></TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(r.createdAt)}</TableCell>
                 </TableRow>
               ))}

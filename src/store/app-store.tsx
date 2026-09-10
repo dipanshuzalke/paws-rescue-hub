@@ -240,20 +240,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         duration: notification.kind === "assignment" ? 10_000 : 6_000,
       });
 
-      if (user.role === "rescuer" && notification.kind === "assignment") {
-        const reportId = notification.link?.split("/").filter(Boolean).at(-1);
-        if (reportId) {
-          void rescueService
-            .getRescueById(reportId)
-            .then((report) =>
-              setReports((previous) => [
-                report,
-                ...previous.filter((item) => item.id !== report.id),
-              ]),
-            )
-          .catch(() => undefined);
-        }
-      }
+      // Notifications are the server's change signal. Refresh the complete
+      // role-specific data set so a rescuer sees both newly reported cases and
+      // assignments immediately, rather than only refreshing one assignment.
+      void refresh();
     };
 
     const syncNotifications = async () => {
@@ -281,7 +271,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.clearInterval(interval);
       unsubscribe();
     };
-  }, [isApiEnabled, user]);
+  }, [isApiEnabled, refresh, user]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {

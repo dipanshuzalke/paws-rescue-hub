@@ -275,8 +275,8 @@ export const createAssignment = asyncHandler(async (req, res) => {
   await notifyUsers([report.reporter], {
     report: report._id,
     type: "STATUS_UPDATE",
-    title: "Your report has been assigned",
-    message: `A rescuer has been assigned to your report ${report.reportId}.`,
+    title: "A rescuer is reviewing your report",
+    message: `A rescuer has been selected for report ${report.reportId} and is awaiting acceptance.`,
     emergencyLevel: report.emergencyLevel,
   });
 

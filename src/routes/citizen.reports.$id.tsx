@@ -82,7 +82,7 @@ function CitizenReportDetail() {
           <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">#{report.id}</p>
           <h1 className="font-display text-2xl font-bold text-foreground">{report.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <StatusBadge status={report.status} />
+            <StatusBadge status={report.status} awaitingAcceptance />
             <PriorityBadge level={report.emergency} />
             <span className="text-xs text-muted-foreground">Reported {timeAgo(report.createdAt)}</span>
           </div>
