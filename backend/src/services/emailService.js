@@ -1,43 +1,35 @@
-import nodemailer from "nodemailer";
-import { setDefaultResultOrder } from "node:dns";
+import { Resend } from "resend";
 import { env } from "../config/env.js";
 
-// Render may return an IPv6 address for Gmail despite having no route to it.
-// Prefer IPv4 before Nodemailer opens the SMTP connection.
-setDefaultResultOrder("ipv4first");
-
-function getTransport() {
-  const { host, port, secure, user, pass } = env.smtp;
-  if (!host || !user || !pass || !env.smtp.from) {
-    throw new Error("Password reset email is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM.");
+function getResend() {
+  if (!env.resend.apiKey || !env.resend.from) {
+    throw new Error("Password reset email is not configured. Set RESEND_API_KEY and RESEND_FROM.");
   }
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-    connectionTimeout: env.smtp.connectionTimeoutMs,
-    greetingTimeout: env.smtp.greetingTimeoutMs,
-    socketTimeout: env.smtp.socketTimeoutMs,
-    tls: { minVersion: "TLSv1.2" },
-  });
+  return new Resend(env.resend.apiKey);
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;",
+  })[character]);
 }
 
 export async function sendPasswordResetEmail({ to, name, resetUrl }) {
   try {
-    await getTransport().sendMail({
-      from: env.smtp.from,
+    const { error } = await getResend().emails.send({
+      from: env.resend.from,
       to,
       subject: "Reset your ResQ Paws password",
       text: `Hi ${name},\n\nUse this link to reset your password:\n${resetUrl}\n\nThis link expires in 1 hour. If you did not request this, you can ignore this email.`,
-      html: `<p>Hi ${name},</p><p>Use this link to reset your ResQ Paws password:</p><p><a href="${resetUrl}">Reset password</a></p><p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>`,
+      html: `<p>Hi ${escapeHtml(name)},</p><p>Use this link to reset your ResQ Paws password:</p><p><a href="${resetUrl}">Reset password</a></p><p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>`,
     });
+    if (error) throw new Error(error.message);
   } catch (error) {
-    const code = error && typeof error === "object" && "code" in error ? error.code : "unknown";
-    console.error(`[email] Password reset delivery failed (${code}):`, error.message);
-    if (["ETIMEDOUT", "ESOCKET", "ECONNECTION"].includes(code)) {
-      throw new Error("The email provider did not respond in time. Please try again shortly.");
-    }
+    console.error("[email] Password reset delivery failed:", error);
     throw error;
   }
 }

@@ -19,17 +19,9 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   cookieName: process.env.COOKIE_NAME || "resqpaws_token",
-  smtp: {
-    host: process.env.SMTP_HOST || "",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    user: process.env.SMTP_USER || "",
-    pass: process.env.SMTP_PASS || "",
-    from: process.env.SMTP_FROM || process.env.SMTP_USER || "",
-    // Keep mail delivery failures below the frontend API timeout (20 seconds).
-    connectionTimeoutMs: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10_000),
-    greetingTimeoutMs: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10_000),
-    socketTimeoutMs: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 15_000),
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || "",
+    from: process.env.RESEND_FROM || "",
   },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",

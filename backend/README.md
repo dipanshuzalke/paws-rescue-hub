@@ -4,7 +4,7 @@ ResQ Paws is an Express and MongoDB-based API designed to coordinate stray anima
 
 ## Requirements
 
-- **Node.js**: 18.x or higher
+- **Node.js**: 20.x or higher
 - **MongoDB**: 6.0+ (Local or Atlas)
 - **Cloudinary**: For animal and rescue-proof image storage
 
@@ -33,22 +33,14 @@ Sign up at [Cloudinary](https://cloudinary.com/) and obtain your API credentials
 
 ### Password-reset email
 
-Password reset links are sent through SMTP. Copy `.env.example` to `.env` and set
-`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM`.
-For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833)
-rather than your normal password. `CLIENT_URL` must be the public frontend URL so
-the link in the email opens the reset-password page.
+Password reset links are sent through the [Resend](https://resend.com) HTTPS API.
+Set `RESEND_API_KEY` and `RESEND_FROM` in your environment. `RESEND_FROM` must be
+a sender address from a domain verified in Resend (for example,
+`ResQ Paws <support@your-domain.com>`). Also set `CLIENT_URL` to the public
+frontend URL so reset links open the reset-password page.
 
-In production, set `CLIENT_URL` to your deployed frontend URL and use an SMTP
-provider reachable from your host. Gmail uses `smtp.gmail.com`, port `587`, and
-`SMTP_SECURE=false`; port `465` requires `SMTP_SECURE=true`. The server limits
-mail connection, greeting, and socket waits to 10–15 seconds by default so a
-blocked SMTP connection does not outlast the frontend request. Override these
-with `SMTP_CONNECTION_TIMEOUT_MS`, `SMTP_GREETING_TIMEOUT_MS`, and
-`SMTP_SOCKET_TIMEOUT_MS` only when needed.
-
-The SMTP transport prefers IPv4 because some managed hosts resolve Gmail's
-IPv6 address even when their runtime has no outbound IPv6 route.
+This works on Render's free tier because it uses HTTPS rather than blocked SMTP
+ports. Do not commit API keys to `.env` files tracked by Git.
 
 ## Database Seeding
 
