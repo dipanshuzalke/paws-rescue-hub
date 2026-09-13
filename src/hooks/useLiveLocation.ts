@@ -142,28 +142,65 @@ export function LiveRoute({
   const instructionsRef = useRef<any[]>([]);
   const currentInstructionRef = useRef(0);
 
+  const latestLocationRef = useRef<LiveLocation | null>(null);
+
   const offRouteCountRef = useRef(0);
+  const lastRerouteAtRef = useRef(0);
+
+  const [routeRequest, setRouteRequest] = useState(0);
 
   /*
-   * Create route whenever the current GPS position
-   * or destination changes.
+   * Always keep the latest GPS position available.
+   */
+  useEffect(() => {
+    latestLocationRef.current = liveLocation;
+  }, [liveLocation]);
+
+  /*
+   * Start the initial route once GPS becomes available.
    *
-   * This restores the working route/instruction behavior.
+   * IMPORTANT:
+   * This does NOT recreate the route on every GPS update.
    */
   useEffect(() => {
     if (!liveLocation || !destination) {
+      return;
+    }
+
+    if (routingControlRef.current || routeRef.current) {
+      return;
+    }
+
+    setRouteRequest((current) => current + 1);
+  }, [liveLocation, destination]);
+
+  /*
+   * Create the route.
+   *
+   * This runs when:
+   * - GPS becomes available for the first time
+   * - destination changes
+   * - a genuine off-route recalculation is requested
+   */
+  useEffect(() => {
+    const location = latestLocationRef.current;
+
+    if (!location || !destination) {
       onRouteInfo?.(null);
       return;
     }
 
     if (routingControlRef.current) {
-      map.removeControl(routingControlRef.current);
-      routingControlRef.current = null;
+      return;
     }
+
+    routeRef.current = null;
+    instructionsRef.current = [];
+    currentInstructionRef.current = 0;
 
     const routingControl = L.Routing.control({
       waypoints: [
-        L.latLng(liveLocation.lat, liveLocation.lng),
+        L.latLng(location.lat, location.lng),
         L.latLng(destination.lat, destination.lng),
       ],
 
@@ -209,7 +246,7 @@ export function LiveRoute({
       if (!firstInstruction) {
         onRouteInfo?.({
           instruction: "Continue straight",
-          distanceMeters: 0,
+          distanceMeters: route.summary?.totalDistance ?? 0,
           totalDistanceMeters: route.summary?.totalDistance ?? 0,
           totalTimeSeconds: route.summary?.totalTime ?? 0,
         });
@@ -217,82 +254,242 @@ export function LiveRoute({
         return;
       }
 
-      const formatted = formatNavigationInstruction(firstInstruction.text ?? "Continue straight");
+      const coordinates = route.coordinates ?? [];
+
+      const maneuverPoint =
+        coordinates[firstInstruction.index];
+
+      let distanceToManeuver =
+        firstInstruction.distance ?? 0;
+
+      if (maneuverPoint) {
+        distanceToManeuver =
+          calculateDistanceKm(location, {
+            lat: maneuverPoint.lat,
+            lng: maneuverPoint.lng,
+          }) * 1000;
+      }
+
+      const formatted = formatNavigationInstruction(
+        firstInstruction.text ?? "Continue straight",
+      );
 
       onRouteInfo?.({
         instruction: formatted.text,
-        distanceMeters: firstInstruction.distance ?? 0,
-        totalDistanceMeters: route.summary?.totalDistance ?? 0,
-        totalTimeSeconds: route.summary?.totalTime ?? 0,
+        distanceMeters: distanceToManeuver,
+        totalDistanceMeters:
+          route.summary?.totalDistance ?? 0,
+        totalTimeSeconds:
+          route.summary?.totalTime ?? 0,
       });
     };
 
     routingControl.on("routesfound", handleRoutesFound);
 
     return () => {
-      (routingControl as any).off("routesfound", handleRoutesFound);
+      (routingControl as any).off(
+        "routesfound",
+        handleRoutesFound,
+      );
 
-      if (routingControlRef.current) {
-        map.removeControl(routingControlRef.current);
+      if (routingControlRef.current === routingControl) {
+        map.removeControl(routingControl);
         routingControlRef.current = null;
       }
     };
-  }, [liveLocation, destination, map]);
+  }, [
+    routeRequest,
+    destination?.lat,
+    destination?.lng,
+    map,
+    onRouteInfo,
+    onOffRoute,
+  ]);
 
   /*
-   * Move to the next turn when the rescuer
-   * reaches the current maneuver.
+   * Update navigation using the existing route.
+   *
+   * GPS updates DO NOT recreate the route.
    */
   useEffect(() => {
     if (!liveLocation) {
       return;
     }
 
+    const route = routeRef.current;
     const instructions = instructionsRef.current;
-    const coordinates = routeRef.current?.coordinates;
 
-    if (!instructions.length || !coordinates?.length) {
+    if (!route || !instructions.length) {
       return;
     }
 
-    const currentIndex = currentInstructionRef.current;
-    const currentInstruction = instructions[currentIndex];
+    const coordinates = route.coordinates ?? [];
+
+    if (!coordinates.length) {
+      return;
+    }
+
+    /*
+     * OFF-ROUTE DETECTION
+     */
+    const distanceFromRoute =
+      distanceToRouteMeters(
+        liveLocation,
+        coordinates,
+      );
+
+    if (distanceFromRoute > OFF_ROUTE_THRESHOLD_METERS) {
+      offRouteCountRef.current += 1;
+    } else {
+      offRouteCountRef.current = 0;
+      onOffRoute?.(false);
+    }
+
+    /*
+     * Require 3 consecutive off-route GPS readings.
+     */
+    if (offRouteCountRef.current >= 3) {
+      const now = Date.now();
+
+      /*
+       * Don't recalculate more than once every 10 seconds.
+       */
+      if (now - lastRerouteAtRef.current > 10000) {
+        lastRerouteAtRef.current = now;
+        offRouteCountRef.current = 0;
+
+        onOffRoute?.(true);
+
+        /*
+         * Remove the old route first.
+         */
+        if (routingControlRef.current) {
+          map.removeControl(
+            routingControlRef.current,
+          );
+          routingControlRef.current = null;
+        }
+
+        routeRef.current = null;
+        instructionsRef.current = [];
+        currentInstructionRef.current = 0;
+
+        /*
+         * The latest GPS location will be used by
+         * the route creation effect.
+         */
+        setRouteRequest(
+          (current) => current + 1,
+        );
+
+        return;
+      }
+    }
+
+    /*
+     * CURRENT MANEUVER
+     */
+    const currentIndex =
+      currentInstructionRef.current;
+
+    const currentInstruction =
+      instructions[currentIndex];
 
     if (!currentInstruction) {
       return;
     }
 
-    const maneuverPoint = coordinates[currentInstruction.index];
+    const maneuverPoint =
+      coordinates[currentInstruction.index];
 
     if (!maneuverPoint) {
       return;
     }
 
+    /*
+     * Calculate live distance to the maneuver.
+     */
     const distanceToManeuver =
       calculateDistanceKm(liveLocation, {
         lat: maneuverPoint.lat,
         lng: maneuverPoint.lng,
       }) * 1000;
 
-    if (distanceToManeuver <= 25) {
-      if (currentIndex < instructions.length - 1) {
-        const nextIndex = currentIndex + 1;
+    /*
+     * Only change the instruction when the rescuer
+     * actually reaches the maneuver.
+     */
+    if (
+      distanceToManeuver <= 25 &&
+      currentIndex < instructions.length - 1
+    ) {
+      const nextIndex =
+        currentIndex + 1;
 
-        currentInstructionRef.current = nextIndex;
+      currentInstructionRef.current =
+        nextIndex;
 
-        const nextInstruction = instructions[nextIndex];
+      const nextInstruction =
+        instructions[nextIndex];
 
-        const formatted = formatNavigationInstruction(nextInstruction.text ?? "Continue straight");
+      const nextManeuverPoint =
+        coordinates[nextInstruction.index];
 
-        onRouteInfo?.({
-          instruction: formatted.text,
-          distanceMeters: nextInstruction.distance ?? 0,
-          totalDistanceMeters: routeRef.current?.summary?.totalDistance ?? 0,
-          totalTimeSeconds: routeRef.current?.summary?.totalTime ?? 0,
-        });
+      let nextDistance =
+        nextInstruction.distance ?? 0;
+
+      if (nextManeuverPoint) {
+        nextDistance =
+          calculateDistanceKm(liveLocation, {
+            lat: nextManeuverPoint.lat,
+            lng: nextManeuverPoint.lng,
+          }) * 1000;
       }
+
+      const formatted =
+        formatNavigationInstruction(
+          nextInstruction.text ??
+            "Continue straight",
+        );
+
+      onRouteInfo?.({
+        instruction: formatted.text,
+        distanceMeters: nextDistance,
+        totalDistanceMeters:
+          route.summary?.totalDistance ?? 0,
+        totalTimeSeconds:
+          route.summary?.totalTime ?? 0,
+      });
+
+      return;
     }
-  }, [liveLocation, onRouteInfo]);
+
+    /*
+     * Same instruction.
+     *
+     * Only the distance changes.
+     * The instruction itself stays stable.
+     */
+    const formatted =
+      formatNavigationInstruction(
+        currentInstruction.text ??
+          "Continue straight",
+      );
+
+    onRouteInfo?.({
+      instruction: formatted.text,
+      distanceMeters: distanceToManeuver,
+      totalDistanceMeters:
+        route.summary?.totalDistance ?? 0,
+      totalTimeSeconds:
+        route.summary?.totalTime ?? 0,
+    });
+  }, [
+    liveLocation,
+    map,
+    onRouteInfo,
+    onOffRoute,
+  ]);
 
   return null;
 }

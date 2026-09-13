@@ -195,17 +195,17 @@ export function ClientMap({
       }`}
     >
       {showStartDriving ? (
-        <div className="absolute bottom-4 left-1/2 z-[1000] -translate-x-1/2">
-          <button
-            type="button"
-            onClick={onStartDriving}
-            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90 active:scale-95"
-          >
-            <span className="text-base">🚗</span>
-            Start Driving
-          </button>
-        </div>
-      ) : null}
+  <div className="absolute bottom-4 left-1/2 z-[2000] -translate-x-1/2">
+    <button
+      type="button"
+      onClick={onStartDriving}
+      className="pointer-events-auto flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-xl transition hover:opacity-90 active:scale-95"
+    >
+      <span className="text-base">🚗</span>
+      Start Driving
+    </button>
+  </div>
+) : null}
       <style>{routingContainerStyle}</style>
       {locationEnabled && (routeInfo || isOffRoute) ? (
         <div className="pointer-events-none absolute left-1/2 top-3 z-[1000] w-[min(92%,420px)] -translate-x-1/2">
