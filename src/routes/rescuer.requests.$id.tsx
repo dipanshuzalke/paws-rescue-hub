@@ -1,13 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  Camera,
-  MapPin,
-  MessageCircle,
-  Navigation,
-  Phone,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, Camera, MapPin, MessageCircle, Navigation, Phone } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { MapView, type MapMarker } from "@/components/maps/map-view";
@@ -60,6 +53,8 @@ function RescuerRequestDetail() {
   const [completeOpen, setCompleteOpen] = useState(false);
   const [outcome, setOutcome] = useState("");
 
+  const isDriving = report?.status === "IN_PROGRESS";
+
   const handleEvidenceSuccess = (updated: typeof report) => {
     if (updated) {
       const idx = reports.findIndex((r) => r.id === id);
@@ -86,7 +81,6 @@ function RescuerRequestDetail() {
   const isMine = report.rescuerId === user?.id;
 
   const markers: MapMarker[] = [
-    { id: "you", label: "You", coords: rescuer.coords, kind: "you" },
     {
       id: report.id,
       label: report.title,
@@ -102,18 +96,30 @@ function RescuerRequestDetail() {
     toast.success("Request accepted.");
   };
 
-  const handleOnTheWay = () => {
-    updateStatus(report.id, "IN_PROGRESS", `${user?.name ?? "Rescuer"} is on the way.`);
-    toast.success("Status updated: on the way.");
-  };
+const handleStartDriving = () => {
+  updateStatus(
+    report.id,
+    "IN_PROGRESS",
+    `${user?.name ?? "Rescuer"} is on the way.`,
+  );
 
-  const handleComplete = () => {
-    updateStatus(report.id, "RESCUED", outcome || "Animal rescued successfully.");
-    if (outcome) addNote(report.id, outcome);
-    setCompleteOpen(false);
-    setOutcome("");
-    toast.success("Rescue marked as completed. Great work!");
-  };
+  toast.success("Driving started. Status updated: on the way.");
+};
+const handleComplete = () => {
+  updateStatus(
+    report.id,
+    "RESCUED",
+    outcome || "Animal rescued successfully.",
+  );
+
+  if (outcome) {
+    addNote(report.id, outcome);
+  }
+
+  setCompleteOpen(false);
+  setOutcome("");
+  toast.success("Rescue marked as completed. Driving stopped.");
+};
 
   return (
     <div className="space-y-6">
@@ -138,7 +144,10 @@ function RescuerRequestDetail() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <section className="card-surface p-4">
-            <SectionHeading title="Photos" />
+            <SectionHeading
+              title="Location & route"
+              description={`${report.distanceKm} km away · ETA ${Math.max(3, Math.round(report.distanceKm * 4))} min`}
+            />
             <ReportImageGallery
               images={report.images}
               alt={`${report.condition} ${report.animal.toLowerCase()} photo`}
@@ -177,7 +186,7 @@ function RescuerRequestDetail() {
               <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
               {report.address}, {report.area}, {report.city}
             </p>
-            <MapView markers={markers} height="h-[320px]" />
+            <MapView markers={markers} height="h-[320px]" tracking={isDriving} />
           </section>
 
           <section className="card-surface p-4">
@@ -215,18 +224,31 @@ function RescuerRequestDetail() {
               {report.status === "REPORTED" || report.status === "ASSIGNED" ? (
                 <Button onClick={handleAccept}>Accept request</Button>
               ) : null}
-              {isMine && report.status === "ACCEPTED" ? (
+              {/* {isMine && report.status === "ACCEPTED" ? (
                 <Button onClick={handleOnTheWay}>
                   <Navigation className="h-4 w-4" aria-hidden="true" /> Mark on the way
+                </Button>
+              ) : null}
+              {isMine && report.status !== "RESCUED" && report.status !== "CLOSED" ? (
+                <Button
+                  variant={isDriving ? "destructive" : "default"}
+                  onClick={() => setIsDriving((current) => !current)}
+                >
+                  <Navigation className="h-4 w-4" aria-hidden="true" />
+                  {isDriving ? "Stop Driving" : "Start Driving"}
+                </Button>
+              ) : null} */}
+              {isMine && report.status === "ACCEPTED" ? (
+                <Button onClick={handleStartDriving}>
+                  <Navigation className="h-4 w-4" aria-hidden="true" />
+                  Start Driving
                 </Button>
               ) : null}
               {isMine && report.status === "IN_PROGRESS" ? (
                 <Button onClick={() => setEvidenceOpen(true)}>Mark rescued</Button>
               ) : null}
               {report.status === "RESCUED" || report.status === "CLOSED" ? (
-                <p className="text-sm text-muted-foreground">
-                  This rescue has been completed.
-                </p>
+                <p className="text-sm text-muted-foreground">This rescue has been completed.</p>
               ) : null}
               {!isMine && report.status !== "REPORTED" && report.status !== "ASSIGNED" ? (
                 <p className="text-sm text-muted-foreground">

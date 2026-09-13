@@ -18,6 +18,9 @@ export interface MapViewProps {
   onSelect?: ((id: string) => void) | undefined;
   onMapClick?: (coords: GeoPoint) => void;
   caption?: string;
+  tracking?: boolean;
+  /** Display the device's current position without enabling driving mode. */
+  showLiveLocation?: boolean;
 }
 
 export function MapView(props: MapViewProps) {
