@@ -21,12 +21,16 @@ export interface MapViewProps {
   tracking?: boolean;
   /** Display the device's current position without enabling driving mode. */
   showLiveLocation?: boolean;
+
+  /** Show the Start Driving button inside the map. */
+  showStartDriving?: boolean;
+
+  /** Called when the rescuer clicks Start Driving. */
+  onStartDriving?: () => void;
 }
 
 export function MapView(props: MapViewProps) {
-  const [ClientMap, setClientMap] = useState<
-    React.ComponentType<MapViewProps> | null
-  >(null);
+  const [ClientMap, setClientMap] = useState<React.ComponentType<MapViewProps> | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -47,9 +51,7 @@ export function MapView(props: MapViewProps) {
       <div
         className={`flex ${props.height ?? "h-[420px]"} items-center justify-center rounded-xl border border-border bg-muted`}
       >
-        <span className="text-sm text-muted-foreground">
-          Loading map...
-        </span>
+        <span className="text-sm text-muted-foreground">Loading map...</span>
       </div>
     );
   }

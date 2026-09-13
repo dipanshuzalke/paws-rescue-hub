@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Camera, MapPin, MessageCircle, Navigation, Phone } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { MapView, type MapMarker } from "@/components/maps/map-view";
@@ -96,30 +96,32 @@ function RescuerRequestDetail() {
     toast.success("Request accepted.");
   };
 
-const handleStartDriving = () => {
-  updateStatus(
-    report.id,
-    "IN_PROGRESS",
-    `${user?.name ?? "Rescuer"} is on the way.`,
-  );
+  const handleStartDriving = () => {
+    updateStatus(report.id, "IN_PROGRESS", `${user?.name ?? "Rescuer"} is on the way.`);
 
-  toast.success("Driving started. Status updated: on the way.");
-};
-const handleComplete = () => {
-  updateStatus(
-    report.id,
-    "RESCUED",
-    outcome || "Animal rescued successfully.",
-  );
+    toast.success("Driving started. Status updated: on the way.");
+  };
+  const handleComplete = () => {
+    updateStatus(report.id, "RESCUED", outcome || "Animal rescued successfully.");
 
-  if (outcome) {
-    addNote(report.id, outcome);
-  }
+    if (outcome) {
+      addNote(report.id, outcome);
+    }
 
-  setCompleteOpen(false);
-  setOutcome("");
-  toast.success("Rescue marked as completed. Driving stopped.");
-};
+    setCompleteOpen(false);
+    setOutcome("");
+    toast.success("Rescue marked as completed. Driving stopped.");
+  };
+
+  const handleOpenGoogleMaps = () => {
+    if (!report) return;
+
+    const { lat, lng } = report.coords;
+
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+
+    window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="space-y-6">
@@ -186,7 +188,13 @@ const handleComplete = () => {
               <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
               {report.address}, {report.area}, {report.city}
             </p>
-            <MapView markers={markers} height="h-[320px]" tracking={isDriving} />
+            <MapView
+              markers={markers}
+              height="h-[320px]"
+              tracking={isDriving}
+              showStartDriving={isMine && report.status === "ACCEPTED"}
+              onStartDriving={handleStartDriving}
+            />
           </section>
 
           <section className="card-surface p-4">
@@ -224,28 +232,13 @@ const handleComplete = () => {
               {report.status === "REPORTED" || report.status === "ASSIGNED" ? (
                 <Button onClick={handleAccept}>Accept request</Button>
               ) : null}
-              {/* {isMine && report.status === "ACCEPTED" ? (
-                <Button onClick={handleOnTheWay}>
-                  <Navigation className="h-4 w-4" aria-hidden="true" /> Mark on the way
-                </Button>
-              ) : null}
-              {isMine && report.status !== "RESCUED" && report.status !== "CLOSED" ? (
-                <Button
-                  variant={isDriving ? "destructive" : "default"}
-                  onClick={() => setIsDriving((current) => !current)}
-                >
-                  <Navigation className="h-4 w-4" aria-hidden="true" />
-                  {isDriving ? "Stop Driving" : "Start Driving"}
-                </Button>
-              ) : null} */}
-              {isMine && report.status === "ACCEPTED" ? (
-                <Button onClick={handleStartDriving}>
-                  <Navigation className="h-4 w-4" aria-hidden="true" />
-                  Start Driving
-                </Button>
-              ) : null}
-              {isMine && report.status === "IN_PROGRESS" ? (
-                <Button onClick={() => setEvidenceOpen(true)}>Mark rescued</Button>
+              {(isMine && report.status === "ACCEPTED") || report.status === "IN_PROGRESS" ? (
+                <div className="flex gap-2">
+                  <Button onClick={() => setEvidenceOpen(true)}>Mark rescued</Button>
+                  <Button variant="outline" onClick={handleOpenGoogleMaps}>
+                    Open in Google Maps
+                  </Button>
+                </div>
               ) : null}
               {report.status === "RESCUED" || report.status === "CLOSED" ? (
                 <p className="text-sm text-muted-foreground">This rescue has been completed.</p>

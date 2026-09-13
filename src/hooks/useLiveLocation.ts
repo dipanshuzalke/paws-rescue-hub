@@ -217,9 +217,7 @@ export function LiveRoute({
         return;
       }
 
-      const formatted = formatNavigationInstruction(
-        firstInstruction.text ?? "Continue straight",
-      );
+      const formatted = formatNavigationInstruction(firstInstruction.text ?? "Continue straight");
 
       onRouteInfo?.({
         instruction: formatted.text,
@@ -232,10 +230,7 @@ export function LiveRoute({
     routingControl.on("routesfound", handleRoutesFound);
 
     return () => {
-      (routingControl as any).off(
-        "routesfound",
-        handleRoutesFound,
-      );
+      (routingControl as any).off("routesfound", handleRoutesFound);
 
       if (routingControlRef.current) {
         map.removeControl(routingControlRef.current);
@@ -267,8 +262,7 @@ export function LiveRoute({
       return;
     }
 
-    const maneuverPoint =
-      coordinates[currentInstruction.index];
+    const maneuverPoint = coordinates[currentInstruction.index];
 
     if (!maneuverPoint) {
       return;
@@ -288,17 +282,13 @@ export function LiveRoute({
 
         const nextInstruction = instructions[nextIndex];
 
-        const formatted = formatNavigationInstruction(
-          nextInstruction.text ?? "Continue straight",
-        );
+        const formatted = formatNavigationInstruction(nextInstruction.text ?? "Continue straight");
 
         onRouteInfo?.({
           instruction: formatted.text,
           distanceMeters: nextInstruction.distance ?? 0,
-          totalDistanceMeters:
-            routeRef.current?.summary?.totalDistance ?? 0,
-          totalTimeSeconds:
-            routeRef.current?.summary?.totalTime ?? 0,
+          totalDistanceMeters: routeRef.current?.summary?.totalDistance ?? 0,
+          totalTimeSeconds: routeRef.current?.summary?.totalTime ?? 0,
         });
       }
     }

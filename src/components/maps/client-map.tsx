@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -106,6 +106,22 @@ function LiveLocationController({ location }: { location: LiveLocation | null })
   return null;
 }
 
+function FullscreenMapController({ isFullscreen }: { isFullscreen: boolean }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [isFullscreen, map]);
+
+  return null;
+}
+
 export function ClientMap({
   markers,
   height = "h-[420px]",
@@ -115,6 +131,8 @@ export function ClientMap({
   caption = "OpenStreetMap",
   tracking = false,
   showLiveLocation = false,
+  showStartDriving = false,
+  onStartDriving,
 }: MapViewProps) {
   const locationEnabled = tracking || showLiveLocation;
   const { location: liveLocation, error: locationError } = useLiveLocation(locationEnabled);
@@ -126,6 +144,33 @@ export function ClientMap({
     totalTimeSeconds: number;
   } | null>(null);
   const [isOffRoute, setIsOffRoute] = useState(false);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const mapWrapperRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await mapWrapperRef.current?.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error("Fullscreen error:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
 
   const animalMarker = markers.find((marker) => marker.kind === "request");
 
@@ -143,7 +188,24 @@ export function ClientMap({
   }, [markers]);
 
   return (
-    <div className={`relative isolate z-0 overflow-hidden rounded-xl ${height}`}>
+    <div
+      ref={mapWrapperRef}
+      className={`relative isolate z-0 overflow-hidden rounded-xl ${
+        isFullscreen ? "h-screen w-screen rounded-none" : height
+      }`}
+    >
+      {showStartDriving ? (
+        <div className="absolute bottom-4 left-1/2 z-[1000] -translate-x-1/2">
+          <button
+            type="button"
+            onClick={onStartDriving}
+            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition hover:opacity-90 active:scale-95"
+          >
+            <span className="text-base">🚗</span>
+            Start Driving
+          </button>
+        </div>
+      ) : null}
       <style>{routingContainerStyle}</style>
       {locationEnabled && (routeInfo || isOffRoute) ? (
         <div className="pointer-events-none absolute left-1/2 top-3 z-[1000] w-[min(92%,420px)] -translate-x-1/2">
@@ -182,7 +244,16 @@ export function ClientMap({
           </div>
         </div>
       ) : null}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Open map fullscreen"}
+        className="absolute right-3 top-3 z-[1000] flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card/95 text-lg shadow-md backdrop-blur transition hover:bg-accent"
+      >
+        {isFullscreen ? "⛶" : "⛶"}
+      </button>
       <MapContainer center={center} zoom={DEFAULT_ZOOM} scrollWheelZoom className="h-full w-full">
+        <FullscreenMapController isFullscreen={isFullscreen} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -256,7 +327,7 @@ export function ClientMap({
 
       {/* Live GPS status */}
       {locationEnabled ? (
-        <div className="pointer-events-none absolute right-3 top-3 z-[1000] rounded-lg border border-border bg-card/95 px-3 py-2 text-xs font-medium shadow-sm backdrop-blur">
+        <div className="pointer-events-none absolute bottom-14 left-3 z-[1000] rounded-lg border border-border bg-card/95 px-3 py-2 text-xs font-medium shadow-sm backdrop-blur">
           {locationError ? (
             <span className="text-destructive">{locationError}</span>
           ) : liveLocation ? (
