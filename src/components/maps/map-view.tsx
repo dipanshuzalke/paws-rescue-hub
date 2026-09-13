@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import type { Emergency, GeoPoint } from "@/types";
+import type { LiveLocation } from "@/hooks/useLiveLocation";
 
 export interface MapMarker {
   id: string;
@@ -19,16 +20,15 @@ export interface MapViewProps {
   onMapClick?: (coords: GeoPoint) => void;
   caption?: string;
   tracking?: boolean;
-  /** Display the device's current position without enabling driving mode. */
   showLiveLocation?: boolean;
-
-  /** Show the Start Driving button inside the map. */
   showStartDriving?: boolean;
-
-  /** Called when the rescuer clicks Start Driving. */
   onStartDriving?: () => void;
-}
 
+  liveLocation?: LiveLocation | null;
+  locationError?: string | null;
+
+  remoteRescuerLocation?: LiveLocation | null;
+}
 export function MapView(props: MapViewProps) {
   const [ClientMap, setClientMap] = useState<React.ComponentType<MapViewProps> | null>(null);
 

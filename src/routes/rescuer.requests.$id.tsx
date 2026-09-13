@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/shared/states";
 import { StatusTimeline } from "@/components/shared/status-timeline";
 import { ReportImageGallery } from "@/components/shared/report-image-gallery";
 import { Button } from "@/components/ui/button";
+import { useRescueSocket } from "@/hooks/useResqueSocket";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
+import { useLiveLocation } from "@/hooks/useLiveLocation";
+import { useRescueTracking } from "@/hooks/useResqueTracking";
 
 export const Route = createFileRoute("/rescuer/requests/$id")({
   head: () => ({
@@ -45,15 +48,20 @@ export const Route = createFileRoute("/rescuer/requests/$id")({
 
 function RescuerRequestDetail() {
   const { id } = Route.useParams();
-  const navigate = useNavigate();
   const { reports, updateStatus, addNote, user } = useApp();
-  const rescuer = useCurrentRescuer();
-  const report = useMemo(() => reports.find((r) => r.id === id), [reports, id]);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [outcome, setOutcome] = useState("");
 
+  const report = useMemo(() => reports.find((r) => r.id === id), [reports, id]);
+
   const isDriving = report?.status === "IN_PROGRESS";
+
+  console.log("[rescuer] Tracking state:", {
+    reportId: report?.id,
+    status: report?.status,
+    isDriving,
+  });
 
   const handleEvidenceSuccess = (updated: typeof report) => {
     if (updated) {
@@ -123,10 +131,16 @@ function RescuerRequestDetail() {
     window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
   };
 
+  const rescueSocket = useRescueSocket(report?.id);
+
+  const { location: rescuerLocation, error: gpsError } = useLiveLocation(isDriving);
+
+  const { trackingStarted } = useRescueTracking(report?.id, isDriving, rescuerLocation);
+
   return (
     <div className="space-y-6">
       <Link
-        to="/rescuer/requests"
+        to="/rescuer/active"
         className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to requests
@@ -192,6 +206,8 @@ function RescuerRequestDetail() {
               markers={markers}
               height="h-[320px]"
               tracking={isDriving}
+              liveLocation={rescuerLocation}
+              locationError={gpsError}
               showStartDriving={isMine && report.status === "ACCEPTED"}
               onStartDriving={handleStartDriving}
             />
@@ -228,21 +244,26 @@ function RescuerRequestDetail() {
 
           <section className="card-surface p-4">
             <SectionHeading title="Actions" />
+
             <div className="flex flex-col gap-2">
               {report.status === "REPORTED" || report.status === "ASSIGNED" ? (
                 <Button onClick={handleAccept}>Accept request</Button>
               ) : null}
-              {(isMine && report.status === "ACCEPTED") || report.status === "IN_PROGRESS" ? (
+
+              {isMine && report.status === "IN_PROGRESS" ? (
                 <div className="flex gap-2">
                   <Button onClick={() => setEvidenceOpen(true)}>Mark rescued</Button>
+
                   <Button variant="outline" onClick={handleOpenGoogleMaps}>
                     Open in Google Maps
                   </Button>
                 </div>
               ) : null}
+
               {report.status === "RESCUED" || report.status === "CLOSED" ? (
                 <p className="text-sm text-muted-foreground">This rescue has been completed.</p>
               ) : null}
+
               {!isMine && report.status !== "REPORTED" && report.status !== "ASSIGNED" ? (
                 <p className="text-sm text-muted-foreground">
                   Assigned to {report.rescuerName ?? "another rescuer"}.
@@ -250,6 +271,20 @@ function RescuerRequestDetail() {
               ) : null}
             </div>
           </section>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-3 text-sm">
+        <div className="font-medium">Live connection</div>
+
+        <div className="mt-1 text-muted-foreground">
+          {rescueSocket.error
+            ? `Error: ${rescueSocket.error}`
+            : rescueSocket.joined
+              ? "● Connected to rescue"
+              : rescueSocket.connected
+                ? "Connected — joining rescue..."
+                : "Connecting..."}
         </div>
       </div>
 

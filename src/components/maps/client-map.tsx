@@ -5,13 +5,14 @@ import "leaflet/dist/leaflet.css";
 
 import type { GeoPoint } from "@/types";
 import type { MapViewProps, MapMarker } from "./map-view";
+
 import {
   calculateDistanceKm,
   formatNavigationInstruction,
-  LiveLocation,
   LiveRoute,
-  useLiveLocation,
 } from "@/hooks/useLiveLocation";
+
+import type { LiveLocation } from "@/hooks/useLiveLocation";
 
 const DEFAULT_CENTER: [number, number] = [21.1458, 79.0882];
 const DEFAULT_ZOOM = 14;
@@ -32,27 +33,34 @@ const markerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const rescuerIcon = L.divIcon({
-  className: "rescuer-vehicle-marker",
-  html: `
-        <div
-            style="
-                width: 42px;
-                height: 42px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 30px;
-                filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
-            "
-        >
-            🚑
-        </div>
+const getRescuerIcon = (heading: number | null) => {
+  const rotation = typeof heading === "number" && Number.isFinite(heading) ? heading : 0;
+
+  return L.divIcon({
+    className: "rescuer-vehicle-marker",
+    html: `
+      <div
+        style="
+          width: 42px;
+          height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 30px;
+          filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+          transform: rotate(${rotation}deg);
+          transform-origin: center center;
+          transition: transform 0.3s ease;
+        "
+      >
+        🚑
+      </div>
     `,
-  iconSize: [42, 42],
-  iconAnchor: [21, 21],
-  popupAnchor: [0, -21],
-});
+    iconSize: [42, 42],
+    iconAnchor: [21, 21],
+    popupAnchor: [0, -21],
+  });
+};
 
 function MapCenterController({ markers, tracking }: { markers: MapMarker[]; tracking: boolean }) {
   const map = useMap();
@@ -133,9 +141,11 @@ export function ClientMap({
   showLiveLocation = false,
   showStartDriving = false,
   onStartDriving,
+  liveLocation = null,
+  locationError = null,
+  remoteRescuerLocation = null,
 }: MapViewProps) {
-  const locationEnabled = tracking || showLiveLocation;
-  const { location: liveLocation, error: locationError } = useLiveLocation(locationEnabled);
+  const locationEnabled = tracking || showLiveLocation || Boolean(liveLocation);
 
   const [routeInfo, setRouteInfo] = useState<{
     instruction: string;
@@ -301,8 +311,32 @@ export function ClientMap({
             </Marker>
           );
         })}
+        {remoteRescuerLocation ? (
+          <Marker
+            position={[remoteRescuerLocation.lat, remoteRescuerLocation.lng]}
+            icon={getRescuerIcon(remoteRescuerLocation.heading)}
+          >
+            <Popup>
+              <div className="min-w-[160px]">
+                <strong>Rescuer — Live Location</strong>
+
+                <div className="mt-1 text-xs text-gray-500">
+                  {remoteRescuerLocation.lat.toFixed(6)}, {remoteRescuerLocation.lng.toFixed(6)}
+                </div>
+
+                <div className="mt-1 text-xs text-gray-500">
+                  Accuracy: {Math.round(remoteRescuerLocation.accuracy)} m
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ) : null}
+
         {locationEnabled && liveLocation ? (
-          <Marker position={[liveLocation.lat, liveLocation.lng]} icon={rescuerIcon}>
+          <Marker
+            position={[liveLocation.lat, liveLocation.lng]}
+            icon={getRescuerIcon(liveLocation.heading)}
+          >
             <Popup>
               <div className="min-w-[160px]">
                 <strong>Rescuer — Live Location</strong>

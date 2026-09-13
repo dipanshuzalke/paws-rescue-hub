@@ -36,7 +36,6 @@ function RescuerMap() {
 
   const markers: MapMarker[] = useMemo(
     () => [
-      { id: "you", label: "You", coords: rescuer.coords, kind: "you" },
       ...open.map((r) => ({
         id: r.id,
         label: r.title,

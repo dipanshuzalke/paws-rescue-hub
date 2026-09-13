@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import L from "leaflet";
 import "leaflet-routing-machine";
 import type { GeoPoint } from "@/types";
 import { useMap } from "react-leaflet";
-import L from "leaflet";
 
 const OFF_ROUTE_THRESHOLD_METERS = 50;
 
