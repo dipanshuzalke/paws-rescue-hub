@@ -208,7 +208,7 @@ export function ClientMap({
       ) : null}
       <style>{routingContainerStyle}</style>
       {locationEnabled && (routeInfo || isOffRoute) ? (
-        <div className="pointer-events-none absolute left-1/2 top-10 md:top-3 z-[1000] w-[min(92%,420px)] -translate-x-1/2">
+        <div className="pointer-events-none absolute left-1/2 top-5 md:top-3 z-[1000] w-[min(92%,420px)] -translate-x-1/2">
           <div className="rounded-xl border border-border bg-card/95 px-4 py-3 shadow-lg backdrop-blur">
             {isOffRoute ? (
               <div className="flex items-center gap-3">
