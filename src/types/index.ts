@@ -111,6 +111,7 @@ export interface RescueReport {
   reporterPhone: string;
   rescuerId?: string | undefined;
   rescuerName?: string | undefined;
+  rescuerPhone?: string | undefined;
   ngoId?: string | undefined;
   ngoName?: string | undefined;
   createdAt: string;

@@ -183,11 +183,19 @@ function CitizenReportDetail() {
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
-                <Button variant="outline" className="flex-1">
-                  <Phone className="h-4 w-4" aria-hidden="true" /> Call
+                <Button variant="outline" className="flex-1" asChild disabled={!report.rescuerPhone}>
+                  <a href={`tel:${report.rescuerPhone}`}>
+                    <Phone className="h-4 w-4" aria-hidden="true" /> Call
+                  </a>
                 </Button>
-                <Button variant="outline" className="flex-1">
-                  <MessageSquare className="h-4 w-4" aria-hidden="true" /> Message
+                <Button variant="outline" className="flex-1" asChild disabled={!report.rescuerPhone}>
+                  <a
+                    href={`sms:${report.rescuerPhone}?body=${encodeURIComponent(
+                      `Hello ${report.rescuerName}, I am following up on my ResQ Paws report #${report.id}.`,
+                    )}`}
+                  >
+                    <MessageSquare className="h-4 w-4" aria-hidden="true" /> Message
+                  </a>
                 </Button>
               </div>
             </div>

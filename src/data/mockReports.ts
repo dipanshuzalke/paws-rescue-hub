@@ -7,6 +7,7 @@ import type {
   RescueStatus,
   TimelineEntry,
 } from "@/types";
+import { mockRescuers } from "@/data/mockUsers";
 
 const STATUS_FLOW: RescueStatus[] = [
   "REPORTED",
@@ -653,6 +654,7 @@ export const mockReports: RescueReport[] = seeds.map((s, i) => {
     reporterPhone: s.reporter[2],
     rescuerId: s.rescuer?.[0],
     rescuerName: s.rescuer?.[1],
+    rescuerPhone: mockRescuers.find((rescuer) => rescuer.id === s.rescuer?.[0])?.phone,
     ngoId: s.ngo?.[0],
     ngoName: s.ngo?.[1],
     createdAt,
