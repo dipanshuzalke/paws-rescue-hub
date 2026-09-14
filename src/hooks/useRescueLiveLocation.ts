@@ -152,6 +152,10 @@ export function useRescueLiveLocation(rescueId?: string) {
 
     socket.on("rescue_tracking_stopped", handleTrackingStopped);
 
+    socket.onAny((event, ...args) => {
+      console.log("[citizen] SOCKET EVENT:", event, args);
+    });
+
     socket.on("connect", handleConnect);
 
     socket.on("disconnect", handleDisconnect);
@@ -179,6 +183,8 @@ export function useRescueLiveLocation(rescueId?: string) {
 
       socket.off("disconnect", handleDisconnect);
 
+      socket.offAny();
+
       socket.emit("leave_rescue", rescueId);
 
       console.log("[citizen] Left rescue room:", rescueId);
@@ -191,4 +197,3 @@ export function useRescueLiveLocation(rescueId?: string) {
     tracking,
   };
 }
-
