@@ -365,11 +365,11 @@ export function ClientMap({
       {/* Live GPS status */}
       {locationEnabled ? (
         <div className="pointer-events-none absolute bottom-14 left-3 z-[1000] rounded-lg border border-border bg-card/95 px-3 py-2 text-xs font-medium shadow-sm backdrop-blur">
-          {locationError ? (
+          {locationError && !remoteRescuerLocation ? (
             <span className="text-destructive">{locationError}</span>
-          ) : liveLocation ? (
+          ) : remoteRescuerLocation ? (
             <div className="space-y-1">
-              <div className="text-success">● GPS Active</div>
+              <div className="text-success">● Rescuer GPS Active</div>
 
               {distanceKm !== null ? (
                 <div className="font-semibold text-foreground">
@@ -380,7 +380,7 @@ export function ClientMap({
               ) : null}
             </div>
           ) : (
-            <span className="text-muted-foreground">Getting location...</span>
+            <span className="text-muted-foreground">Waiting for rescuer location...</span>
           )}
         </div>
       ) : null}
