@@ -198,17 +198,16 @@ export function LiveRoute({
     instructionsRef.current = [];
     currentInstructionRef.current = 0;
 
-    const routingControl = L.Routing.control({
-      waypoints: [
-        L.latLng(location.lat, location.lng),
-        L.latLng(destination.lat, destination.lng),
-      ],
+    const routingOptions: any = {
+      waypoints: [L.latLng(location.lat, location.lng), L.latLng(destination.lat, destination.lng)],
 
       routeWhileDragging: false,
       addWaypoints: false,
       fitSelectedRoutes: false,
       showAlternatives: false,
       show: false,
+
+      createMarker: () => null,
 
       lineOptions: {
         styles: [
@@ -218,9 +217,10 @@ export function LiveRoute({
             weight: 6,
           },
         ],
-      } as any,
-    }).addTo(map);
+      },
+    };
 
+    const routingControl = L.Routing.control(routingOptions).addTo(map);
     routingControlRef.current = routingControl;
 
     const handleRoutesFound = (event: any) => {
@@ -256,11 +256,9 @@ export function LiveRoute({
 
       const coordinates = route.coordinates ?? [];
 
-      const maneuverPoint =
-        coordinates[firstInstruction.index];
+      const maneuverPoint = coordinates[firstInstruction.index];
 
-      let distanceToManeuver =
-        firstInstruction.distance ?? 0;
+      let distanceToManeuver = firstInstruction.distance ?? 0;
 
       if (maneuverPoint) {
         distanceToManeuver =
@@ -270,41 +268,27 @@ export function LiveRoute({
           }) * 1000;
       }
 
-      const formatted = formatNavigationInstruction(
-        firstInstruction.text ?? "Continue straight",
-      );
+      const formatted = formatNavigationInstruction(firstInstruction.text ?? "Continue straight");
 
       onRouteInfo?.({
         instruction: formatted.text,
         distanceMeters: distanceToManeuver,
-        totalDistanceMeters:
-          route.summary?.totalDistance ?? 0,
-        totalTimeSeconds:
-          route.summary?.totalTime ?? 0,
+        totalDistanceMeters: route.summary?.totalDistance ?? 0,
+        totalTimeSeconds: route.summary?.totalTime ?? 0,
       });
     };
 
     routingControl.on("routesfound", handleRoutesFound);
 
     return () => {
-      (routingControl as any).off(
-        "routesfound",
-        handleRoutesFound,
-      );
+      (routingControl as any).off("routesfound", handleRoutesFound);
 
       if (routingControlRef.current === routingControl) {
         map.removeControl(routingControl);
         routingControlRef.current = null;
       }
     };
-  }, [
-    routeRequest,
-    destination?.lat,
-    destination?.lng,
-    map,
-    onRouteInfo,
-    onOffRoute,
-  ]);
+  }, [routeRequest, destination?.lat, destination?.lng, map, onRouteInfo, onOffRoute]);
 
   /*
    * Update navigation using the existing route.
@@ -332,11 +316,7 @@ export function LiveRoute({
     /*
      * OFF-ROUTE DETECTION
      */
-    const distanceFromRoute =
-      distanceToRouteMeters(
-        liveLocation,
-        coordinates,
-      );
+    const distanceFromRoute = distanceToRouteMeters(liveLocation, coordinates);
 
     if (distanceFromRoute > OFF_ROUTE_THRESHOLD_METERS) {
       offRouteCountRef.current += 1;
@@ -364,9 +344,7 @@ export function LiveRoute({
          * Remove the old route first.
          */
         if (routingControlRef.current) {
-          map.removeControl(
-            routingControlRef.current,
-          );
+          map.removeControl(routingControlRef.current);
           routingControlRef.current = null;
         }
 
@@ -378,9 +356,7 @@ export function LiveRoute({
          * The latest GPS location will be used by
          * the route creation effect.
          */
-        setRouteRequest(
-          (current) => current + 1,
-        );
+        setRouteRequest((current) => current + 1);
 
         return;
       }
@@ -389,18 +365,15 @@ export function LiveRoute({
     /*
      * CURRENT MANEUVER
      */
-    const currentIndex =
-      currentInstructionRef.current;
+    const currentIndex = currentInstructionRef.current;
 
-    const currentInstruction =
-      instructions[currentIndex];
+    const currentInstruction = instructions[currentIndex];
 
     if (!currentInstruction) {
       return;
     }
 
-    const maneuverPoint =
-      coordinates[currentInstruction.index];
+    const maneuverPoint = coordinates[currentInstruction.index];
 
     if (!maneuverPoint) {
       return;
@@ -419,24 +392,16 @@ export function LiveRoute({
      * Only change the instruction when the rescuer
      * actually reaches the maneuver.
      */
-    if (
-      distanceToManeuver <= 25 &&
-      currentIndex < instructions.length - 1
-    ) {
-      const nextIndex =
-        currentIndex + 1;
+    if (distanceToManeuver <= 25 && currentIndex < instructions.length - 1) {
+      const nextIndex = currentIndex + 1;
 
-      currentInstructionRef.current =
-        nextIndex;
+      currentInstructionRef.current = nextIndex;
 
-      const nextInstruction =
-        instructions[nextIndex];
+      const nextInstruction = instructions[nextIndex];
 
-      const nextManeuverPoint =
-        coordinates[nextInstruction.index];
+      const nextManeuverPoint = coordinates[nextInstruction.index];
 
-      let nextDistance =
-        nextInstruction.distance ?? 0;
+      let nextDistance = nextInstruction.distance ?? 0;
 
       if (nextManeuverPoint) {
         nextDistance =
@@ -446,19 +411,13 @@ export function LiveRoute({
           }) * 1000;
       }
 
-      const formatted =
-        formatNavigationInstruction(
-          nextInstruction.text ??
-            "Continue straight",
-        );
+      const formatted = formatNavigationInstruction(nextInstruction.text ?? "Continue straight");
 
       onRouteInfo?.({
         instruction: formatted.text,
         distanceMeters: nextDistance,
-        totalDistanceMeters:
-          route.summary?.totalDistance ?? 0,
-        totalTimeSeconds:
-          route.summary?.totalTime ?? 0,
+        totalDistanceMeters: route.summary?.totalDistance ?? 0,
+        totalTimeSeconds: route.summary?.totalTime ?? 0,
       });
 
       return;
@@ -470,26 +429,15 @@ export function LiveRoute({
      * Only the distance changes.
      * The instruction itself stays stable.
      */
-    const formatted =
-      formatNavigationInstruction(
-        currentInstruction.text ??
-          "Continue straight",
-      );
+    const formatted = formatNavigationInstruction(currentInstruction.text ?? "Continue straight");
 
     onRouteInfo?.({
       instruction: formatted.text,
       distanceMeters: distanceToManeuver,
-      totalDistanceMeters:
-        route.summary?.totalDistance ?? 0,
-      totalTimeSeconds:
-        route.summary?.totalTime ?? 0,
+      totalDistanceMeters: route.summary?.totalDistance ?? 0,
+      totalTimeSeconds: route.summary?.totalTime ?? 0,
     });
-  }, [
-    liveLocation,
-    map,
-    onRouteInfo,
-    onOffRoute,
-  ]);
+  }, [liveLocation, map, onRouteInfo, onOffRoute]);
 
   return null;
 }
