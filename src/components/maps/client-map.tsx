@@ -145,7 +145,8 @@ export function ClientMap({
   locationError = null,
   remoteRescuerLocation = null,
 }: MapViewProps) {
-  const locationEnabled = tracking || showLiveLocation || Boolean(liveLocation);
+  const locationEnabled =
+    tracking || showLiveLocation || Boolean(liveLocation) || Boolean(remoteRescuerLocation);
 
   const [routeInfo, setRouteInfo] = useState<{
     instruction: string;
@@ -184,8 +185,10 @@ export function ClientMap({
 
   const animalMarker = markers.find((marker) => marker.kind === "request");
 
+  const routeLocation = remoteRescuerLocation ?? liveLocation;
+
   const distanceKm =
-    liveLocation && animalMarker ? calculateDistanceKm(liveLocation, animalMarker.coords) : null;
+    routeLocation && animalMarker ? calculateDistanceKm(routeLocation, animalMarker.coords) : null;
 
   const center = useMemo<[number, number]>(() => {
     const first = markers[0];
@@ -274,7 +277,7 @@ export function ClientMap({
         <LiveLocationController location={liveLocation} />
 
         <LiveRoute
-          liveLocation={liveLocation}
+          liveLocation={routeLocation}
           destination={animalMarker?.coords}
           onRouteInfo={setRouteInfo}
           onOffRoute={setIsOffRoute}
