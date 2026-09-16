@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { elapsedLabel } from "@/components/rescuer/use-current-rescuer";
+import { calculateDistanceKm, useLiveLocation } from "@/hooks/useLiveLocation";
 import { PageHeader } from "@/components/shared/page-header";
 import { PriorityBadge, StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/states";
@@ -30,6 +31,10 @@ function RescuerActive() {
   const { reports, user } = useApp();
   const [, setTick] = useState(0);
 
+  const { location: rescuerLocation, error: locationError } = useLiveLocation(
+    user?.role === "rescuer",
+  );
+
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 60000);
     return () => window.clearInterval(id);
@@ -37,10 +42,16 @@ function RescuerActive() {
 
   const active = useMemo(
     () =>
-      reports.filter(
-        (r) => r.rescuerId === user?.id && (r.status === "ACCEPTED" || r.status === "IN_PROGRESS"),
-      ),
-    [reports, user],
+      reports
+        .filter(
+          (r) =>
+            r.rescuerId === user?.id && (r.status === "ACCEPTED" || r.status === "IN_PROGRESS"),
+        )
+        .map((r) => ({
+          ...r,
+          liveDistanceKm: rescuerLocation ? calculateDistanceKm(rescuerLocation, r.coords) : null,
+        })),
+    [reports, user, rescuerLocation],
   );
 
   return (
@@ -61,7 +72,11 @@ function RescuerActive() {
                 >
                   <p className="truncate font-semibold text-foreground">{r.title}</p>
                   <p className="truncate text-sm text-muted-foreground">
-                    {r.area}, {r.city} · {r.distanceKm} km · Elapsed {elapsedLabel(r.updatedAt)}
+                    {r.area}, {r.city} ·{" "}
+                    {r.liveDistanceKm !== null
+                      ? `${r.liveDistanceKm.toFixed(1)} km`
+                      : "Getting location..."}{" "}
+                    · Elapsed {elapsedLabel(r.updatedAt)}
                   </p>
                 </Link>
                 <div className="flex flex-wrap items-center gap-2">

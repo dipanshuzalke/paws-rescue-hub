@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Activity, CheckCircle2, Clock, Star, Timer } from "lucide-react";
+import { Activity, CheckCircle2, Clock, Navigation, Star, Timer } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ import { useCurrentRescuer } from "@/components/rescuer/use-current-rescuer";
 import { timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 import type { Emergency } from "@/types";
+import { calculateDistanceKm, useLiveLocation } from "@/hooks/useLiveLocation";
 
 export const Route = createFileRoute("/rescuer/dashboard")({
   head: () => ({
@@ -45,6 +46,9 @@ function RescuerDashboard() {
   const { reports, user, updateAvailability, updateStatus, refresh } = useApp();
   const rescuer = useCurrentRescuer();
   const [availability, setAvailability] = useState(rescuer.availability);
+  const isRescuer = user?.role === "rescuer";
+
+  const { location: rescuerLocation, error: locationError } = useLiveLocation(isRescuer);
 
   useEffect(() => {
     setAvailability(rescuer.availability);
@@ -56,24 +60,38 @@ function RescuerDashboard() {
     void refresh();
   }, [refresh]);
 
-  const incoming = useMemo(
-    () =>
-      reports
-        .filter((r) => r.status === "REPORTED" || r.status === "ASSIGNED")
-        .sort(
-          (a, b) =>
-            emergencyOrder[a.emergency] - emergencyOrder[b.emergency] ||
-            a.distanceKm - b.distanceKm,
-        )
-        .slice(0, 6),
-    [reports],
-  );
+  const incoming = useMemo(() => {
+    return reports
+      .filter((r) => r.status === "REPORTED" || r.status === "ASSIGNED")
+      .map((r) => {
+        const distanceKm = rescuerLocation ? calculateDistanceKm(rescuerLocation, r.coords) : null;
+
+        return {
+          ...r,
+          distanceKm,
+        };
+      })
+      .sort((a, b) => {
+        const emergencyDifference = emergencyOrder[a.emergency] - emergencyOrder[b.emergency];
+
+        if (emergencyDifference !== 0) {
+          return emergencyDifference;
+        }
+
+        // If GPS isn't available yet, keep original order.
+        if (a.distanceKm === null || b.distanceKm === null) {
+          return 0;
+        }
+
+        return a.distanceKm - b.distanceKm;
+      })
+      .slice(0, 6);
+  }, [reports, rescuerLocation]);
 
   const active = useMemo(
     () =>
       reports.find(
-        (r) =>
-          r.rescuerId === user?.id && (r.status === "ACCEPTED" || r.status === "IN_PROGRESS"),
+        (r) => r.rescuerId === user?.id && (r.status === "ACCEPTED" || r.status === "IN_PROGRESS"),
       ),
     [reports, user],
   );
@@ -83,7 +101,9 @@ function RescuerDashboard() {
       ...incoming.map((r) => ({
         id: r.id,
         label: r.title,
-        sub: `${r.distanceKm} km · ${r.area}`,
+        sub: `${
+          r.distanceKm !== null ? `${r.distanceKm.toFixed(1)} km` : "Distance unavailable"
+        } · ${r.area}`,
         coords: r.coords,
         emergency: r.emergency,
         kind: "request" as const,
@@ -164,15 +184,52 @@ function RescuerDashboard() {
             <div className="min-w-0">
               <p className="truncate font-semibold text-foreground">{active.title}</p>
               <p className="truncate text-sm text-muted-foreground">
-                {active.area}, {active.city} 
+                {active.area}, {active.city}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <PriorityBadge level={active.emergency} />
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Navigation className="h-3 w-3" aria-hidden="true" />
+
+                  {rescuerLocation
+                    ? `${calculateDistanceKm(rescuerLocation, active.coords).toFixed(1)} km`
+                    : "—"}
+                </span>
+
+                <PriorityBadge level={active.emergency} className="shrink-0" />
+              </div>
+              {/* <PriorityBadge level={active.emergency} /> */}
               <StatusBadge status={active.status} />
             </div>
           </Link>
         </section>
+      ) : null}
+
+      {isRescuer ? (
+        <div className="card-surface flex items-center gap-3 p-3">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full ${
+              rescuerLocation ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <Navigation className="h-4 w-4" />
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              {rescuerLocation ? "Location sharing active" : "Getting your location..."}
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              {locationError
+                ? locationError
+                : rescuerLocation
+                  ? "Distances to rescue requests are being updated automatically."
+                  : "Allow location access to see your distance from rescue requests."}
+            </p>
+          </div>
+        </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -204,7 +261,11 @@ function RescuerDashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-foreground">{r.title}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {r.area} · {timeAgo(r.createdAt)}
+                        {r.area} ·{" "}
+                        {r.distanceKm !== null
+                          ? `${r.distanceKm.toFixed(1)} km`
+                          : "Getting location..."}{" "}
+                        · {timeAgo(r.createdAt)}
                       </p>
                     </div>
                     <PriorityBadge level={r.emergency} className="shrink-0" />

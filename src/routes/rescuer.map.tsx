@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
+import { calculateDistanceKm, useLiveLocation } from "@/hooks/useLiveLocation";
 import { MapView, type MapMarker } from "@/components/maps/map-view";
 import { useCurrentRescuer } from "@/components/rescuer/use-current-rescuer";
 import { PageHeader } from "@/components/shared/page-header";
@@ -27,25 +28,36 @@ export const Route = createFileRoute("/rescuer/map")({
 function RescuerMap() {
   const { reports } = useApp();
   const rescuer = useCurrentRescuer();
+
+  const { location: rescuerLocation } = useLiveLocation(rescuer?.role === "rescuer");
+
   const [activeId, setActiveId] = useState<string | undefined>();
 
   const open = useMemo(
-    () => reports.filter((r) => r.status === "REPORTED" || r.status === "ASSIGNED"),
-    [reports],
+    () =>
+      reports
+        .filter((r) => r.status === "REPORTED" || r.status === "ASSIGNED")
+        .map((r) => ({
+          ...r,
+          liveDistanceKm: rescuerLocation ? calculateDistanceKm(rescuerLocation, r.coords) : null,
+        })),
+    [reports, rescuerLocation],
   );
 
   const markers: MapMarker[] = useMemo(
-    () => [
-      ...open.map((r) => ({
+    () =>
+      open.map((r) => ({
         id: r.id,
         label: r.title,
-        sub: `${r.distanceKm} km · ${r.area}`,
+        sub:
+          r.liveDistanceKm !== null
+            ? `${r.liveDistanceKm.toFixed(1)} km · ${r.area}`
+            : `Getting location · ${r.area}`,
         coords: r.coords,
         emergency: r.emergency,
         kind: "request" as const,
       })),
-    ],
-    [open, rescuer.coords],
+    [open],
   );
 
   return (
@@ -76,7 +88,10 @@ function RescuerMap() {
                       <PriorityBadge level={r.emergency} />
                     </div>
                     <p className="mt-1 truncate text-xs text-muted-foreground">
-                      {r.area} · {r.distanceKm} km
+                      {r.area} ·{" "}
+                      {r.liveDistanceKm !== null
+                        ? `${r.liveDistanceKm.toFixed(1)} km`
+                        : "Getting location..."}
                     </p>
                     <Link
                       to="/rescuer/requests/$id"
@@ -92,12 +107,7 @@ function RescuerMap() {
           )}
         </aside>
         <div className="min-h-[420px]">
-          <MapView
-            markers={markers}
-            activeId={activeId}
-            onSelect={setActiveId}
-            height="h-full"
-          />
+          <MapView markers={markers} activeId={activeId} onSelect={setActiveId} height="h-full" />
         </div>
       </div>
     </div>

@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 
 import { STATUS_LABELS, buildTimeline, mockReports } from "@/data/mockReports";
@@ -11,13 +19,7 @@ import { rescueService } from "@/services/rescueService";
 import { ngoService } from "@/services/ngoService";
 import { notificationService } from "@/services/notificationService";
 import { toast } from "sonner";
-import type {
-  AppNotification,
-  RescueReport,
-  RescueStatus,
-  Role,
-  User,
-} from "@/types";
+import type { AppNotification, RescueReport, RescueStatus, Role, User } from "@/types";
 
 interface NewReportInput {
   animal: RescueReport["animal"];
@@ -25,7 +27,7 @@ interface NewReportInput {
   condition: RescueReport["condition"];
   emergency: RescueReport["emergency"];
   description?: string;
-  contactPhone: string,
+  contactPhone: string;
   address: string;
   area: string;
   images: string[];
@@ -48,6 +50,15 @@ interface AppState {
   error: string | null;
   refresh: () => Promise<void>;
   updateAvailability: (availability: NonNullable<User["availability"]>) => Promise<User | null>;
+  updateProfile: (patch: {
+    name: string;
+    phone: string;
+    email?: string;
+    location?: {
+      address?: string;
+      coordinates?: [number, number];
+    };
+  }) => Promise<User | null>;
   signIn: (email: string, password: string) => Promise<User>;
   signUp: (input: {
     name: string;
@@ -189,6 +200,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateProfile = useCallback(
+    async (patch: {
+      name: string;
+      phone: string;
+      email?: string;
+      location?: {
+        address?: string;
+        coordinates?: [number, number];
+      };
+    }) => {
+      if (!isApiEnabled) {
+        let updated: User | null = null;
+
+        setUser((current) => {
+          if (!current) return null;
+
+          updated = {
+            ...current,
+            name: patch.name,
+            phone: patch.phone,
+            ...(patch.email !== undefined ? { email: patch.email } : {}),
+            ...(patch.location?.address !== undefined ? { location: patch.location.address } : {}),
+          };
+
+          return updated;
+        });
+
+        return updated;
+      }
+
+      const updated = await authService.updateProfile(patch);
+
+      // IMPORTANT:
+      // Update the global user immediately after the API succeeds.
+      setUser(updated);
+
+      return updated;
+    },
+    [],
+  );
+
   // Restore the JWT session on first load when the backend is configured.
   useEffect(() => {
     if (!isApiEnabled) return;
@@ -229,9 +281,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const receiveNotification = (notification: AppNotification, showToast: boolean) => {
       if (knownNotificationIds.has(notification.id)) return;
       knownNotificationIds.add(notification.id);
-      setNotifications((previous) => [notification, ...previous].sort(
-        (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
-      ));
+      setNotifications((previous) =>
+        [notification, ...previous].sort(
+          (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+        ),
+      );
       if (!showToast) return;
       // A streamed notification is new to this browser session, so surface it
       // immediately regardless of its type or the recipient's role.
@@ -263,7 +317,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const unsubscribe = notificationService.subscribe((notification) => receiveNotification(notification, true));
+    const unsubscribe = notificationService.subscribe((notification) =>
+      receiveNotification(notification, true),
+    );
     void syncNotifications();
     const interval = window.setInterval(() => void syncNotifications(), 5_000);
     return () => {
@@ -318,20 +374,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [loadFor],
   );
 
-  const loginAs = useCallback(async (role: Role) => {
-    const account = demoAccounts.find((a) => a.role === role)!;
-    if (isApiEnabled) {
-      const me = await authService.login(account.email, DEMO_PASSWORD);
-      setUser(me);
-      setReports([]);
-      setNotifications([]);
-      await loadFor(me);
-      return me;
-    }
-    const found = mockUsers.find((u) => u.id === account.userId)!;
-    setUser(found);
-    return found;
-  }, [loadFor]);
+  const loginAs = useCallback(
+    async (role: Role) => {
+      const account = demoAccounts.find((a) => a.role === role)!;
+      if (isApiEnabled) {
+        const me = await authService.login(account.email, DEMO_PASSWORD);
+        setUser(me);
+        setReports([]);
+        setNotifications([]);
+        await loadFor(me);
+        return me;
+      }
+      const found = mockUsers.find((u) => u.id === account.userId)!;
+      setUser(found);
+      return found;
+    },
+    [loadFor],
+  );
 
   const logout = useCallback(async () => {
     authVersion.current += 1;
@@ -531,10 +590,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const hasStep = r.timeline.some((t) => t.status === status);
         const timeline = hasStep
           ? r.timeline.map((t) => (t.status === status ? { ...t, at: now, note } : t))
-          : [
-              ...r.timeline,
-              { status, label: STATUS_LABELS[status], at: now, note },
-            ];
+          : [...r.timeline, { status, label: STATUS_LABELS[status], at: now, note }];
         return {
           ...r,
           status,
@@ -599,7 +655,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isApiEnabled) {
       void notificationService.markRead(id).catch(() => {
         // Restore the unread state when the server did not persist the change.
-        setNotifications((prev) => prev.map((item) => (item.id === id ? { ...item, read: false } : item)));
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, read: false } : item)),
+        );
         toast.error("Could not mark notification as read. Please try again.");
       });
     }
@@ -639,8 +697,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notifications,
       unreadCount: notifications.filter(
         (notification) =>
-          !notification.read &&
-          (notification.role === user?.role || notification.role === "all"),
+          !notification.read && (notification.role === user?.role || notification.role === "all"),
       ).length,
       apiMode: isApiEnabled,
       authReady,
@@ -648,6 +705,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       error,
       refresh,
       updateAvailability,
+      updateProfile,
       signIn,
       signUp,
       loginAs,

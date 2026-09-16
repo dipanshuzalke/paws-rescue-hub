@@ -20,7 +20,10 @@ export const Route = createFileRoute("/rescuer/profile")({
       { title: "My Profile · ResQ Paws" },
       { name: "description", content: "Manage your rescuer profile, skills and service area." },
       { property: "og:title", content: "My Profile · ResQ Paws" },
-      { property: "og:description", content: "Manage your rescuer profile, skills and service area." },
+      {
+        property: "og:description",
+        content: "Manage your rescuer profile, skills and service area.",
+      },
     ],
   }),
   component: RescuerProfile,
@@ -28,7 +31,7 @@ export const Route = createFileRoute("/rescuer/profile")({
 
 function RescuerProfile() {
   const rescuer = useCurrentRescuer();
-  const { apiMode } = useApp();
+  const { apiMode, updateProfile } = useApp();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: rescuer.name,
@@ -52,31 +55,53 @@ function RescuerProfile() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
     try {
-      if (apiMode) {
-        const location = await new Promise<{ address: string; coordinates?: [number, number] }>(
-          (resolve) => {
-            if (!navigator.geolocation) return resolve({ address: form.location });
-            navigator.geolocation.getCurrentPosition(
-              (position) =>
-                resolve({
-                  address: form.location,
-                  coordinates: [position.coords.longitude, position.coords.latitude],
-                }),
-              () => resolve({ address: form.location }),
-              { enableHighAccuracy: true, timeout: 8000 },
-            );
+      const location = await new Promise<{
+        address: string;
+        coordinates?: [number, number];
+      }>((resolve) => {
+        if (!navigator.geolocation) {
+          return resolve({
+            address: form.location,
+          });
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) =>
+            resolve({
+              address: form.location,
+              coordinates: [position.coords.longitude, position.coords.latitude],
+            }),
+          () =>
+            resolve({
+              address: form.location,
+            }),
+          {
+            enableHighAccuracy: true,
+            timeout: 8000,
           },
         );
-        await authService.updateProfile({
-          name: form.name,
-          phone: form.phone,
-          location,
-        });
+      });
+
+      const updated = await updateProfile({
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        location,
+      });
+
+      if (!updated) {
+        throw new Error("Could not update profile.");
       }
-      toast.success("Profile updated successfully. Distance will appear when coordinates are available.");
-    } catch {
-      toast.error("Could not update your profile. Please try again.");
+
+      toast.success("Profile updated successfully.");
+    } catch (error) {
+      console.error("Profile update error:", error);
+
+      toast.error(
+        error instanceof Error ? error.message : "Could not update your profile. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -96,7 +121,12 @@ function RescuerProfile() {
         />
         <StatCard label="Completed" value={rescuer.completedCases} tone="success" />
         <StatCard label="Active" value={rescuer.activeCases} tone="warning" />
-        <StatCard label="Avg Response" value={`${rescuer.avgResponseMins}m`} tone="info" animate={false} />
+        <StatCard
+          label="Avg Response"
+          value={`${rescuer.avgResponseMins}m`}
+          tone="info"
+          animate={false}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -174,7 +204,9 @@ function RescuerProfile() {
             </div>
           </div>
           <div className="flex justify-end">
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Save changes"}
+            </Button>
           </div>
         </form>
       </div>

@@ -207,12 +207,40 @@ export const deleteMe = asyncHandler(async (req, res) => {
 });
 
 export const updateMe = asyncHandler(async (req, res) => {
-  const allowed = ["name", "phone", "availability"];
   const updates = {};
-  for (const key of allowed) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
+
+  if (req.body.name !== undefined) {
+    updates.name = req.body.name;
   }
 
+  if (req.body.phone !== undefined) {
+    updates.phone = req.body.phone;
+  }
+
+  if (req.body.availability !== undefined) {
+    updates.availability = req.body.availability;
+  }
+
+  // Email
+  if (req.body.email !== undefined) {
+    const email = req.body.email.trim().toLowerCase();
+
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: req.user._id },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email is already in use.",
+      });
+    }
+
+    updates.email = email;
+  }
+
+  // Location
   if (req.body.location) {
     updates.location = {
       ...(req.user.location?.toObject?.() ?? req.user.location ?? {}),
@@ -221,10 +249,16 @@ export const updateMe = asyncHandler(async (req, res) => {
     };
   }
 
-  const user = await User.findByIdAndUpdate(req.user._id, updates, {
-    new: true,
-    runValidators: true,
-  });
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    updates,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
-  return ok(res, { user }, "Profile updated successfully");
+  return ok(res, {
+    user,
+  }, "Profile updated successfully");
 });
