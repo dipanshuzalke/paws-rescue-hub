@@ -21,6 +21,7 @@ import {
 import { formatDateTime, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 import type { RescueStatus } from "@/types";
+import { NotesSection } from "@/components/shared/NotesSection";
 
 export const Route = createFileRoute("/admin/reports/$id")({
   head: ({ params }) => ({
@@ -159,20 +160,7 @@ function AdminReportDetail() {
             <StatusTimeline entries={report.timeline} />
           </div>
 
-          {report.notes.length > 0 ? (
-            <div className="card-surface p-5">
-              <SectionHeading title="Case notes" />
-              <ul className="space-y-3">
-                {report.notes.map((n) => (
-                  <li key={n.id} className="text-sm">
-                    <p className="font-medium text-foreground">{n.author}</p>
-                    <p className="text-xs text-muted-foreground">{formatDateTime(n.at)}</p>
-                    <p className="mt-1 text-foreground">{n.text}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+          <NotesSection notes={report.notes} />
         </div>
 
         <div className="space-y-6">
@@ -238,7 +226,9 @@ function AdminReportDetail() {
         onConfirm={() => {
           if (pending) {
             updateStatus(report.id, pending);
-            toast.success(`Case #${report.id} overridden to ${pending.replace("_", " ").toLowerCase()}.`);
+            toast.success(
+              `Case #${report.id} overridden to ${pending.replace("_", " ").toLowerCase()}.`,
+            );
           }
           setPending(null);
         }}

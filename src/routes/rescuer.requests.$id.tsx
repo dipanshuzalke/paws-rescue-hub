@@ -27,6 +27,7 @@ import { formatDateTime, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 import { calculateDistanceKm, useLiveLocation } from "@/hooks/useLiveLocation";
 import { useRescueTracking } from "@/hooks/useResqueTracking";
+import { NotesSection } from "@/components/shared/NotesSection";
 
 export const Route = createFileRoute("/rescuer/requests/$id")({
   head: () => ({
@@ -281,19 +282,7 @@ function RescuerRequestDetail() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-3 text-sm">
-        <div className="font-medium">Live connection</div>
-
-        <div className="mt-1 text-muted-foreground">
-          {rescueSocket.error
-            ? `Error: ${rescueSocket.error}`
-            : rescueSocket.joined
-              ? "● Connected to rescue"
-              : rescueSocket.connected
-                ? "Connected — joining rescue..."
-                : "Connecting..."}
-        </div>
-      </div>
+      <NotesSection notes={report.notes} />
 
       {report ? (
         <EvidenceSubmissionDialog

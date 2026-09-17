@@ -24,6 +24,7 @@ import { duplicateService } from "@/services/duplicateService";
 import { useApp } from "@/store/app-store";
 import type { DuplicateMatch, RescueStatus } from "@/types";
 import { useRescueLiveLocation } from "@/hooks/useRescueLiveLocation";
+import { NotesSection } from "@/components/shared/NotesSection";
 
 export const Route = createFileRoute("/ngo/requests/$id")({
   head: ({ params }) => ({
@@ -221,6 +222,8 @@ function NgoRequestDetail() {
             <SectionHeading title="Status timeline" />
             <StatusTimeline entries={report.timeline} />
           </div>
+
+          <NotesSection notes={report.notes} />
 
           {loadingDuplicates ? (
             <div className="card-surface p-5">

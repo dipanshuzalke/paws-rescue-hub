@@ -198,3 +198,48 @@ export const deleteReport = asyncHandler(async (req, res) => {
   await RescueHistory.deleteMany({ report: report._id });
   return ok(res, null, "Report deleted successfully");
 });
+
+export const addReportNote = asyncHandler(async (req, res) => {
+  const { text } = req.body;
+
+  if (!text?.trim()) {
+    throw new ApiError(400, "Note cannot be empty");
+  }
+
+  const report = await RescueReport.findById(req.params.id);
+
+  if (!report) {
+    throw new ApiError(404, "Rescue report not found");
+  }
+
+  // Citizen can only add notes to their own report
+  if (
+    req.user.role === "CITIZEN" &&
+    String(report.reporter) !== String(req.user._id)
+  ) {
+    throw new ApiError(
+      403,
+      "You can only add notes to your own report"
+    );
+  }
+
+  report.rescueNotes.push({
+    author: req.user._id,
+    authorName: req.user.name,
+    authorRole: req.user.role,
+    text: text.trim(),
+    at: new Date(),
+  });
+
+  await report.save();
+
+  const updatedReport = await RescueReport.findById(report._id)
+    .populate("reporter", "name email phone")
+    .populate("assignedRescuer", "name email phone")
+    .populate("assignedOrganization", "name");
+
+  return res.status(200).json({
+    success: true,
+    data: updatedReport,
+  });
+});

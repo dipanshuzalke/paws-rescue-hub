@@ -21,6 +21,7 @@ import {
   updateReport,
   cancelReport,
   deleteReport,
+  addReportNote
 } from "../controllers/reportController.js";
 import {
   checkDuplicates,
@@ -83,6 +84,11 @@ router.post(
   keepSeparate,
 );
 
+router.post(
+  "/:id/notes",
+  authorizeRoles("CITIZEN"),
+  addReportNote,
+);
 router.get("/:id", requireVerifiedNgo, getReport);
 router.put("/:id", authorizeRoles("CITIZEN"), validate(updateReportSchema), updateReport);
 router.post("/:id/cancel", cancelReport);

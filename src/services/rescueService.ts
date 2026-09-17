@@ -44,9 +44,9 @@ export const rescueService = {
   },
 
   async addNote(reportId: string, text: string): Promise<RescueReport> {
-    return adaptReport(await unwrap<ApiReport>(api.post(`/rescues/${reportId}/notes`, { text })));
+    return adaptReport(await unwrap<ApiReport>(api.post(`/reports/${reportId}/notes`, { text })));
   },
-
+  
   async uploadProof(reportId: string, files: File[], note?: string): Promise<RescueReport> {
     const form = new FormData();
     files.forEach((f) => form.append("images", f));
