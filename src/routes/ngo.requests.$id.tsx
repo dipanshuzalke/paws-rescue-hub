@@ -23,6 +23,7 @@ import { formatDateTime, timeAgo } from "@/lib/format";
 import { duplicateService } from "@/services/duplicateService";
 import { useApp } from "@/store/app-store";
 import type { DuplicateMatch, RescueStatus } from "@/types";
+import { useRescueLiveLocation } from "@/hooks/useRescueLiveLocation";
 
 export const Route = createFileRoute("/ngo/requests/$id")({
   head: ({ params }) => ({
@@ -30,7 +31,10 @@ export const Route = createFileRoute("/ngo/requests/$id")({
       { title: `Request #${params.id} · ResQ Paws` },
       { name: "description", content: "Rescue request detail, timeline and assignment panel." },
       { property: "og:title", content: `Request #${params.id} · ResQ Paws` },
-      { property: "og:description", content: "Review photos, location and status for this rescue request." },
+      {
+        property: "og:description",
+        content: "Review photos, location and status for this rescue request.",
+      },
     ],
   }),
   component: NgoRequestDetail,
@@ -52,6 +56,12 @@ function NgoRequestDetail() {
   const [loadingDuplicates, setLoadingDuplicates] = useState(false);
 
   const report = reports.find((r) => r.id === id);
+
+  const {
+    rescuerLocation: remoteRescuerLocation,
+    rescuerName: liveRescuerName,
+    tracking,
+  } = useRescueLiveLocation(report?.id);
 
   useEffect(() => {
     if (!report) return;
@@ -173,10 +183,38 @@ function NgoRequestDetail() {
                   sub: report.address,
                   coords: report.coords,
                   emergency: report.emergency,
+                  kind: "request",
                 },
               ]}
               height="h-[320px]"
+              remoteRescuerLocation={remoteRescuerLocation}
             />
+            {report.rescuerName && (
+              <div className="mt-4 rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Live Rescue Tracking</p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {liveRescuerName ?? report.rescuerName}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ${
+                      tracking ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        tracking ? "bg-green-500 animate-pulse" : "bg-muted-foreground"
+                      }`}
+                    />
+                    {tracking ? "Live" : "Not sharing"}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="card-surface p-5">
@@ -187,7 +225,10 @@ function NgoRequestDetail() {
           {loadingDuplicates ? (
             <div className="card-surface p-5">
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Loading duplicates..." />
+                <Loader2
+                  className="h-5 w-5 animate-spin text-muted-foreground"
+                  aria-label="Loading duplicates..."
+                />
               </div>
             </div>
           ) : duplicates.length > 0 ? (
@@ -254,7 +295,9 @@ function NgoRequestDetail() {
               <Select
                 onValueChange={(v) => {
                   updateStatus(report.id, v as RescueStatus);
-                  toast.success(`Request #${report.id} marked as ${v.replace("_", " ").toLowerCase()}.`);
+                  toast.success(
+                    `Request #${report.id} marked as ${v.replace("_", " ").toLowerCase()}.`,
+                  );
                 }}
               >
                 <SelectTrigger className="bg-card">

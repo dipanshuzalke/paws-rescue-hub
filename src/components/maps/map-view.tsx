@@ -14,21 +14,57 @@ export interface MapMarker {
 
 export interface MapViewProps {
   markers: MapMarker[];
+
   height?: string;
+
   activeId?: string | undefined;
+
   onSelect?: ((id: string) => void) | undefined;
+
   onMapClick?: (coords: GeoPoint) => void;
+
   caption?: string;
+
   tracking?: boolean;
+
   showLiveLocation?: boolean;
+
   showStartDriving?: boolean;
+
   onStartDriving?: () => void;
 
+  /**
+   * =========================================================
+   * LIVE LOCATION
+   * =========================================================
+   */
+
+  // Rescuer's own browser GPS
   liveLocation?: LiveLocation | null;
+
   locationError?: string | null;
 
+  // Rescuer GPS received through Socket.IO
+  // Used by Citizen / NGO / Admin
   remoteRescuerLocation?: LiveLocation | null;
+
+  /**
+   * =========================================================
+   * NAVIGATION
+   * =========================================================
+   *
+   * true  -> show turn-by-turn navigation
+   * false -> hide navigation instructions
+   *
+   * Recommended:
+   * Rescuer       -> true
+   * Citizen       -> false
+   * NGO           -> false
+   * Admin         -> false
+   */
+  showNavigation?: boolean;
 }
+
 export function MapView(props: MapViewProps) {
   const [ClientMap, setClientMap] = useState<React.ComponentType<MapViewProps> | null>(null);
 
@@ -49,7 +85,9 @@ export function MapView(props: MapViewProps) {
   if (!ClientMap) {
     return (
       <div
-        className={`flex ${props.height ?? "h-[420px]"} items-center justify-center rounded-xl border border-border bg-muted`}
+        className={`flex ${
+          props.height ?? "h-[420px]"
+        } items-center justify-center rounded-xl border border-border bg-muted`}
       >
         <span className="text-sm text-muted-foreground">Loading map...</span>
       </div>

@@ -135,7 +135,7 @@ function RescuerRequestDetail() {
 
   const { location: rescuerLocation, error: gpsError } = useLiveLocation(isDriving);
 
-  const { trackingStarted } = useRescueTracking(report?.id, isDriving, rescuerLocation);
+  useRescueTracking(report?.id, isDriving, rescuerLocation);
 
   return (
     <div className="space-y-6">
@@ -210,6 +210,7 @@ function RescuerRequestDetail() {
               locationError={gpsError}
               showStartDriving={isMine && report.status === "ACCEPTED"}
               onStartDriving={handleStartDriving}
+              showNavigation={isDriving}
             />
           </section>
 
