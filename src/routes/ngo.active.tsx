@@ -31,17 +31,13 @@ const activeStatuses: RescueStatus[] = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 
 function NgoActive() {
   const { reports } = useApp();
-  const availableRescuerLocations =
-  useAvailableRescuersLocation();
+  const availableRescuerLocations = useAvailableRescuersLocation();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
   const [assignTarget, setAssignTarget] = useState<RescueReport | null>(null);
 
-  const active = useMemo(
-    () => reports.filter((r) => activeStatuses.includes(r.status)),
-    [reports],
-  );
+  const active = useMemo(() => reports.filter((r) => activeStatuses.includes(r.status)), [reports]);
 
   const filtered = useMemo(
     () =>
@@ -60,13 +56,13 @@ function NgoActive() {
   );
 
   const activeCaseMarkers = active.map((r) => ({
-  id: r.id,
-  label: `#${r.id} · ${r.title}`,
-  sub: `${r.area}, ${r.city}${r.rescuerName ? ` · ${r.rescuerName}` : ""}`,
-  coords: r.coords,
-  emergency: r.emergency,
-  kind: "request" as const,
-}));
+    id: r.id,
+    label: `#${r.id} · ${r.title}`,
+    sub: `${r.area}, ${r.city}${r.rescuerName ? ` · ${r.rescuerName}` : ""}`,
+    coords: r.coords,
+    emergency: r.emergency,
+    kind: "request" as const,
+  }));
 
   return (
     <div className="space-y-6">
@@ -93,17 +89,20 @@ function NgoActive() {
       <div className="card-surface p-5">
         <SectionHeading title="Live map" description="Locations of all active rescue cases." />
         <MapView
-    markers={activeCaseMarkers}
-    availableRescuerLocations={availableRescuerLocations}
-    activeId={activeId}
-    onSelect={setActiveId}
-    height="h-[420px]"
-    showNavigation={false}
-  />
+          markers={activeCaseMarkers}
+          availableRescuerLocations={availableRescuerLocations}
+          activeId={activeId}
+          onSelect={setActiveId}
+          height="h-[420px]"
+          showNavigation={false}
+        />
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title="No active rescues" description="Assigned and in-progress cases will show up here." />
+        <EmptyState
+          title="No active rescues"
+          description="Assigned and in-progress cases will show up here."
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((r) => (
