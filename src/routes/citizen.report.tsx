@@ -91,6 +91,7 @@ function CitizenReport() {
   const [duplicateResult, setDuplicateResult] = useState<DuplicateCheckResult | null>(null);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicateSawAndAcknowledged, setDuplicateSawAndAcknowledged] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const errors: Partial<Record<number, string>> = {};
 
@@ -774,6 +775,7 @@ function CitizenReport() {
                 </div>
 
                 {/* Image Preview */}
+                {/* Image Preview */}
                 {images.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {images.map((img) => (
@@ -781,12 +783,21 @@ function CitizenReport() {
                         key={img.id}
                         className="group relative aspect-square overflow-hidden rounded-lg border border-border"
                       >
-                        <img
-                          src={img.url}
-                          alt="Uploaded animal"
-                          className="h-full w-full object-cover"
-                        />
+                        {/* Clickable image */}
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage(img.url)}
+                          className="h-full w-full cursor-zoom-in"
+                          aria-label="View uploaded animal photo"
+                        >
+                          <img
+                            src={img.url}
+                            alt="Uploaded animal"
+                            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                          />
+                        </button>
 
+                        {/* Remove button */}
                         <button
                           type="button"
                           aria-label="Remove photo"
@@ -797,6 +808,30 @@ function CitizenReport() {
                         </button>
                       </div>
                     ))}
+                  </div>
+                )}
+                {previewImage && (
+                  <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+                    onClick={() => setPreviewImage(null)}
+                  >
+                    {/* Close button */}
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage(null)}
+                      className="absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20"
+                      aria-label="Close image preview"
+                    >
+                      <X className="h-6 w-6" />
+                    </button>
+
+                    {/* Full image */}
+                    <img
+                      src={previewImage}
+                      alt="Full size animal preview"
+                      className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
                 )}
               </div>
