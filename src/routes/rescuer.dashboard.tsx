@@ -21,6 +21,7 @@ import { timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 import type { Emergency } from "@/types";
 import { calculateDistanceKm, useLiveLocation } from "@/hooks/useLiveLocation";
+import { connectSocket } from "@/lib/socket";
 
 export const Route = createFileRoute("/rescuer/dashboard")({
   head: () => ({
@@ -49,6 +50,67 @@ function RescuerDashboard() {
   const isRescuer = user?.role === "rescuer";
 
   const { location: rescuerLocation, error: locationError } = useLiveLocation(isRescuer);
+
+  useEffect(() => {
+    if (!isRescuer) return;
+    if (availability !== "Available") return;
+    if (!rescuerLocation) return;
+
+    const socket = connectSocket();
+
+    const payload = {
+      lat: rescuerLocation.lat,
+      lng: rescuerLocation.lng,
+      accuracy: rescuerLocation.accuracy,
+      heading: rescuerLocation.heading,
+      speed: rescuerLocation.speed,
+    };
+
+    console.log("[RESCUER] Sending available location:", payload);
+
+    socket.emit("rescuer_location_update", payload);
+  }, [isRescuer, availability, rescuerLocation]);
+
+  useEffect(() => {
+    if (!isRescuer || !rescuerLocation) {
+      return;
+    }
+
+    // Only publish location while the rescuer is available.
+    if (availability !== "Available") {
+      return;
+    }
+
+    const socket = connectSocket();
+
+    const payload = {
+      lat: rescuerLocation.lat,
+      lng: rescuerLocation.lng,
+      accuracy: rescuerLocation.accuracy,
+      heading: rescuerLocation.heading,
+      speed: rescuerLocation.speed,
+    };
+
+    console.log("[RESCUER] Sending available location:", payload);
+
+    socket.emit("rescuer_location_update", payload);
+  }, [isRescuer, availability, rescuerLocation]);
+
+  useEffect(() => {
+    if (!isRescuer) {
+      return;
+    }
+
+    if (availability === "Available") {
+      return;
+    }
+
+    const socket = connectSocket();
+
+    console.log("[RESCUER] Stopping available location sharing");
+
+    socket.emit("rescuer_location_stop");
+  }, [isRescuer, availability]);
 
   useEffect(() => {
     setAvailability(rescuer.availability);

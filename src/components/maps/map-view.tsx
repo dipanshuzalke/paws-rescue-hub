@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import type { Emergency, GeoPoint } from "@/types";
 import type { LiveLocation } from "@/hooks/useLiveLocation";
+import { AvailableRescuerLocation } from "@/hooks/useAvailableResquer";
 
 export interface MapMarker {
   id: string;
@@ -63,6 +64,8 @@ export interface MapViewProps {
    * Admin         -> false
    */
   showNavigation?: boolean;
+
+availableRescuerLocations?: AvailableRescuerLocation[];
 }
 
 export function MapView(props: MapViewProps) {

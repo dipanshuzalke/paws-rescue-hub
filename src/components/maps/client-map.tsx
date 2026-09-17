@@ -62,12 +62,19 @@ const getRescuerIcon = (heading: number | null) => {
   });
 };
 
-function MapCenterController({ markers, tracking }: { markers: MapMarker[]; tracking: boolean }) {
+function MapCenterController({
+  markers,
+  tracking,
+  disableMarkerCentering = false,
+}: {
+  markers: MapMarker[];
+  tracking: boolean;
+  disableMarkerCentering?: boolean;
+}) {
   const map = useMap();
 
   useEffect(() => {
-    // When driving, LiveLocationController handles the map center.
-    if (tracking) {
+    if (tracking || disableMarkerCentering) {
       return;
     }
 
@@ -77,10 +84,17 @@ function MapCenterController({ markers, tracking }: { markers: MapMarker[]; trac
       return;
     }
 
-    map.setView([first.coords.lat, first.coords.lng], 16, {
-      animate: false,
-    });
-  }, [markers, tracking, map]);
+    map.setView(
+      [first.coords.lat, first.coords.lng],
+      16,
+      { animate: false },
+    );
+  }, [
+    markers,
+    tracking,
+    disableMarkerCentering,
+    map,
+  ]);
 
   return null;
 }
@@ -130,6 +144,32 @@ function FullscreenMapController({ isFullscreen }: { isFullscreen: boolean }) {
   return null;
 }
 
+function AvailableRescuersMapController({
+  rescuers,
+}: {
+  rescuers: MapViewProps["availableRescuerLocations"];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!rescuers || rescuers.length === 0) {
+      return;
+    }
+
+    const bounds = L.latLngBounds(
+      rescuers.map((rescuer) => [rescuer.location.lat, rescuer.location.lng] as [number, number]),
+    );
+
+    map.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 15,
+      animate: false,
+    });
+  }, [rescuers, map]);
+
+  return null;
+}
+
 export function ClientMap({
   markers,
   height = "h-[420px]",
@@ -145,9 +185,14 @@ export function ClientMap({
   locationError = null,
   remoteRescuerLocation = null,
   showNavigation = false,
+  availableRescuerLocations = [],
 }: MapViewProps) {
   const locationEnabled =
-    tracking || showLiveLocation || Boolean(liveLocation) || Boolean(remoteRescuerLocation);
+    tracking ||
+    showLiveLocation ||
+    Boolean(liveLocation) ||
+    Boolean(remoteRescuerLocation) ||
+    availableRescuerLocations.length > 0;
 
   const [routeInfo, setRouteInfo] = useState<{
     instruction: string;
@@ -192,14 +237,20 @@ export function ClientMap({
     routeLocation && animalMarker ? calculateDistanceKm(routeLocation, animalMarker.coords) : null;
 
   const center = useMemo<[number, number]>(() => {
-    const first = markers[0];
+    const firstMarker = markers[0];
 
-    if (first?.coords) {
-      return [first.coords.lat, first.coords.lng];
+    if (firstMarker?.coords) {
+      return [firstMarker.coords.lat, firstMarker.coords.lng];
+    }
+
+    const firstRescuer = availableRescuerLocations[0];
+
+    if (firstRescuer?.location) {
+      return [firstRescuer.location.lat, firstRescuer.location.lng];
     }
 
     return DEFAULT_CENTER;
-  }, [markers]);
+  }, [markers, availableRescuerLocations]);
 
   return (
     <div
@@ -268,12 +319,15 @@ export function ClientMap({
       </button>
       <MapContainer center={center} zoom={DEFAULT_ZOOM} scrollWheelZoom className="h-full w-full">
         <FullscreenMapController isFullscreen={isFullscreen} />
+        <AvailableRescuersMapController rescuers={availableRescuerLocations} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <MapCenterController markers={markers} tracking={tracking} />
+        <MapCenterController markers={markers} tracking={tracking} disableMarkerCentering={
+    availableRescuerLocations.length > 0
+  }/>
 
         <LiveLocationController location={liveLocation} />
 
@@ -316,27 +370,27 @@ export function ClientMap({
             </Marker>
           );
         })}
-        {remoteRescuerLocation ? (
+        {availableRescuerLocations.map((rescuer) => (
           <Marker
-            position={[remoteRescuerLocation.lat, remoteRescuerLocation.lng]}
-            icon={getRescuerIcon(remoteRescuerLocation.heading)}
+            key={rescuer.rescuerId}
+            position={[rescuer.location.lat, rescuer.location.lng]}
+            icon={getRescuerIcon(rescuer.location.heading)}
           >
             <Popup>
-              <div className="min-w-[160px]">
-                <strong>Rescuer — Live Location</strong>
+              <div className="min-w-[180px]">
+                <strong>🚑 {rescuer.rescuerName}</strong>
+
+                <div className="mt-1 text-sm text-gray-600">Available</div>
+
+                <div className="mt-1 text-xs text-gray-500">Live location</div>
 
                 <div className="mt-1 text-xs text-gray-500">
-                  {remoteRescuerLocation.lat.toFixed(6)}, {remoteRescuerLocation.lng.toFixed(6)}
-                </div>
-
-                <div className="mt-1 text-xs text-gray-500">
-                  Accuracy: {Math.round(remoteRescuerLocation.accuracy)} m
+                  Accuracy: {Math.round(rescuer.location.accuracy)} m
                 </div>
               </div>
             </Popup>
           </Marker>
-        ) : null}
-
+        ))}
         {locationEnabled && liveLocation ? (
           <Marker
             position={[liveLocation.lat, liveLocation.lng]}
@@ -365,39 +419,64 @@ export function ClientMap({
       </div>
 
       {/* Live GPS status */}
-      {locationEnabled ? (
-        <div className="pointer-events-none absolute bottom-14 left-3 z-[1000] rounded-lg border border-border bg-card/95 px-3 py-2 text-xs font-medium shadow-sm backdrop-blur">
-          {locationError && !liveLocation && !remoteRescuerLocation ? (
-            <span className="text-destructive">{locationError}</span>
-          ) : remoteRescuerLocation ? (
-            <div className="space-y-1">
-              <div className="text-success">● Rescuer GPS Active</div>
+     {locationEnabled ? (
+  <div className="pointer-events-none absolute bottom-14 left-3 z-[1000] rounded-lg border border-border bg-card/95 px-3 py-2 text-xs font-medium shadow-sm backdrop-blur">
 
-              {distanceKm !== null ? (
-                <div className="font-semibold text-foreground">
-                  {distanceKm < 1
-                    ? `${Math.round(distanceKm * 1000)} m away`
-                    : `${distanceKm.toFixed(2)} km away`}
-                </div>
-              ) : null}
-            </div>
-          ) : liveLocation ? (
-            <div className="space-y-1">
-              <div className="text-success">● GPS Active</div>
-
-              {distanceKm !== null ? (
-                <div className="font-semibold text-foreground">
-                  {distanceKm < 1
-                    ? `${Math.round(distanceKm * 1000)} m away`
-                    : `${distanceKm.toFixed(2)} km away`}
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">Getting your location...</span>
-          )}
+    {availableRescuerLocations.length > 0 ? (
+      <div className="space-y-1">
+        <div className="text-success">
+          ● {availableRescuerLocations.length} Available Rescuer
+          {availableRescuerLocations.length !== 1 ? "s" : ""}
         </div>
-      ) : null}
+
+        <div className="text-muted-foreground">
+          Live locations updating
+        </div>
+      </div>
+
+    ) : locationError && !liveLocation && !remoteRescuerLocation ? (
+      <span className="text-destructive">
+        {locationError}
+      </span>
+
+    ) : remoteRescuerLocation ? (
+      <div className="space-y-1">
+        <div className="text-success">
+          ● Rescuer GPS Active
+        </div>
+
+        {distanceKm !== null ? (
+          <div className="font-semibold text-foreground">
+            {distanceKm < 1
+              ? `${Math.round(distanceKm * 1000)} m away`
+              : `${distanceKm.toFixed(2)} km away`}
+          </div>
+        ) : null}
+      </div>
+
+    ) : liveLocation ? (
+      <div className="space-y-1">
+        <div className="text-success">
+          ● GPS Active
+        </div>
+
+        {distanceKm !== null ? (
+          <div className="font-semibold text-foreground">
+            {distanceKm < 1
+              ? `${Math.round(distanceKm * 1000)} m away`
+              : `${distanceKm.toFixed(2)} km away`}
+          </div>
+        ) : null}
+      </div>
+
+    ) : (
+      <span className="text-muted-foreground">
+        Getting your location...
+      </span>
+    )}
+
+  </div>
+) : null}
     </div>
   );
 }

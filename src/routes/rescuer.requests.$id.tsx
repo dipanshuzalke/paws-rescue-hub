@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
-import { useLiveLocation } from "@/hooks/useLiveLocation";
+import { calculateDistanceKm, useLiveLocation } from "@/hooks/useLiveLocation";
 import { useRescueTracking } from "@/hooks/useResqueTracking";
 
 export const Route = createFileRoute("/rescuer/requests/$id")({
@@ -134,6 +134,9 @@ function RescuerRequestDetail() {
   const rescueSocket = useRescueSocket(report?.id);
 
   const { location: rescuerLocation, error: gpsError } = useLiveLocation(isDriving);
+  const liveDistanceKm = rescuerLocation
+    ? calculateDistanceKm(rescuerLocation, report.coords)
+    : null;
 
   useRescueTracking(report?.id, isDriving, rescuerLocation);
 
@@ -160,10 +163,6 @@ function RescuerRequestDetail() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <section className="card-surface p-4">
-            <SectionHeading
-              title="Location & route"
-              description={`${report.distanceKm} km away · ETA ${Math.max(3, Math.round(report.distanceKm * 4))} min`}
-            />
             <ReportImageGallery
               images={report.images}
               alt={`${report.condition} ${report.animal.toLowerCase()} photo`}
@@ -196,7 +195,14 @@ function RescuerRequestDetail() {
           <section className="card-surface p-4">
             <SectionHeading
               title="Location & route"
-              description={`${report.distanceKm} km away · ETA ${Math.max(3, Math.round(report.distanceKm * 4))} min`}
+              description={
+                liveDistanceKm !== null
+                  ? `${liveDistanceKm.toFixed(1)} km away · ETA ${Math.max(
+                      3,
+                      Math.round(liveDistanceKm * 4),
+                    )} min`
+                  : "Getting your location..."
+              }
             />
             <p className="mb-3 flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />

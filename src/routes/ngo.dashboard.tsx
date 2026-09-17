@@ -1,15 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Clock, Inbox, ShieldCheck, Timer, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  XAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, XAxis } from "recharts";
 
 import { AssignDialog } from "@/components/ngo/assign-dialog";
 import { MapView } from "@/components/maps/map-view";
@@ -30,6 +22,7 @@ import { evidenceService } from "@/services/evidenceService";
 import { ngoService } from "@/services/ngoService";
 import { useApp } from "@/store/app-store";
 import type { RescueReport } from "@/types";
+import { useAvailableRescuersLocation } from "@/hooks/useAvailableResquer";
 
 export const Route = createFileRoute("/ngo/dashboard")({
   head: () => ({
@@ -57,7 +50,11 @@ function NgoDashboard() {
   const { reports, apiMode } = useApp();
   const [assignTarget, setAssignTarget] = useState<RescueReport | null>(null);
 
-  const { data: rescuersData, loading: rescuersLoading, retry: retryRescuers } = useAsync(
+  const {
+    data: rescuersData,
+    loading: rescuersLoading,
+    retry: retryRescuers,
+  } = useAsync(
     () =>
       apiMode
         ? ngoService.getRescuers({ limit: 50 }).then((r) => r.items)
@@ -67,10 +64,7 @@ function NgoDashboard() {
   const rescuers = rescuersData ?? [];
 
   const { data: overview } = useAsync(
-    () =>
-      apiMode
-        ? analyticsService.getOverview()
-        : Promise.resolve(null),
+    () => (apiMode ? analyticsService.getOverview() : Promise.resolve(null)),
     [apiMode],
   );
 
@@ -85,7 +79,9 @@ function NgoDashboard() {
       apiMode
         ? analyticsService
             .getMonthly()
-            .then((pts) => pts.map((p) => ({ period: p.month, reported: p.reports, rescued: p.rescued })))
+            .then((pts) =>
+              pts.map((p) => ({ period: p.month, reported: p.reports, rescued: p.rescued })),
+            )
         : Promise.resolve(seriesForRange("6m")),
     [apiMode],
   );
@@ -95,7 +91,9 @@ function NgoDashboard() {
       apiMode
         ? evidenceService.getPending({ limit: 100 }).then((r) => r.items)
         : Promise.resolve(
-            reports.filter((r) => r.evidence?.status === "PENDING" || r.evidence?.status === "REJECTED"),
+            reports.filter(
+              (r) => r.evidence?.status === "PENDING" || r.evidence?.status === "REJECTED",
+            ),
           ),
     [apiMode, reports],
   );
@@ -104,16 +102,13 @@ function NgoDashboard() {
 
   const open = reports.filter((r) => r.status === "REPORTED");
   const assigned = reports.filter((r) => r.status === "ASSIGNED");
-  const inProgress = reports.filter(
-    (r) => r.status === "ACCEPTED" || r.status === "IN_PROGRESS",
-  );
+  const inProgress = reports.filter((r) => r.status === "ACCEPTED" || r.status === "IN_PROGRESS");
   const now = new Date();
-  const rescuedThisMonth = reports.filter(
-    (r) =>
-      r.status === "RESCUED" || r.status === "CLOSED"
-        ? new Date(r.updatedAt).getMonth() === now.getMonth() &&
-          new Date(r.updatedAt).getFullYear() === now.getFullYear()
-        : false,
+  const rescuedThisMonth = reports.filter((r) =>
+    r.status === "RESCUED" || r.status === "CLOSED"
+      ? new Date(r.updatedAt).getMonth() === now.getMonth() &&
+        new Date(r.updatedAt).getFullYear() === now.getFullYear()
+      : false,
   );
   const rescuerAverage = rescuers.length
     ? Math.round(rescuers.reduce((sum, r) => sum + r.avgResponseMins, 0) / rescuers.length)
@@ -145,6 +140,9 @@ function NgoDashboard() {
     name: e,
     value: reports.filter((r) => r.emergency === e).length,
   }));
+
+  const availableRescuersLive =
+  useAvailableRescuersLocation();
 
   return (
     <div className="space-y-6">
@@ -264,9 +262,7 @@ function NgoDashboard() {
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{r.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {r.activeCases} active 
-                </p>
+                <p className="truncate text-xs text-muted-foreground">{r.activeCases} active</p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <AvailabilityBadge value={r.availability} />
@@ -279,43 +275,55 @@ function NgoDashboard() {
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="card-surface p-5 xl:col-span-2">
-          <SectionHeading title="Cases over time" description="Reported vs. rescued (last 6 months)." />
+          <SectionHeading
+            title="Cases over time"
+            description="Reported vs. rescued (last 6 months)."
+          />
           {chartLoading ? null : (
-          <ChartContainer
-            config={{
-              reported: { label: "Reported", color: "var(--color-chart-1)" },
-              rescued: { label: "Rescued", color: "var(--color-chart-2)" },
-            }}
-            className="h-[260px] w-full"
-          >
-            <AreaChart data={chartData}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis dataKey="period" tickLine={false} axisLine={false} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area
-                type="monotone"
-                dataKey="reported"
-                stroke="var(--color-reported)"
-                fill="var(--color-reported)"
-                fillOpacity={0.15}
-              />
-              <Area
-                type="monotone"
-                dataKey="rescued"
-                stroke="var(--color-rescued)"
-                fill="var(--color-rescued)"
-                fillOpacity={0.25}
-              />
-            </AreaChart>
-          </ChartContainer>
+            <ChartContainer
+              config={{
+                reported: { label: "Reported", color: "var(--color-chart-1)" },
+                rescued: { label: "Rescued", color: "var(--color-chart-2)" },
+              }}
+              className="h-[260px] w-full"
+            >
+              <AreaChart data={chartData}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="period" tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                  type="monotone"
+                  dataKey="reported"
+                  stroke="var(--color-reported)"
+                  fill="var(--color-reported)"
+                  fillOpacity={0.15}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="rescued"
+                  stroke="var(--color-rescued)"
+                  fill="var(--color-rescued)"
+                  fillOpacity={0.25}
+                />
+              </AreaChart>
+            </ChartContainer>
           )}
         </div>
         <div className="card-surface p-5">
-          <SectionHeading title="Emergency distribution" description="All-time reports by priority." />
+          <SectionHeading
+            title="Emergency distribution"
+            description="All-time reports by priority."
+          />
           <ChartContainer config={{}} className="h-[260px] w-full">
             <PieChart>
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Pie data={emergencyCounts} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80}>
+              <Pie
+                data={emergencyCounts}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={50}
+                outerRadius={80}
+              >
                 {emergencyCounts.map((entry) => (
                   <Cell key={entry.name} fill={emergencyColors[entry.name]} />
                 ))}
@@ -326,11 +334,23 @@ function NgoDashboard() {
       </div>
 
       <div>
-        <SectionHeading title="Active cases map" description="Assigned and in-progress rescues right now." />
-        <MapView markers={activeMapMarkers} />
+        <SectionHeading
+          title="Active cases map"
+          description="Assigned and in-progress rescues right now."
+        />
+        <MapView
+  markers={activeMapMarkers}
+  availableRescuerLocations={availableRescuersLive}
+  height="h-[420px]"
+  showNavigation={false}
+/>
       </div>
 
-      <AssignDialog report={assignTarget} open={!!assignTarget} onOpenChange={(v) => !v && setAssignTarget(null)} />
+      <AssignDialog
+        report={assignTarget}
+        open={!!assignTarget}
+        onOpenChange={(v) => !v && setAssignTarget(null)}
+      />
     </div>
   );
 }

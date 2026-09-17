@@ -31,6 +31,9 @@ import { RescueReport } from "../models/RescueReport.js";
  */
 const activeTracking = new Map();
 
+const AVAILABLE_RESCUERS_ROOM = "available_rescuers";
+const availableRescuers = new Map();
+
 /**
  * Example:
  *
@@ -56,7 +59,6 @@ const activeTracking = new Map();
  * }
  */
 
-
 /**
  * ============================================================
  * EXTRACT JWT
@@ -69,8 +71,7 @@ const activeTracking = new Map();
  * 3. Cookie
  */
 function extractSocketToken(socket) {
-  const authorization =
-    socket.handshake.headers?.authorization || "";
+  const authorization = socket.handshake.headers?.authorization || "";
 
   // Authorization: Bearer <token>
   if (authorization.startsWith("Bearer ")) {
@@ -81,24 +82,18 @@ function extractSocketToken(socket) {
   const authToken = socket.handshake.auth?.token;
 
   if (authToken) {
-    return authToken.startsWith("Bearer ")
-      ? authToken.slice(7)
-      : authToken;
+    return authToken.startsWith("Bearer ") ? authToken.slice(7) : authToken;
   }
 
   // Cookie
-  const cookieHeader =
-    socket.handshake.headers?.cookie || "";
+  const cookieHeader = socket.handshake.headers?.cookie || "";
 
   if (cookieHeader) {
     const cookies = Object.fromEntries(
       cookieHeader.split(";").map((cookie) => {
         const [key, ...value] = cookie.trim().split("=");
 
-        return [
-          key,
-          decodeURIComponent(value.join("=")),
-        ];
+        return [key, decodeURIComponent(value.join("="))];
       }),
     );
 
@@ -107,7 +102,6 @@ function extractSocketToken(socket) {
 
   return null;
 }
-
 
 /**
  * ============================================================
@@ -119,32 +113,19 @@ async function authenticateSocket(socket, next) {
     const token = extractSocketToken(socket);
 
     if (!token) {
-      return next(
-        new Error("Authentication required"),
-      );
+      return next(new Error("Authentication required"));
     }
 
-    const payload = jwt.verify(
-      token,
-      env.jwtSecret,
-    );
+    const payload = jwt.verify(token, env.jwtSecret);
 
     const user = await User.findById(payload.sub);
 
     if (!user) {
-      return next(
-        new Error("Account no longer exists"),
-      );
+      return next(new Error("Account no longer exists"));
     }
 
-    if (
-      !user.isActive ||
-      user.status === "INACTIVE" ||
-      user.status === "SUSPENDED"
-    ) {
-      return next(
-        new Error("Account is inactive"),
-      );
+    if (!user.isActive || user.status === "INACTIVE" || user.status === "SUSPENDED") {
+      return next(new Error("Account is inactive"));
     }
 
     // Attach authenticated user to socket
@@ -152,17 +133,11 @@ async function authenticateSocket(socket, next) {
 
     next();
   } catch (error) {
-    console.error(
-      "[socket] Authentication failed:",
-      error.message,
-    );
+    console.error("[socket] Authentication failed:", error.message);
 
-    next(
-      new Error("Invalid or expired session"),
-    );
+    next(new Error("Invalid or expired session"));
   }
 }
-
 
 /**
  * ============================================================
@@ -175,14 +150,10 @@ async function authenticateSocket(socket, next) {
  * Viewers need to join before tracking starts so they can
  * receive rescue_tracking_started.
  */
-async function canAccessRescue(
-  user,
-  rescueId,
-) {
-  const report =
-    await RescueReport.findById(rescueId).select(
-      "_id reporter assignedRescuer assignedOrganization status",
-    );
+async function canAccessRescue(user, rescueId) {
+  const report = await RescueReport.findById(rescueId).select(
+    "_id reporter assignedRescuer assignedOrganization status",
+  );
 
   if (!report) {
     return false;
@@ -201,18 +172,13 @@ async function canAccessRescue(
    * Can access only their assigned rescue.
    */
   if (user.role === "RESCUER") {
-    const assignment =
-      await RescueAssignment.findOne({
-        report: rescueId,
-        rescuer: user._id,
-        status: {
-          $in: [
-            "ASSIGNED",
-            "ACCEPTED",
-            "IN_PROGRESS",
-          ],
-        },
-      }).select("_id");
+    const assignment = await RescueAssignment.findOne({
+      report: rescueId,
+      rescuer: user._id,
+      status: {
+        $in: ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"],
+      },
+    }).select("_id");
 
     return Boolean(assignment);
   }
@@ -222,10 +188,7 @@ async function canAccessRescue(
    * Can monitor only their own report.
    */
   if (user.role === "CITIZEN") {
-    return (
-      String(report.reporter) ===
-      String(user._id)
-    );
+    return String(report.reporter) === String(user._id);
   }
 
   /**
@@ -240,7 +203,6 @@ async function canAccessRescue(
 
   return false;
 }
-
 
 /**
  * ============================================================
@@ -266,17 +228,13 @@ export function createSocketServer(httpServer) {
    */
   io.use(authenticateSocket);
 
-
   /**
    * ==========================================================
    * CONNECTION
    * ==========================================================
    */
   io.on("connection", (socket) => {
-    console.log(
-      `[socket] Connected: ${socket.id} | ${socket.user.name} | ${socket.user.role}`,
-    );
-
+    console.log(`[socket] Connected: ${socket.id} | ${socket.user.name} | ${socket.user.role}`);
 
     /**
      * ========================================================
@@ -295,143 +253,104 @@ export function createSocketServer(httpServer) {
      * If tracking is already active, immediately send the
      * current tracking state to this newly joined socket.
      */
-    socket.on(
-      "join_rescue",
-      async (rescueId, callback) => {
-        try {
-          if (!rescueId) {
-            return callback?.({
-              success: false,
-              message: "Rescue ID is required.",
-            });
-          }
-
-          const authorized =
-            await canAccessRescue(
-              socket.user,
-              rescueId,
-            );
-
-          if (!authorized) {
-            return callback?.({
-              success: false,
-              message:
-                "You are not authorized to access this rescue.",
-            });
-          }
-
-          const room = `rescue:${rescueId}`;
-
-          /**
-           * Join rescue room.
-           */
-          socket.join(room);
-
-          socket.data.rescueRoom = room;
-
-          console.log(
-            `[socket] ${socket.user.name} joined ${room}`,
-          );
-
-          /**
-           * ==================================================
-           * NEW:
-           * CHECK CURRENT ACTIVE TRACKING STATE
-           * ==================================================
-           */
-          const trackingState =
-            activeTracking.get(rescueId);
-
-          if (trackingState) {
-            console.log(
-              `[tracking] Active tracking found for ${rescueId}`,
-            );
-
-            console.log(
-              `[tracking] Sending current state to ${socket.user.name}`,
-            );
-
-            /**
-             * Send current tracking state ONLY to the
-             * newly joined socket.
-             *
-             * This solves the refresh problem.
-             */
-            socket.emit(
-              "rescue_tracking_state",
-              {
-                rescueId:
-                  trackingState.rescueId,
-
-                rescuerId:
-                  trackingState.rescuerId,
-
-                rescuerName:
-                  trackingState.rescuerName,
-
-                location:
-                  trackingState.location,
-
-                startedAt:
-                  trackingState.startedAt,
-              },
-            );
-          } else {
-            console.log(
-              `[tracking] No active tracking for ${rescueId}`,
-            );
-          }
-
-          callback?.({
-            success: true,
-            room,
-            trackingActive:
-              Boolean(trackingState),
-          });
-        } catch (error) {
-          console.error(
-            "[socket] join_rescue error:",
-            error,
-          );
-
-          callback?.({
+    socket.on("join_rescue", async (rescueId, callback) => {
+      try {
+        if (!rescueId) {
+          return callback?.({
             success: false,
-            message:
-              "Unable to join rescue room.",
+            message: "Rescue ID is required.",
           });
         }
-      },
-    );
 
+        const authorized = await canAccessRescue(socket.user, rescueId);
+
+        if (!authorized) {
+          return callback?.({
+            success: false,
+            message: "You are not authorized to access this rescue.",
+          });
+        }
+
+        const room = `rescue:${rescueId}`;
+
+        /**
+         * Join rescue room.
+         */
+        socket.join(room);
+
+        socket.data.rescueRoom = room;
+
+        console.log(`[socket] ${socket.user.name} joined ${room}`);
+
+        /**
+         * ==================================================
+         * NEW:
+         * CHECK CURRENT ACTIVE TRACKING STATE
+         * ==================================================
+         */
+        const trackingState = activeTracking.get(rescueId);
+
+        if (trackingState) {
+          console.log(`[tracking] Active tracking found for ${rescueId}`);
+
+          console.log(`[tracking] Sending current state to ${socket.user.name}`);
+
+          /**
+           * Send current tracking state ONLY to the
+           * newly joined socket.
+           *
+           * This solves the refresh problem.
+           */
+          socket.emit("rescue_tracking_state", {
+            rescueId: trackingState.rescueId,
+
+            rescuerId: trackingState.rescuerId,
+
+            rescuerName: trackingState.rescuerName,
+
+            location: trackingState.location,
+
+            startedAt: trackingState.startedAt,
+          });
+        } else {
+          console.log(`[tracking] No active tracking for ${rescueId}`);
+        }
+
+        callback?.({
+          success: true,
+          room,
+          trackingActive: Boolean(trackingState),
+        });
+      } catch (error) {
+        console.error("[socket] join_rescue error:", error);
+
+        callback?.({
+          success: false,
+          message: "Unable to join rescue room.",
+        });
+      }
+    });
 
     /**
      * ========================================================
      * LEAVE RESCUE ROOM
      * ========================================================
      */
-    socket.on(
-      "leave_rescue",
-      (rescueId) => {
-        if (!rescueId) {
-          return;
-        }
+    socket.on("leave_rescue", (rescueId) => {
+      if (!rescueId) {
+        return;
+      }
 
-        const room = `rescue:${rescueId}`;
+      const room = `rescue:${rescueId}`;
 
-        socket.leave(room);
+      socket.leave(room);
 
-        if (
-          socket.data.rescueRoom === room
-        ) {
-          socket.data.rescueRoom = null;
-        }
+      if (socket.data.rescueRoom === room) {
+        socket.data.rescueRoom = null;
+      }
 
-        console.log(
-          `[socket] ${socket.user.name} left ${room}`,
-        );
-      },
-    );
-
+      console.log(`[socket] ${socket.user.name} left ${room}`);
+    });
 
     /**
      * ========================================================
@@ -446,191 +365,141 @@ export function createSocketServer(httpServer) {
      * - Rescue is IN_PROGRESS
      * - Assigned rescuer matches current user
      */
-    socket.on(
-      "rescue_tracking_start",
-      async (rescueId, callback) => {
-        try {
-          /**
-           * Only RESCUER can start GPS tracking.
-           */
-          if (
-            socket.user.role !== "RESCUER"
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Only rescuers can start tracking.",
-            });
-          }
-
-          /**
-           * Check access.
-           */
-          const allowed =
-            await canAccessRescue(
-              socket.user,
-              rescueId,
-            );
-
-          if (!allowed) {
-            return callback?.({
-              success: false,
-              message:
-                "You cannot access this rescue.",
-            });
-          }
-
-          /**
-           * Get rescue.
-           */
-          const report =
-            await RescueReport.findById(
-              rescueId,
-            ).select(
-              "_id status assignedRescuer",
-            );
-
-          if (!report) {
-            return callback?.({
-              success: false,
-              message:
-                "Rescue not found.",
-            });
-          }
-
-          /**
-           * Rescue must be IN_PROGRESS.
-           */
-          if (
-            report.status !== "IN_PROGRESS"
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Rescue must be IN_PROGRESS.",
-            });
-          }
-
-          /**
-           * Verify assigned rescuer.
-           */
-          if (
-            String(
-              report.assignedRescuer,
-            ) !==
-            String(socket.user._id)
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "You are not assigned to this rescue.",
-            });
-          }
-
-          const room =
-            `rescue:${rescueId}`;
-
-          /**
-           * Ensure rescuer is in room.
-           */
-          socket.join(room);
-
-          /**
-           * Store which rescue this socket is
-           * currently tracking.
-           */
-          socket.data.trackingRescueId =
-            rescueId;
-
-          /**
-           * ==================================================
-           * CREATE ACTIVE TRACKING STATE
-           * ==================================================
-           */
-          const trackingState = {
-            rescueId,
-
-            rescuerId:
-              String(socket.user._id),
-
-            rescuerName:
-              socket.user.name,
-
-            /**
-             * Important:
-             * Store socket ID so that an old socket cannot
-             * accidentally delete a newer tracking session.
-             */
-            rescuerSocketId:
-              socket.id,
-
-            /**
-             * No GPS location yet.
-             * It will be filled by rescue_location_update.
-             */
-            location: null,
-
-            startedAt:
-              new Date().toISOString(),
-          };
-
-          /**
-           * Store/replace current active tracking.
-           */
-          activeTracking.set(
-            rescueId,
-            trackingState,
-          );
-
-          console.log(
-            "[tracking] Active tracking created:",
-            trackingState,
-          );
-
-          /**
-           * ==================================================
-           * NOTIFY ALL CURRENT ROOM MEMBERS
-           * ==================================================
-           */
-          io.to(room).emit(
-            "rescue_tracking_started",
-            {
-              rescueId,
-
-              rescuerId:
-                String(socket.user._id),
-
-              rescuerName:
-                socket.user.name,
-
-              startedAt:
-                trackingState.startedAt,
-            },
-          );
-
-          /**
-           * Confirm to rescuer.
-           */
-          callback?.({
-            success: true,
-            message:
-              "Live tracking started.",
-          });
-        } catch (error) {
-          console.error(
-            "[tracking] start error:",
-            error,
-          );
-
-          callback?.({
+    socket.on("rescue_tracking_start", async (rescueId, callback) => {
+      try {
+        /**
+         * Only RESCUER can start GPS tracking.
+         */
+        if (socket.user.role !== "RESCUER") {
+          return callback?.({
             success: false,
-            message:
-              "Failed to start tracking.",
+            message: "Only rescuers can start tracking.",
           });
         }
-      },
-    );
 
+        /**
+         * Check access.
+         */
+        const allowed = await canAccessRescue(socket.user, rescueId);
+
+        if (!allowed) {
+          return callback?.({
+            success: false,
+            message: "You cannot access this rescue.",
+          });
+        }
+
+        /**
+         * Get rescue.
+         */
+        const report = await RescueReport.findById(rescueId).select("_id status assignedRescuer");
+
+        if (!report) {
+          return callback?.({
+            success: false,
+            message: "Rescue not found.",
+          });
+        }
+
+        /**
+         * Rescue must be IN_PROGRESS.
+         */
+        if (report.status !== "IN_PROGRESS") {
+          return callback?.({
+            success: false,
+            message: "Rescue must be IN_PROGRESS.",
+          });
+        }
+
+        /**
+         * Verify assigned rescuer.
+         */
+        if (String(report.assignedRescuer) !== String(socket.user._id)) {
+          return callback?.({
+            success: false,
+            message: "You are not assigned to this rescue.",
+          });
+        }
+
+        const room = `rescue:${rescueId}`;
+
+        /**
+         * Ensure rescuer is in room.
+         */
+        socket.join(room);
+
+        /**
+         * Store which rescue this socket is
+         * currently tracking.
+         */
+        socket.data.trackingRescueId = rescueId;
+
+        /**
+         * ==================================================
+         * CREATE ACTIVE TRACKING STATE
+         * ==================================================
+         */
+        const trackingState = {
+          rescueId,
+
+          rescuerId: String(socket.user._id),
+
+          rescuerName: socket.user.name,
+
+          /**
+           * Important:
+           * Store socket ID so that an old socket cannot
+           * accidentally delete a newer tracking session.
+           */
+          rescuerSocketId: socket.id,
+
+          /**
+           * No GPS location yet.
+           * It will be filled by rescue_location_update.
+           */
+          location: null,
+
+          startedAt: new Date().toISOString(),
+        };
+
+        /**
+         * Store/replace current active tracking.
+         */
+        activeTracking.set(rescueId, trackingState);
+
+        console.log("[tracking] Active tracking created:", trackingState);
+
+        /**
+         * ==================================================
+         * NOTIFY ALL CURRENT ROOM MEMBERS
+         * ==================================================
+         */
+        io.to(room).emit("rescue_tracking_started", {
+          rescueId,
+
+          rescuerId: String(socket.user._id),
+
+          rescuerName: socket.user.name,
+
+          startedAt: trackingState.startedAt,
+        });
+
+        /**
+         * Confirm to rescuer.
+         */
+        callback?.({
+          success: true,
+          message: "Live tracking started.",
+        });
+      } catch (error) {
+        console.error("[tracking] start error:", error);
+
+        callback?.({
+          success: false,
+          message: "Failed to start tracking.",
+        });
+      }
+    });
 
     /**
      * ========================================================
@@ -645,329 +514,243 @@ export function createSocketServer(httpServer) {
      *
      * It is NOT stored in MongoDB.
      */
-    socket.on(
-      "rescue_location_update",
-      (payload, callback) => {
-        try {
-          /**
-           * Only RESCUER can send GPS.
-           */
-          if (
-            socket.user.role !== "RESCUER"
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Only rescuers can send location updates.",
-            });
-          }
-
-          /**
-           * Validate payload.
-           */
-          if (
-            !payload ||
-            typeof payload !== "object"
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Invalid location payload.",
-            });
-          }
-
-          const {
-            rescueId,
-            lat,
-            lng,
-            accuracy,
-            heading,
-            speed,
-          } = payload;
-
-          /**
-           * Rescue ID required.
-           */
-          if (!rescueId) {
-            return callback?.({
-              success: false,
-              message:
-                "Rescue ID is required.",
-            });
-          }
-
-          /**
-           * ==================================================
-           * SECURITY CHECK
-           * ==================================================
-           *
-           * A rescuer cannot send GPS for a rescue unless
-           * this socket started tracking it.
-           */
-          if (
-            socket.data.trackingRescueId !==
-            rescueId
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Live tracking has not been started for this rescue.",
-            });
-          }
-
-          /**
-           * ==================================================
-           * VALIDATE LAT/LNG
-           * ==================================================
-           */
-          if (
-            typeof lat !== "number" ||
-            typeof lng !== "number" ||
-            !Number.isFinite(lat) ||
-            !Number.isFinite(lng)
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Latitude and longitude must be valid numbers.",
-            });
-          }
-
-          if (
-            lat < -90 ||
-            lat > 90
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Invalid latitude.",
-            });
-          }
-
-          if (
-            lng < -180 ||
-            lng > 180
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Invalid longitude.",
-            });
-          }
-
-          /**
-           * ==================================================
-           * VALIDATE ACCURACY
-           * ==================================================
-           */
-          if (
-            accuracy !== undefined &&
-            accuracy !== null &&
-            (
-              typeof accuracy !== "number" ||
-              !Number.isFinite(accuracy) ||
-              accuracy < 0
-            )
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Invalid GPS accuracy.",
-            });
-          }
-
-          /**
-           * ==================================================
-           * VALIDATE HEADING
-           * ==================================================
-           */
-          if (
-            heading !== undefined &&
-            heading !== null &&
-            (
-              typeof heading !== "number" ||
-              !Number.isFinite(heading)
-            )
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Invalid heading.",
-            });
-          }
-
-          /**
-           * ==================================================
-           * VALIDATE SPEED
-           * ==================================================
-           */
-          if (
-            speed !== undefined &&
-            speed !== null &&
-            (
-              typeof speed !== "number" ||
-              !Number.isFinite(speed)
-            )
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Invalid speed.",
-            });
-          }
-
-          const room =
-            `rescue:${rescueId}`;
-
-          /**
-           * ==================================================
-           * CREATE LOCATION OBJECT
-           * ==================================================
-           */
-          const location = {
-            rescueId,
-
-            rescuerId:
-              String(socket.user._id),
-
-            rescuerName:
-              socket.user.name,
-
-            lat,
-            lng,
-
-            accuracy:
-              accuracy ?? null,
-
-            heading:
-              heading ?? null,
-
-            speed:
-              speed ?? null,
-
-            updatedAt:
-              new Date().toISOString(),
-          };
-
-          /**
-           * ==================================================
-           * UPDATE CURRENT IN-MEMORY STATE
-           * ==================================================
-           */
-          const trackingState =
-            activeTracking.get(
-              rescueId,
-            );
-
-          if (trackingState) {
-            /**
-             * Update ONLY the latest location.
-             */
-            trackingState.location =
-              location;
-
-            /**
-             * Make sure the active state belongs
-             * to this socket.
-             */
-            trackingState.rescuerSocketId =
-              socket.id;
-
-            activeTracking.set(
-              rescueId,
-              trackingState,
-            );
-          } else {
-            /**
-             * Safety fallback.
-             *
-             * Normally this should never happen because
-             * tracking must be started first.
-             */
-            console.warn(
-              `[tracking] No active state found for ${rescueId}`,
-            );
-
-            activeTracking.set(
-              rescueId,
-              {
-                rescueId,
-
-                rescuerId:
-                  String(socket.user._id),
-
-                rescuerName:
-                  socket.user.name,
-
-                rescuerSocketId:
-                  socket.id,
-
-                location,
-
-                startedAt:
-                  new Date().toISOString(),
-              },
-            );
-          }
-
-          /**
-           * ==================================================
-           * DEBUG
-           * ==================================================
-           */
-          console.log(
-            "[tracking] Broadcasting location to room:",
-            room,
-          );
-
-          console.log(
-            "[tracking] ROOM MEMBERS:",
-            Array.from(
-              io.sockets.adapter.rooms.get(
-                room,
-              ) ?? [],
-            ),
-          );
-
-          console.log(
-            "[tracking] LOCATION:",
-            location,
-          );
-
-          /**
-           * ==================================================
-           * BROADCAST LIVE LOCATION
-           * ==================================================
-           *
-           * Everyone currently watching this rescue gets
-           * the latest location.
-           */
-          io.to(room).emit(
-            "rescue_location_updated",
-            location,
-          );
-
-          /**
-           * Confirm to sender.
-           */
-          callback?.({
-            success: true,
-          });
-        } catch (error) {
-          console.error(
-            "[socket] rescue_location_update error:",
-            error,
-          );
-
-          callback?.({
+    socket.on("rescue_location_update", (payload, callback) => {
+      try {
+        /**
+         * Only RESCUER can send GPS.
+         */
+        if (socket.user.role !== "RESCUER") {
+          return callback?.({
             success: false,
-            message:
-              "Unable to update rescue location.",
+            message: "Only rescuers can send location updates.",
           });
         }
-      },
-    );
 
+        /**
+         * Validate payload.
+         */
+        if (!payload || typeof payload !== "object") {
+          return callback?.({
+            success: false,
+            message: "Invalid location payload.",
+          });
+        }
+
+        const { rescueId, lat, lng, accuracy, heading, speed } = payload;
+
+        /**
+         * Rescue ID required.
+         */
+        if (!rescueId) {
+          return callback?.({
+            success: false,
+            message: "Rescue ID is required.",
+          });
+        }
+
+        /**
+         * ==================================================
+         * SECURITY CHECK
+         * ==================================================
+         *
+         * A rescuer cannot send GPS for a rescue unless
+         * this socket started tracking it.
+         */
+        if (socket.data.trackingRescueId !== rescueId) {
+          return callback?.({
+            success: false,
+            message: "Live tracking has not been started for this rescue.",
+          });
+        }
+
+        /**
+         * ==================================================
+         * VALIDATE LAT/LNG
+         * ==================================================
+         */
+        if (
+          typeof lat !== "number" ||
+          typeof lng !== "number" ||
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lng)
+        ) {
+          return callback?.({
+            success: false,
+            message: "Latitude and longitude must be valid numbers.",
+          });
+        }
+
+        if (lat < -90 || lat > 90) {
+          return callback?.({
+            success: false,
+            message: "Invalid latitude.",
+          });
+        }
+
+        if (lng < -180 || lng > 180) {
+          return callback?.({
+            success: false,
+            message: "Invalid longitude.",
+          });
+        }
+
+        /**
+         * ==================================================
+         * VALIDATE ACCURACY
+         * ==================================================
+         */
+        if (
+          accuracy !== undefined &&
+          accuracy !== null &&
+          (typeof accuracy !== "number" || !Number.isFinite(accuracy) || accuracy < 0)
+        ) {
+          return callback?.({
+            success: false,
+            message: "Invalid GPS accuracy.",
+          });
+        }
+
+        /**
+         * ==================================================
+         * VALIDATE HEADING
+         * ==================================================
+         */
+        if (
+          heading !== undefined &&
+          heading !== null &&
+          (typeof heading !== "number" || !Number.isFinite(heading))
+        ) {
+          return callback?.({
+            success: false,
+            message: "Invalid heading.",
+          });
+        }
+
+        /**
+         * ==================================================
+         * VALIDATE SPEED
+         * ==================================================
+         */
+        if (
+          speed !== undefined &&
+          speed !== null &&
+          (typeof speed !== "number" || !Number.isFinite(speed))
+        ) {
+          return callback?.({
+            success: false,
+            message: "Invalid speed.",
+          });
+        }
+
+        const room = `rescue:${rescueId}`;
+
+        /**
+         * ==================================================
+         * CREATE LOCATION OBJECT
+         * ==================================================
+         */
+        const location = {
+          rescueId,
+
+          rescuerId: String(socket.user._id),
+
+          rescuerName: socket.user.name,
+
+          lat,
+          lng,
+
+          accuracy: accuracy ?? null,
+
+          heading: heading ?? null,
+
+          speed: speed ?? null,
+
+          updatedAt: new Date().toISOString(),
+        };
+
+        /**
+         * ==================================================
+         * UPDATE CURRENT IN-MEMORY STATE
+         * ==================================================
+         */
+        const trackingState = activeTracking.get(rescueId);
+
+        if (trackingState) {
+          /**
+           * Update ONLY the latest location.
+           */
+          trackingState.location = location;
+
+          /**
+           * Make sure the active state belongs
+           * to this socket.
+           */
+          trackingState.rescuerSocketId = socket.id;
+
+          activeTracking.set(rescueId, trackingState);
+        } else {
+          /**
+           * Safety fallback.
+           *
+           * Normally this should never happen because
+           * tracking must be started first.
+           */
+          console.warn(`[tracking] No active state found for ${rescueId}`);
+
+          activeTracking.set(rescueId, {
+            rescueId,
+
+            rescuerId: String(socket.user._id),
+
+            rescuerName: socket.user.name,
+
+            rescuerSocketId: socket.id,
+
+            location,
+
+            startedAt: new Date().toISOString(),
+          });
+        }
+
+        /**
+         * ==================================================
+         * DEBUG
+         * ==================================================
+         */
+        console.log("[tracking] Broadcasting location to room:", room);
+
+        console.log(
+          "[tracking] ROOM MEMBERS:",
+          Array.from(io.sockets.adapter.rooms.get(room) ?? []),
+        );
+
+        console.log("[tracking] LOCATION:", location);
+
+        /**
+         * ==================================================
+         * BROADCAST LIVE LOCATION
+         * ==================================================
+         *
+         * Everyone currently watching this rescue gets
+         * the latest location.
+         */
+        io.to(room).emit("rescue_location_updated", location);
+
+        /**
+         * Confirm to sender.
+         */
+        callback?.({
+          success: true,
+        });
+      } catch (error) {
+        console.error("[socket] rescue_location_update error:", error);
+
+        callback?.({
+          success: false,
+          message: "Unable to update rescue location.",
+        });
+      }
+    });
 
     /**
      * ========================================================
@@ -979,124 +762,86 @@ export function createSocketServer(httpServer) {
      * - Rescuer stops driving
      * - Tracking hook stops
      */
-    socket.on(
-      "rescue_tracking_stop",
-      async (rescueId, callback) => {
-        try {
-          /**
-           * Only RESCUER can stop tracking.
-           */
-          if (
-            socket.user.role !== "RESCUER"
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "Only rescuers can stop live tracking.",
-            });
-          }
-
-          if (!rescueId) {
-            return callback?.({
-              success: false,
-              message:
-                "Rescue ID is required.",
-            });
-          }
-
-          /**
-           * Make sure this socket is tracking this rescue.
-           */
-          if (
-            socket.data.trackingRescueId !==
-            rescueId
-          ) {
-            return callback?.({
-              success: false,
-              message:
-                "This rescue is not being tracked by this socket.",
-            });
-          }
-
-          const room =
-            `rescue:${rescueId}`;
-
-          /**
-           * Remove socket's tracking association.
-           */
-          socket.data.trackingRescueId =
-            null;
-
-          /**
-           * ==================================================
-           * REMOVE ACTIVE MEMORY STATE
-           * ==================================================
-           *
-           * Only delete if this socket owns the active
-           * tracking state.
-           */
-          const trackingState =
-            activeTracking.get(
-              rescueId,
-            );
-
-          if (
-            trackingState &&
-            trackingState.rescuerSocketId ===
-              socket.id
-          ) {
-            activeTracking.delete(
-              rescueId,
-            );
-
-            console.log(
-              `[tracking] Active state removed: ${rescueId}`,
-            );
-          }
-
-          /**
-           * Notify viewers.
-           */
-          io.to(room).emit(
-            "rescue_tracking_stopped",
-            {
-              rescueId,
-
-              rescuerId:
-                String(socket.user._id),
-
-              rescuerName:
-                socket.user.name,
-
-              stoppedAt:
-                new Date().toISOString(),
-            },
-          );
-
-          console.log(
-            `[socket] ${socket.user.name} stopped tracking ${rescueId}`,
-          );
-
-          callback?.({
-            success: true,
-            message:
-              "Live tracking stopped.",
-          });
-        } catch (error) {
-          console.error(
-            "[socket] rescue_tracking_stop error:",
-            error,
-          );
-
-          callback?.({
+    socket.on("rescue_tracking_stop", async (rescueId, callback) => {
+      try {
+        /**
+         * Only RESCUER can stop tracking.
+         */
+        if (socket.user.role !== "RESCUER") {
+          return callback?.({
             success: false,
-            message:
-              "Unable to stop live tracking.",
+            message: "Only rescuers can stop live tracking.",
           });
         }
-      },
-    );
 
+        if (!rescueId) {
+          return callback?.({
+            success: false,
+            message: "Rescue ID is required.",
+          });
+        }
+
+        /**
+         * Make sure this socket is tracking this rescue.
+         */
+        if (socket.data.trackingRescueId !== rescueId) {
+          return callback?.({
+            success: false,
+            message: "This rescue is not being tracked by this socket.",
+          });
+        }
+
+        const room = `rescue:${rescueId}`;
+
+        /**
+         * Remove socket's tracking association.
+         */
+        socket.data.trackingRescueId = null;
+
+        /**
+         * ==================================================
+         * REMOVE ACTIVE MEMORY STATE
+         * ==================================================
+         *
+         * Only delete if this socket owns the active
+         * tracking state.
+         */
+        const trackingState = activeTracking.get(rescueId);
+
+        if (trackingState && trackingState.rescuerSocketId === socket.id) {
+          activeTracking.delete(rescueId);
+
+          console.log(`[tracking] Active state removed: ${rescueId}`);
+        }
+
+        /**
+         * Notify viewers.
+         */
+        io.to(room).emit("rescue_tracking_stopped", {
+          rescueId,
+
+          rescuerId: String(socket.user._id),
+
+          rescuerName: socket.user.name,
+
+          stoppedAt: new Date().toISOString(),
+        });
+
+        console.log(`[socket] ${socket.user.name} stopped tracking ${rescueId}`);
+
+        callback?.({
+          success: true,
+          message: "Live tracking stopped.",
+        });
+      } catch (error) {
+        console.error("[socket] rescue_tracking_stop error:", error);
+
+        callback?.({
+          success: false,
+          message: "Unable to stop live tracking.",
+        });
+      }
+    });
 
     /**
      * ========================================================
@@ -1106,78 +851,93 @@ export function createSocketServer(httpServer) {
      * If rescuer closes browser, refreshes, loses connection,
      * etc., notify viewers and remove active tracking state.
      */
-    socket.on(
-      "disconnect",
-      (reason) => {
-        const trackingRescueId =
-          socket.data.trackingRescueId;
+    socket.on("disconnect", (reason) => {
+      const trackingRescueId = socket.data.trackingRescueId;
 
-        if (trackingRescueId) {
-          const room =
-            `rescue:${trackingRescueId}`;
+      if (trackingRescueId) {
+        const room = `rescue:${trackingRescueId}`;
 
-          /**
-           * Notify viewers.
-           */
-          io.to(room).emit(
-            "rescue_tracking_stopped",
-            {
-              rescueId:
-                trackingRescueId,
+        /**
+         * Notify viewers.
+         */
+        io.to(room).emit("rescue_tracking_stopped", {
+          rescueId: trackingRescueId,
 
-              rescuerId:
-                String(socket.user._id),
+          rescuerId: String(socket.user._id),
 
-              rescuerName:
-                socket.user.name,
+          rescuerName: socket.user.name,
 
-              stoppedAt:
-                new Date().toISOString(),
+          stoppedAt: new Date().toISOString(),
 
-              reason: "disconnect",
-            },
-          );
+          reason: "disconnect",
+        });
 
-          /**
-           * ==================================================
-           * REMOVE MEMORY STATE
-           * ==================================================
-           *
-           * Important:
-           * Only delete if this socket still owns the
-           * active tracking state.
-           */
-          const trackingState =
-            activeTracking.get(
-              trackingRescueId,
-            );
+        /**
+         * ==================================================
+         * REMOVE MEMORY STATE
+         * ==================================================
+         *
+         * Important:
+         * Only delete if this socket still owns the
+         * active tracking state.
+         */
+        const trackingState = activeTracking.get(trackingRescueId);
 
-          if (
-            trackingState &&
-            trackingState.rescuerSocketId ===
-              socket.id
-          ) {
-            activeTracking.delete(
-              trackingRescueId,
-            );
+        if (trackingState && trackingState.rescuerSocketId === socket.id) {
+          activeTracking.delete(trackingRescueId);
 
-            console.log(
-              `[tracking] Removed active state after disconnect: ${trackingRescueId}`,
-            );
-          }
-
-          console.log(
-            `[socket] Tracking disconnected for ${trackingRescueId}`,
-          );
+          console.log(`[tracking] Removed active state after disconnect: ${trackingRescueId}`);
         }
 
-        console.log(
-          `[socket] Disconnected: ${socket.id} | ${socket.user.name} | ${reason}`,
-        );
-      },
-    );
-  });
+        console.log(`[socket] Tracking disconnected for ${trackingRescueId}`);
+      }
 
+      console.log(`[socket] Disconnected: ${socket.id} | ${socket.user.name} | ${reason}`);
+    });
+
+    socket.on("rescuer_location_update", (payload) => {
+      if (socket.user.role !== "RESCUER") return;
+
+      const location = {
+        rescuerId: String(socket.user._id),
+        rescuerName: socket.user.name,
+        lat: payload.lat,
+        lng: payload.lng,
+        accuracy: payload.accuracy ?? null,
+        heading: payload.heading ?? null,
+        speed: payload.speed ?? null,
+        updatedAt: new Date().toISOString(),
+      };
+
+      availableRescuers.set(location.rescuerId, {
+        ...location,
+        socketId: socket.id,
+      });
+
+      io.to(AVAILABLE_RESCUERS_ROOM).emit("available_rescuer_location_updated", location);
+    });
+
+    socket.on("rescuer_location_stop", () => {
+      if (socket.user.role !== "RESCUER") return;
+
+      const rescuerId = String(socket.user._id);
+
+      availableRescuers.delete(rescuerId);
+
+      io.to(AVAILABLE_RESCUERS_ROOM).emit("available_rescuer_location_removed", { rescuerId });
+    });
+
+    socket.on("join_available_rescuers", () => {
+      if (!["NGO", "ADMIN"].includes(socket.user.role)) return;
+
+      socket.join(AVAILABLE_RESCUERS_ROOM);
+
+      socket.emit(
+        "available_rescuers_state",
+        Array.from(availableRescuers.values()).map(({ socketId, ...rescuer }) => rescuer),
+      );
+    });
+  });
 
   /**
    * Return Socket.IO instance.
