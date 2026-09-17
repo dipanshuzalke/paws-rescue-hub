@@ -141,8 +141,7 @@ function NgoDashboard() {
     value: reports.filter((r) => r.emergency === e).length,
   }));
 
-  const availableRescuersLive =
-  useAvailableRescuersLocation();
+  const availableRescuersLive = useAvailableRescuersLocation();
 
   return (
     <div className="space-y-6">
@@ -339,11 +338,11 @@ function NgoDashboard() {
           description="Assigned and in-progress rescues right now."
         />
         <MapView
-  markers={activeMapMarkers}
-  availableRescuerLocations={availableRescuersLive}
-  height="h-[420px]"
-  showNavigation={false}
-/>
+          markers={activeMapMarkers}
+          availableRescuerLocations={availableRescuersLive}
+          height="h-[420px]"
+          showNavigation={false}
+        />
       </div>
 
       <AssignDialog

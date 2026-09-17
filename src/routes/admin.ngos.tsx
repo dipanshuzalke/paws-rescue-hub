@@ -182,11 +182,11 @@ function AdminNgos() {
                   {ngo.verification}
                 </Badge>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm">
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-1 text-sm">
+                {/* <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                   <Users className="h-3.5 w-3.5" aria-hidden="true" /> {ngo.rescuers} rescuers
                 </span>
-                <span className="text-muted-foreground">{ngo.cases} cases</span>
+                <span className="text-muted-foreground">{ngo.cases} cases</span> */}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">Joined {formatDate(ngo.joinedAt)}</p>
             </article>
