@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/states";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/store/app-store";
 import type { RescueReport, RescueStatus } from "@/types";
+import { useAvailableRescuersLocation } from "@/hooks/useAvailableResquer";
 
 export const Route = createFileRoute("/ngo/active")({
   head: () => ({
@@ -30,6 +31,8 @@ const activeStatuses: RescueStatus[] = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 
 function NgoActive() {
   const { reports } = useApp();
+  const availableRescuerLocations =
+  useAvailableRescuersLocation();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
@@ -56,13 +59,14 @@ function NgoActive() {
     [active, search, status],
   );
 
-  const markers = filtered.map((r) => ({
-    id: r.id,
-    label: `#${r.id} · ${r.title}`,
-    sub: `${r.area}, ${r.city}${r.rescuerName ? ` · ${r.rescuerName}` : ""}`,
-    coords: r.coords,
-    emergency: r.emergency,
-  }));
+  const activeCaseMarkers = active.map((r) => ({
+  id: r.id,
+  label: `#${r.id} · ${r.title}`,
+  sub: `${r.area}, ${r.city}${r.rescuerName ? ` · ${r.rescuerName}` : ""}`,
+  coords: r.coords,
+  emergency: r.emergency,
+  kind: "request" as const,
+}));
 
   return (
     <div className="space-y-6">
@@ -88,7 +92,14 @@ function NgoActive() {
 
       <div className="card-surface p-5">
         <SectionHeading title="Live map" description="Locations of all active rescue cases." />
-        <MapView markers={markers} activeId={activeId} onSelect={setActiveId} height="h-[360px]" />
+        <MapView
+    markers={activeCaseMarkers}
+    availableRescuerLocations={availableRescuerLocations}
+    activeId={activeId}
+    onSelect={setActiveId}
+    height="h-[420px]"
+    showNavigation={false}
+  />
       </div>
 
       {filtered.length === 0 ? (
