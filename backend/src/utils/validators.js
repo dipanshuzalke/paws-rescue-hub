@@ -34,12 +34,29 @@ export const resetPasswordSchema = z.object({
 export const updateProfileSchema = z
   .object({
     name: z.string().trim().min(1).max(120).optional(),
+
+    email: z
+      .string()
+      .trim()
+      .email("A valid email is required")
+      .optional(),
+
     phone: z.string().trim().min(1).max(24).optional(),
-    availability: z.enum(["AVAILABLE", "BUSY", "OFFLINE"]).optional(),
+
+    availability: z
+      .enum(["AVAILABLE", "BUSY", "OFFLINE"])
+      .optional(),
+
     location: z
       .object({
         address: z.string().trim().max(200).optional(),
-        coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]).optional(),
+
+        coordinates: z
+          .tuple([
+            z.number().min(-180).max(180),
+            z.number().min(-90).max(90),
+          ])
+          .optional(),
       })
       .optional(),
   })

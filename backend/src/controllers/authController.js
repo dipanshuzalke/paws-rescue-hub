@@ -221,9 +221,11 @@ export const updateMe = asyncHandler(async (req, res) => {
     updates.availability = req.body.availability;
   }
 
-  // Email
   if (req.body.email !== undefined) {
     const email = req.body.email.trim().toLowerCase();
+
+    console.log("EMAIL FROM REQUEST:", req.body.email);
+    console.log("EMAIL AFTER NORMALIZATION:", email);
 
     const existingUser = await User.findOne({
       email,
@@ -240,14 +242,7 @@ export const updateMe = asyncHandler(async (req, res) => {
     updates.email = email;
   }
 
-  // Location
-  if (req.body.location) {
-    updates.location = {
-      ...(req.user.location?.toObject?.() ?? req.user.location ?? {}),
-      ...req.body.location,
-      type: "Point",
-    };
-  }
+  console.log("UPDATES BEING SENT TO MONGODB:", updates);
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
@@ -258,7 +253,11 @@ export const updateMe = asyncHandler(async (req, res) => {
     }
   );
 
-  return ok(res, {
-    user,
-  }, "Profile updated successfully");
+  console.log("USER RETURNED FROM MONGODB:", user?.email);
+
+  return ok(
+    res,
+    { user },
+    "Profile updated successfully"
+  );
 });
