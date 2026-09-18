@@ -36,6 +36,8 @@ export interface User {
   role: Role;
   status: UserStatus;
   location: string;
+  vehicle?: string;
+  bio?: string;
   joinedAt: string;
   avatar?: string | undefined;
   cases: number;
@@ -48,6 +50,8 @@ export interface Rescuer extends User {
   role: "rescuer";
   availability: "Available" | "Busy" | "Offline";
   distanceKm: number;
+  vehicle?: string;
+  bio?: string;
   activeCases: number;
   completedCases: number;
   avgResponseMins: number;

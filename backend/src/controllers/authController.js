@@ -40,7 +40,8 @@ async function ensureOrganization(user, { name, description } = {}) {
 }
 
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, role, organizationName, organizationDescription } = req.body;
+  const { name, email, phone, password, role, organizationName, organizationDescription } =
+    req.body;
 
   if (role === "ADMIN") {
     throw ApiError.forbidden("You cannot self-register as an admin");
@@ -90,7 +91,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email }).select("+passwordResetToken +passwordResetExpiresAt");
 
   // Always use the same response so this endpoint cannot be used to discover accounts.
-  if (!user) return ok(res, null, "If an account exists for this email, a reset link is on its way.");
+  if (!user)
+    return ok(res, null, "If an account exists for this email, a reset link is on its way.");
 
   const token = crypto.randomBytes(32).toString("hex");
   user.passwordResetToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -119,7 +121,8 @@ export const resetPassword = asyncHandler(async (req, res) => {
     passwordResetExpiresAt: { $gt: new Date() },
   }).select("+password +passwordResetToken +passwordResetExpiresAt");
 
-  if (!user) throw ApiError.badRequest("This reset link is invalid or has expired. Request a new one.");
+  if (!user)
+    throw ApiError.badRequest("This reset link is invalid or has expired. Request a new one.");
 
   user.password = req.body.password;
   user.passwordResetToken = undefined;
@@ -168,7 +171,9 @@ export const deleteMe = asyncHandler(async (req, res) => {
   // left on cases, rather than leaving orphaned ObjectId references.
   const assignments = await RescueAssignment.find({
     $or: [{ rescuer: userId }, { assignedBy: userId }],
-  }).select("_id").lean();
+  })
+    .select("_id")
+    .lean();
   const assignmentIds = assignments.map((assignment) => assignment._id);
   if (assignmentIds.length) {
     await Promise.all([
@@ -195,8 +200,14 @@ export const deleteMe = asyncHandler(async (req, res) => {
     const organizationId = req.user.organization;
     await Promise.all([
       User.updateMany({ organization: organizationId }, { $set: { organization: null } }),
-      RescueAssignment.updateMany({ organization: organizationId }, { $set: { organization: null } }),
-      RescueReport.updateMany({ assignedOrganization: organizationId }, { $set: { assignedOrganization: null } }),
+      RescueAssignment.updateMany(
+        { organization: organizationId },
+        { $set: { organization: null } },
+      ),
+      RescueReport.updateMany(
+        { assignedOrganization: organizationId },
+        { $set: { assignedOrganization: null } },
+      ),
       Organization.findByIdAndDelete(organizationId),
     ]);
   }
@@ -215,6 +226,18 @@ export const updateMe = asyncHandler(async (req, res) => {
 
   if (req.body.phone !== undefined) {
     updates.phone = req.body.phone;
+  }
+
+  if (req.body.vehicle !== undefined) {
+    updates.vehicle = req.body.vehicle;
+  }
+
+  if (req.body.bio !== undefined) {
+    updates.bio = req.body.bio;
+  }
+
+  if (req.body.location !== undefined) {
+    updates.location = req.body.location;
   }
 
   if (req.body.availability !== undefined) {
@@ -244,20 +267,14 @@ export const updateMe = asyncHandler(async (req, res) => {
 
   console.log("UPDATES BEING SENT TO MONGODB:", updates);
 
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    updates,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const user = await User.findByIdAndUpdate(req.user._id, updates, {
+    new: true,
+    runValidators: true,
+  });
 
-  console.log("USER RETURNED FROM MONGODB:", user?.email);
+  console.log("USER RETURNED FROM MONGODB:", user);
 
-  return ok(
-    res,
-    { user },
-    "Profile updated successfully"
-  );
+  console.log("FULL REQUEST BODY:", req.body);
+
+  return ok(res, { user }, "Profile updated successfully");
 });

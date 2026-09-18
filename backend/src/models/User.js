@@ -24,13 +24,31 @@ const userSchema = new mongoose.Schema(
       match: [/^\S+@\S+\.\S+$/, "A valid email is required"],
     },
     phone: { type: String, required: [true, "Phone is required"], trim: true, maxlength: 24 },
+    vehicle: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: "",
+    },
+
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
     password: { type: String, required: true, minlength: 4, select: false },
     passwordResetToken: { type: String, select: false },
     passwordResetExpiresAt: { type: Date, select: false },
     role: { type: String, enum: ROLES, default: "CITIZEN", index: true },
     profileImage: { url: String, publicId: String },
     location: { type: pointSchema, default: undefined },
-    organization: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", default: null, index: true },
+    organization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+      index: true,
+    },
     // Rescuer-only operational fields (kept on User to avoid a second lookup on dashboards)
     availability: { type: String, enum: AVAILABILITY, default: "OFFLINE" },
     activeCases: { type: Number, default: 0, min: 0 },

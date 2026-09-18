@@ -14,6 +14,8 @@ export interface RegisterInput {
   phone: string;
   password: string;
   role: Role;
+  vehicle?: string;
+  bio?: string;
   organizationName?: string;
   organizationDescription?: string;
   location?: {
@@ -51,9 +53,16 @@ export const authService = {
   },
 
   async updateProfile(patch: Partial<RegisterInput>): Promise<User> {
-    const data = await unwrap<{ user: ApiUser }>(api.put("/auth/me", patch));
-    return adaptUser(data.user);
-  },
+  console.log("AUTH SERVICE PATCH:", JSON.stringify(patch, null, 2));
+
+  const data = await unwrap<{ user: ApiUser }>(
+    api.put("/auth/me", patch),
+  );
+
+  console.log("AUTH SERVICE RESPONSE:", data.user);
+
+  return adaptUser(data.user);
+},
 
   async deleteAccount(): Promise<void> {
     try {

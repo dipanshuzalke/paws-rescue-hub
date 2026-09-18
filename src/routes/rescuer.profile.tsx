@@ -38,19 +38,20 @@ function RescuerProfile() {
     phone: rescuer.phone,
     email: rescuer.email,
     location: rescuer.location,
-    vehicle: "",
-    bio: "",
+    vehicle: rescuer.vehicle ?? "",
+    bio: rescuer.bio ?? "",
   });
 
   useEffect(() => {
-    setForm((current) => ({
-      ...current,
-      name: rescuer.name,
-      phone: rescuer.phone,
-      email: rescuer.email,
-      location: rescuer.location,
-    }));
-  }, [rescuer.email, rescuer.location, rescuer.name, rescuer.phone]);
+    setForm({
+      name: rescuer.name ?? "",
+      phone: rescuer.phone ?? "",
+      email: rescuer.email ?? "",
+      location: rescuer.location ?? "",
+      vehicle: rescuer.vehicle ?? "",
+      bio: rescuer.bio ?? "",
+    });
+  }, [rescuer.name, rescuer.phone, rescuer.email, rescuer.location, rescuer.vehicle, rescuer.bio]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,10 +86,12 @@ function RescuerProfile() {
       });
 
       const updated = await updateProfile({
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        location,
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        vehicle: form.vehicle.trim(),
+        bio: form.bio.trim(),
+        location
       });
 
       if (!updated) {

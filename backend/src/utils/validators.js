@@ -43,6 +43,18 @@ export const updateProfileSchema = z
 
     phone: z.string().trim().min(1).max(24).optional(),
 
+    vehicle: z
+      .string()
+      .trim()
+      .max(100)
+      .optional(),
+
+    bio: z
+      .string()
+      .trim()
+      .max(500)
+      .optional(),
+
     availability: z
       .enum(["AVAILABLE", "BUSY", "OFFLINE"])
       .optional(),

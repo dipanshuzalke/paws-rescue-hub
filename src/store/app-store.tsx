@@ -58,6 +58,8 @@ interface AppState {
       address?: string;
       coordinates?: [number, number];
     };
+    vehicle?: string;
+    bio?: string;
   }) => Promise<User | null>;
   signIn: (email: string, password: string) => Promise<User>;
   signUp: (input: {
@@ -209,6 +211,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         address?: string;
         coordinates?: [number, number];
       };
+      vehicle?: string;
+      bio?: string;
     }) => {
       if (!isApiEnabled) {
         let updated: User | null = null;

@@ -34,6 +34,8 @@ export interface ApiUser {
   name: string;
   email: string;
   phone: string;
+  vehicle?: string;
+  bio?: string;
   role: "CITIZEN" | "RESCUER" | "NGO" | "ADMIN";
   status?: string;
   isActive?: boolean;
@@ -214,6 +216,8 @@ export function adaptUser(u: ApiUser): User {
     name: u.name,
     email: u.email,
     phone: u.phone,
+    vehicle: u.vehicle ?? "",
+    bio: u.bio ?? "",
     role: toUiRole(u.role),
     status: ((u.status as UserStatus) ?? (u.isActive === false ? "INACTIVE" : "ACTIVE")) as UserStatus,
     location: u.location?.address ?? "Nagpur",
