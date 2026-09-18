@@ -237,8 +237,36 @@ export const updateMe = asyncHandler(async (req, res) => {
   }
 
   if (req.body.location !== undefined) {
-    updates.location = req.body.location;
+  const existingUser = await User.findById(req.user._id).select("location");
+
+  const newLocation = req.body.location;
+
+  // If coordinates are provided, save a complete GeoJSON Point
+  if (newLocation.coordinates) {
+    updates.location = {
+      type: "Point",
+      coordinates: newLocation.coordinates,
+      address: newLocation.address ?? "",
+    };
   }
+  // If only address is provided, preserve existing coordinates
+  else if (existingUser?.location?.coordinates) {
+    updates.location = {
+      type: "Point",
+      coordinates: existingUser.location.coordinates,
+      address:
+        newLocation.address ??
+        existingUser.location.address ??
+        "",
+    };
+  }
+  // No coordinates exist yet
+  else if (newLocation.address) {
+    // Don't create an invalid GeoJSON Point.
+    // Store the address without location for now.
+    updates.location = undefined;
+  }
+}
 
   if (req.body.availability !== undefined) {
     updates.availability = req.body.availability;
