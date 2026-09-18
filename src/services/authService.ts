@@ -53,16 +53,10 @@ export const authService = {
   },
 
   async updateProfile(patch: Partial<RegisterInput>): Promise<User> {
-  console.log("AUTH SERVICE PATCH:", JSON.stringify(patch, null, 2));
+    const data = await unwrap<{ user: ApiUser }>(api.put("/auth/me", patch));
 
-  const data = await unwrap<{ user: ApiUser }>(
-    api.put("/auth/me", patch),
-  );
-
-  console.log("AUTH SERVICE RESPONSE:", data.user);
-
-  return adaptUser(data.user);
-},
+    return adaptUser(data.user);
+  },
 
   async deleteAccount(): Promise<void> {
     try {

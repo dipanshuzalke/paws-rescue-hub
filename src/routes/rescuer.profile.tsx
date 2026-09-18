@@ -33,6 +33,7 @@ function RescuerProfile() {
   const rescuer = useCurrentRescuer();
   const { apiMode, updateProfile } = useApp();
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name: rescuer.name,
     phone: rescuer.phone,
@@ -91,7 +92,7 @@ function RescuerProfile() {
         email: form.email.trim(),
         vehicle: form.vehicle.trim(),
         bio: form.bio.trim(),
-        location
+        location,
       });
 
       if (!updated) {
@@ -152,25 +153,55 @@ function RescuerProfile() {
           </div>
         </section>
 
-        <form onSubmit={handleSave} className="card-surface space-y-4 p-5 lg:col-span-2">
-          <SectionHeading title="Personal information" description="Editable profile details." />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form onSubmit={handleSave} className="card-surface p-5 lg:col-span-2">
+          {/* Header */}
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <SectionHeading
+              title="Personal information"
+              description={
+                editing
+                  ? "Update your personal and rescue profile details."
+                  : "View your personal and rescue profile details."
+              }
+            />
+
+            {!editing && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditing(true)}
+                className="shrink-0"
+              >
+                Edit Profile
+              </Button>
+            )}
+          </div>
+
+          {/* Form fields */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            {/* Full Name */}
             <div className="space-y-1.5">
               <Label htmlFor="p-name">Full name</Label>
               <Input
                 id="p-name"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                disabled={!editing}
               />
             </div>
+
+            {/* Phone */}
             <div className="space-y-1.5">
               <Label htmlFor="p-phone">Phone</Label>
               <Input
                 id="p-phone"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                disabled={!editing}
               />
             </div>
+
+            {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="p-email">Email</Label>
               <Input
@@ -178,39 +209,76 @@ function RescuerProfile() {
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                disabled={!editing}
               />
             </div>
+
+            {/* Location */}
             <div className="space-y-1.5">
               <Label htmlFor="p-location">Location</Label>
               <Input
                 id="p-location"
                 value={form.location}
                 onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                disabled={!editing}
+                placeholder="Enter your location"
               />
             </div>
+
+            {/* Vehicle */}
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="p-vehicle">Vehicle</Label>
               <Input
                 id="p-vehicle"
                 value={form.vehicle}
                 onChange={(e) => setForm((f) => ({ ...f, vehicle: e.target.value }))}
+                disabled={!editing}
+                placeholder="e.g. MH31AB1234"
               />
             </div>
+
+            {/* Bio */}
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="p-bio">Bio</Label>
               <Textarea
                 id="p-bio"
-                rows={3}
+                rows={4}
                 value={form.bio}
                 onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                disabled={!editing}
+                placeholder="Tell something about yourself..."
               />
             </div>
           </div>
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save changes"}
-            </Button>
-          </div>
+
+          {/* Action buttons */}
+          {editing && (
+            <div className="mt-6 flex justify-end gap-3 border-t pt-5">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setForm({
+                    name: rescuer.name ?? "",
+                    phone: rescuer.phone ?? "",
+                    email: rescuer.email ?? "",
+                    location: rescuer.location ?? "",
+                    vehicle: rescuer.vehicle ?? "",
+                    bio: rescuer.bio ?? "",
+                  });
+
+                  setEditing(false);
+                }}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          )}
         </form>
       </div>
     </div>

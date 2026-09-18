@@ -247,9 +247,6 @@ export const updateMe = asyncHandler(async (req, res) => {
   if (req.body.email !== undefined) {
     const email = req.body.email.trim().toLowerCase();
 
-    console.log("EMAIL FROM REQUEST:", req.body.email);
-    console.log("EMAIL AFTER NORMALIZATION:", email);
-
     const existingUser = await User.findOne({
       email,
       _id: { $ne: req.user._id },
@@ -265,16 +262,10 @@ export const updateMe = asyncHandler(async (req, res) => {
     updates.email = email;
   }
 
-  console.log("UPDATES BEING SENT TO MONGODB:", updates);
-
   const user = await User.findByIdAndUpdate(req.user._id, updates, {
     new: true,
     runValidators: true,
   });
-
-  console.log("USER RETURNED FROM MONGODB:", user);
-
-  console.log("FULL REQUEST BODY:", req.body);
 
   return ok(res, { user }, "Profile updated successfully");
 });
