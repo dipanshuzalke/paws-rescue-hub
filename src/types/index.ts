@@ -157,6 +157,7 @@ export interface RescueEvidence {
   verifiedByName?: string | undefined;
   verifiedAt?: string | undefined;
   verificationNotes: string;
+  verificationStatus?: "PENDING" | "REJECTED" | "VERIFIED";
   rejectionReason: string;
   events: EvidenceEvent[];
 }

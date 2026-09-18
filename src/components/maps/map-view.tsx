@@ -66,6 +66,8 @@ export interface MapViewProps {
   showNavigation?: boolean;
 
   availableRescuerLocations?: AvailableRescuerLocation[];
+
+  rescuerName?: string;
 }
 
 export function MapView(props: MapViewProps) {

@@ -177,6 +177,7 @@ export function ClientMap({
   remoteRescuerLocation = null,
   showNavigation = false,
   availableRescuerLocations = [],
+  rescuerName,
 }: MapViewProps) {
   const locationEnabled =
     tracking ||
@@ -310,7 +311,9 @@ export function ClientMap({
       </button>
       <MapContainer center={center} zoom={DEFAULT_ZOOM} scrollWheelZoom className="h-full w-full">
         <FullscreenMapController isFullscreen={isFullscreen} />
+
         <AvailableRescuersMapController rescuers={availableRescuerLocations} />
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -331,8 +334,10 @@ export function ClientMap({
           onOffRoute={setIsOffRoute}
           showNavigation={showNavigation}
         />
+
         {onMapClick ? <MapClickHandler onMapClick={onMapClick} /> : null}
 
+        {/* Report markers */}
         {markers.map((marker) => {
           if (locationEnabled && (marker.kind === "you" || marker.kind === "rescuer")) {
             return null;
@@ -354,15 +359,13 @@ export function ClientMap({
                   {marker.sub ? (
                     <div className="mt-1 text-sm text-gray-600">{marker.sub}</div>
                   ) : null}
-
-                  <div className="mt-1 text-xs text-gray-500">
-                    {marker.coords.lat.toFixed(6)}, {marker.coords.lng.toFixed(6)}
-                  </div>
                 </div>
               </Popup>
             </Marker>
           );
         })}
+
+        {/* Available rescuers */}
         {availableRescuerLocations.map((rescuer) => (
           <Marker
             key={rescuer.rescuerId}
@@ -372,18 +375,37 @@ export function ClientMap({
             <Popup>
               <div className="min-w-[180px]">
                 <strong>🚑 {rescuer.rescuerName}</strong>
-
                 <div className="mt-1 text-sm text-gray-600">Available</div>
-
-                <div className="mt-1 text-xs text-gray-500">Live location</div>
-
-                <div className="mt-1 text-xs text-gray-500">
-                  Accuracy: {Math.round(rescuer.location.accuracy)} m
-                </div>
               </div>
             </Popup>
           </Marker>
         ))}
+
+        {/* 🔴 REMOTE RESCUER — MUST BE INSIDE MapContainer */}
+        {remoteRescuerLocation ? (
+          <Marker
+            position={[remoteRescuerLocation.lat, remoteRescuerLocation.lng]}
+            icon={getRescuerIcon(remoteRescuerLocation.heading)}
+          >
+            <Popup>
+              <div className="min-w-[180px]">
+                <strong>🚑 {rescuerName ?? "Rescuer"}</strong>
+
+                <div className="mt-1 text-sm text-gray-600">Live Location</div>
+
+                <div className="mt-1 text-xs text-gray-500">
+                  {remoteRescuerLocation.lat.toFixed(6)}, {remoteRescuerLocation.lng.toFixed(6)}
+                </div>
+
+                <div className="mt-1 text-xs text-gray-500">
+                  Accuracy: {Math.round(remoteRescuerLocation.accuracy)} m
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ) : null}
+
+        {/* Local rescuer GPS */}
         {locationEnabled && liveLocation ? (
           <Marker
             position={[liveLocation.lat, liveLocation.lng]}
@@ -392,14 +414,6 @@ export function ClientMap({
             <Popup>
               <div className="min-w-[160px]">
                 <strong>Rescuer — Live Location</strong>
-
-                <div className="mt-1 text-xs text-gray-500">
-                  {liveLocation.lat.toFixed(6)}, {liveLocation.lng.toFixed(6)}
-                </div>
-
-                <div className="mt-1 text-xs text-gray-500">
-                  Accuracy: {Math.round(liveLocation.accuracy)} m
-                </div>
               </div>
             </Popup>
           </Marker>

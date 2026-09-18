@@ -22,6 +22,7 @@ import { formatDateTime, timeAgo } from "@/lib/format";
 import { useApp } from "@/store/app-store";
 import type { RescueStatus } from "@/types";
 import { NotesSection } from "@/components/shared/NotesSection";
+import { useRescueLiveLocation } from "@/hooks/useRescueLiveLocation";
 
 export const Route = createFileRoute("/admin/reports/$id")({
   head: ({ params }) => ({
@@ -58,6 +59,14 @@ function AdminReportDetail() {
   const [pending, setPending] = useState<RescueStatus | null>(null);
 
   const report = reports.find((r) => r.id === id);
+
+  const { rescuerLocation, rescuerName, tracking } = useRescueLiveLocation(id);
+  console.log("ADMIN LIVE TRACKING:", {
+    reportId: id,
+    tracking,
+    rescuerName,
+    rescuerLocation,
+  });
 
   if (!report) {
     return (
@@ -152,6 +161,9 @@ function AdminReportDetail() {
                 },
               ]}
               height="h-[320px]"
+              tracking={tracking}
+              remoteRescuerLocation={rescuerLocation}
+              showLiveLocation={tracking}
             />
           </div>
 
@@ -187,12 +199,12 @@ function AdminReportDetail() {
             <div className="space-y-2 text-sm">
               <p className="flex items-center gap-2 text-foreground">
                 <Shield className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                {report.rescuerName ?? "No rescuer assigned"}
+                Rescuer: {report.rescuerName ?? "No rescuer assigned"}
               </p>
-              <p className="flex items-center gap-2 text-muted-foreground">
+              {/* <p className="flex items-center gap-2 text-muted-foreground">
                 <Building2 className="h-4 w-4" aria-hidden="true" />
                 {report.ngoName ?? "No NGO assigned"}
-              </p>
+              </p> */}
             </div>
           </div>
 

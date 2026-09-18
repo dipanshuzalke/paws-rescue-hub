@@ -31,7 +31,9 @@ export async function submitEvidence({ report, user, photos = [], payload = {} }
     throw ApiError.forbidden("Only the assigned rescuer can submit evidence for this rescue");
   }
   if (!SUBMITTABLE_STATUSES.includes(report.status)) {
-    throw ApiError.conflict(`Evidence can only be submitted while a rescue is in progress (current: ${report.status})`);
+    throw ApiError.conflict(
+      `Evidence can only be submitted while a rescue is in progress (current: ${report.status})`,
+    );
   }
 
   const evidence = report.rescueEvidence || {};
@@ -83,19 +85,11 @@ export async function submitEvidence({ report, user, photos = [], payload = {} }
     report,
     user,
     action: isResubmission ? "RESCUE_EVIDENCE_RESUBMITTED" : "RESCUE_EVIDENCE_SUBMITTED",
-    note: isResubmission ? "Revised rescue evidence submitted" : "Rescue evidence submitted for verification",
+    note: isResubmission
+      ? "Revised rescue evidence submitted"
+      : "Rescue evidence submitted for verification",
     previousStatus,
   });
-
-  let result = report;
-  if (report.status === "IN_PROGRESS") {
-    result = await transitionReport({
-      report,
-      newStatus: "RESCUED",
-      user,
-      note: "Rescue completed — evidence submitted for verification",
-    });
-  }
 
   await notifyRole(["NGO", "ADMIN"], {
     report: report._id,
@@ -106,7 +100,7 @@ export async function submitEvidence({ report, user, photos = [], payload = {} }
     link: `/reports/${report._id}`,
   });
 
-  return populateReport(result._id || report._id);
+  return populateReport(report._id);
 }
 
 /** NGO / Admin approves the submitted evidence and closes the case. */
@@ -167,13 +161,27 @@ export async function verifyEvidence({ report, user, notes = "", rescuerRating, 
   });
 
   let result = report;
-  if (close && report.status === "RESCUED") {
-    result = await transitionReport({
-      report,
-      newStatus: "CLOSED",
-      user,
-      note: "Rescue verified and case closed",
-    });
+
+  if (close) {
+    // First mark the rescue as completed.
+    if (report.status === "IN_PROGRESS") {
+      result = await transitionReport({
+        report,
+        newStatus: "RESCUED",
+        user,
+        note: "Rescue evidence verified",
+      });
+    }
+
+    // Then close the verified rescue.
+    if (result.status === "RESCUED") {
+      result = await transitionReport({
+        report: result,
+        newStatus: "CLOSED",
+        user,
+        note: "Rescue verified and case closed",
+      });
+    }
   }
 
   await notifyUsers([report.rescueEvidence.submittedBy, report.assignedRescuer], {

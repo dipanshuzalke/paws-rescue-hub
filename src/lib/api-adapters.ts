@@ -332,36 +332,84 @@ export function adaptReport(r: ApiReport): RescueReport {
 const nameOf = (value: unknown): string | undefined =>
   isPopulated(value) ? value.name : undefined;
 
-export function adaptEvidence(e?: ApiRescueEvidence | null): RescueEvidence {
+export function adaptEvidence(
+  e?: ApiRescueEvidence | null,
+): RescueEvidence {
   const coords = e?.completionLocation?.coordinates;
+
+  const verificationStatus =
+    e?.verificationStatus === "PENDING" ||
+    e?.verificationStatus === "VERIFIED" ||
+    e?.verificationStatus === "REJECTED"
+      ? e.verificationStatus
+      : undefined;
+
   return {
+    // Keep the existing required field.
+    // "NONE" means no evidence has been submitted yet.
     status: e?.verificationStatus ?? "NONE",
+
+    // New field used by the evidence verification workflow.
+    verificationStatus,
+
     photos: (e?.photos ?? []).map((p) => p.url),
+
     notes: e?.notes ?? "",
-    animalCondition: e?.animalCondition ?? "",
-    treatmentNotes: e?.treatmentNotes ?? "",
+
+    animalCondition:
+      e?.animalCondition ?? "",
+
+    treatmentNotes:
+      e?.treatmentNotes ?? "",
+
     completionCoords:
-      coords && coords.length === 2 ? { lat: coords[1] as number, lng: coords[0] as number } : undefined,
-    submittedByName: nameOf(e?.submittedBy),
-    submittedAt: e?.submittedAt,
-    submissionCount: e?.submissionCount ?? 0,
-    verifiedByName: nameOf(e?.verifiedBy),
-    verifiedAt: e?.verifiedAt,
-    verificationNotes: e?.verificationNotes ?? "",
-    rescuerRating: e?.rescuerRating,
-    rescuerRatedAt: e?.rescuerRatedAt,
-    rejectionReason: e?.rejectionReason ?? "",
-    events: (e?.events ?? []).map((ev) => ({
-      action: ev.action,
-      byName: ev.byName,
-      byRole: ev.byRole,
-      notes: ev.notes,
-      photos: (ev.photos ?? []).map((p) => p.url),
-      at: ev.at,
-    })),
+      coords && coords.length === 2
+        ? {
+            lat: coords[1] as number,
+            lng: coords[0] as number,
+          }
+        : undefined,
+
+    submittedByName:
+      nameOf(e?.submittedBy),
+
+    submittedAt:
+      e?.submittedAt,
+
+    submissionCount:
+      e?.submissionCount ?? 0,
+
+    verifiedByName:
+      nameOf(e?.verifiedBy),
+
+    verifiedAt:
+      e?.verifiedAt,
+
+    verificationNotes:
+      e?.verificationNotes ?? "",
+
+    rescuerRating:
+      e?.rescuerRating,
+
+    rescuerRatedAt:
+      e?.rescuerRatedAt,
+
+    rejectionReason:
+      e?.rejectionReason ?? "",
+
+    events:
+      (e?.events ?? []).map((ev) => ({
+        action: ev.action,
+        byName: ev.byName,
+        byRole: ev.byRole,
+        notes: ev.notes,
+        photos: (ev.photos ?? []).map(
+          (p) => p.url,
+        ),
+        at: ev.at,
+      })),
   };
 }
-
 /** Duplicate-detection candidates returned by the Phase 3 endpoints. */
 export interface ApiDuplicateMatch {
   id: string;

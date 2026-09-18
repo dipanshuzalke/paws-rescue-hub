@@ -164,15 +164,6 @@ function AdminSettings() {
               <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete account
             </Button>
           </li>
-          <li className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Reset demo data</p>
-              <p className="text-sm text-muted-foreground">Restore all mock users, NGOs and reports to their defaults.</p>
-            </div>
-            <Button variant="outline" onClick={() => setDangerAction("reset")}>
-              <RefreshCw className="h-4 w-4" aria-hidden="true" /> Reset data
-            </Button>
-          </li>
           <li className="flex flex-col gap-3 rounded-lg border border-critical/25 bg-critical-soft/40 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">Purge closed cases</p>
