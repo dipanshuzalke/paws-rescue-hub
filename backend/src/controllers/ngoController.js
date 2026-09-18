@@ -45,16 +45,21 @@ function orgScope(user, { requireOrganization = false } = {}) {
 export const getStats = asyncHandler(async (req, res) => {
   const org = orgScope(req.user, { requireOrganization: false });
   const isAdmin = req.user.role === "ADMIN";
-  const orgMatch = isAdmin ? {} : org ? { assignedOrganization: org } : { assignedOrganization: null };
+  const orgMatch = isAdmin
+    ? {}
+    : org
+      ? { assignedOrganization: org }
+      : { assignedOrganization: null };
 
-  const [unassigned, orgReports, activeRescues, completedRescues, criticalCases, rescuers] = await Promise.all([
-    RescueReport.countDocuments({ assignedOrganization: null, status: "REPORTED" }),
-    RescueReport.countDocuments(orgMatch),
-    RescueReport.countDocuments({ ...orgMatch, status: { $in: ACTIVE_STATUSES } }),
-    RescueReport.countDocuments({ ...orgMatch, status: { $in: ["RESCUED", "CLOSED"] } }),
-    RescueReport.countDocuments({ ...orgMatch, emergencyLevel: "CRITICAL" }),
-    User.countDocuments(org ? { role: "RESCUER", organization: org } : { role: "RESCUER" }),
-  ]);
+  const [unassigned, orgReports, activeRescues, completedRescues, criticalCases, rescuers] =
+    await Promise.all([
+      RescueReport.countDocuments({ assignedOrganization: null, status: "REPORTED" }),
+      RescueReport.countDocuments(orgMatch),
+      RescueReport.countDocuments({ ...orgMatch, status: { $in: ACTIVE_STATUSES } }),
+      RescueReport.countDocuments({ ...orgMatch, status: { $in: ["RESCUED", "CLOSED"] } }),
+      RescueReport.countDocuments({ ...orgMatch, emergencyLevel: "CRITICAL" }),
+      User.countDocuments(org ? { role: "RESCUER", organization: org } : { role: "RESCUER" }),
+    ]);
 
   return ok(res, {
     unassignedReports: unassigned,
@@ -75,10 +80,86 @@ export const getProfile = asyncHandler(async (req, res) => {
 
 export const updateProfile = asyncHandler(async (req, res) => {
   const org = orgScope(req.user, { requireOrganization: true });
+
   const profile = await Organization.findById(org);
-  if (!profile) throw ApiError.notFound("Organization not found");
-  Object.assign(profile, req.body);
+
+  if (!profile) {
+    throw ApiError.notFound("Organization not found");
+  }
+
+  /*
+   * Update organization fields
+   */
+  if (req.body.name !== undefined) {
+    profile.name = req.body.name.trim();
+  }
+
+  if (req.body.registrationNumber !== undefined) {
+    profile.registrationNumber = req.body.registrationNumber.trim();
+  }
+
+  if (req.body.contactPerson !== undefined) {
+    profile.contactPerson = req.body.contactPerson.trim();
+  }
+
+  if (req.body.email !== undefined) {
+    profile.email = req.body.email.trim().toLowerCase();
+  }
+
+  if (req.body.phone !== undefined) {
+    profile.phone = req.body.phone.trim();
+  }
+
+  if (req.body.areasServed !== undefined) {
+    profile.areasServed = req.body.areasServed.trim();
+  }
+
+  if (req.body.description !== undefined) {
+    profile.about = req.body.description.trim();
+  }
+
+  /*
+   * Keep the NGO's login User account synchronized.
+   *
+   * User.email is what your authentication system uses
+   * for login.
+   */
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw ApiError.notFound("User account not found");
+  }
+
+  if (req.body.contactPerson !== undefined) {
+    user.name = req.body.contactPerson.trim();
+  }
+
+  if (req.body.email !== undefined) {
+    const email = req.body.email.trim().toLowerCase();
+
+    /*
+     * Make sure another user isn't already using
+     * the new email address.
+     */
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: user._id },
+    });
+
+    if (existingUser) {
+      throw ApiError.conflict("This email address is already being used by another account.");
+    }
+
+    user.email = email;
+  }
+
+  if (req.body.phone !== undefined) {
+    user.phone = req.body.phone.trim();
+  }
+
   await profile.save();
+  await user.save();
+
   return ok(res, profile, "Organization profile updated successfully");
 });
 
@@ -162,16 +243,24 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   const org = orgScope(req.user);
   const match = org ? { assignedOrganization: org } : {};
 
-  const [overview, reportsByAnimal, reportsByStatus, reportsByPriority, monthly, performance] = await Promise.all([
-    analyticsService.overview(match),
-    analyticsService.reportsByAnimal(match),
-    analyticsService.reportsByStatus(match),
-    analyticsService.reportsByPriority(match),
-    analyticsService.monthly(match),
-    analyticsService.performance(match),
-  ]);
+  const [overview, reportsByAnimal, reportsByStatus, reportsByPriority, monthly, performance] =
+    await Promise.all([
+      analyticsService.overview(match),
+      analyticsService.reportsByAnimal(match),
+      analyticsService.reportsByStatus(match),
+      analyticsService.reportsByPriority(match),
+      analyticsService.monthly(match),
+      analyticsService.performance(match),
+    ]);
 
-  return ok(res, { overview, reportsByAnimal, reportsByStatus, reportsByPriority, monthly, performance });
+  return ok(res, {
+    overview,
+    reportsByAnimal,
+    reportsByStatus,
+    reportsByPriority,
+    monthly,
+    performance,
+  });
 });
 
 async function findReportByAnyId(id) {
