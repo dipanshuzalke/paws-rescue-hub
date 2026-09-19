@@ -329,13 +329,27 @@ function Register() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              minLength={8}
-              value={form.confirmPassword}
-              onChange={(e) => set("confirmPassword", e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={show ? "text" : "password"}
+                minLength={8}
+                value={form.confirmPassword}
+                onChange={(e) => set("confirmPassword", e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                aria-label={show ? "Hide password" : "Show password"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:text-foreground"
+              >
+                {show ? (
+                  <EyeOff className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                )}
+              </button>
+            </div>
             {errors.confirmPassword ? (
               <p className="text-xs text-destructive">{errors.confirmPassword}</p>
             ) : null}
