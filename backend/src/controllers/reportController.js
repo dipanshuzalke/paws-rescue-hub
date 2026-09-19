@@ -6,6 +6,7 @@ import { ok, created, list } from "../utils/apiResponse.js";
 import { persistUploads } from "../middleware/uploadMiddleware.js";
 import { buildReportFilter, paginateReports, recordHistory } from "../services/reportService.js";
 import { notifyNewReport } from "../services/notificationService.js";
+import { notifyRescuersNewReport } from "../services/emailService.js";
 
 const POPULATE_USER_FIELDS = "name email phone role avatar profileImage organization availability";
 const SAFE_REPORTER_FIELDS = "name email phone avatar profileImage";
@@ -56,6 +57,9 @@ export const createReport = asyncHandler(async (req, res) => {
   await recordHistory({ report, user: req.user, previousStatus: "NONE", newStatus: "REPORTED", note: "Report created" });
 
   await notifyNewReport(report);
+
+  // Fire-and-forget: email all active rescuers (never blocks response)
+  notifyRescuersNewReport(report).catch(() => {});
 
   const populated = await report.populate([{ path: "reporter", select: SAFE_REPORTER_FIELDS }]);
 
