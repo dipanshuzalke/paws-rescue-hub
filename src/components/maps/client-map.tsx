@@ -103,24 +103,52 @@ function MapClickHandler({ onMapClick }: { onMapClick?: (coords: GeoPoint) => vo
   return null;
 }
 
-function LiveLocationController({
-  location,
-  follow = false,
+function MapUserInteractionGuard({
+  userInteractedRef,
 }: {
-  location: LiveLocation | null;
-  follow?: boolean;
+  userInteractedRef: React.MutableRefObject<boolean>;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    if (!location || !follow) {
+    const handleUserInteraction = () => {
+      userInteractedRef.current = true;
+    };
+
+    map.on("movestart", handleUserInteraction);
+    map.on("dragstart", handleUserInteraction);
+    map.on("zoomstart", handleUserInteraction);
+
+    return () => {
+      map.off("movestart", handleUserInteraction);
+      map.off("dragstart", handleUserInteraction);
+      map.off("zoomstart", handleUserInteraction);
+    };
+  }, [map, userInteractedRef]);
+
+  return null;
+}
+
+function LiveLocationController({
+  location,
+  follow = false,
+  userInteractedRef,
+}: {
+  location: LiveLocation | null;
+  follow?: boolean;
+  userInteractedRef: React.MutableRefObject<boolean>;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!location || !follow || userInteractedRef.current) {
       return;
     }
 
     map.setView([location.lat, location.lng], map.getZoom() < 15 ? 15 : map.getZoom(), {
       animate: true,
     });
-  }, [location, follow, map]);
+  }, [location, follow, map, userInteractedRef]);
 
   return null;
 }
@@ -143,8 +171,10 @@ function FullscreenMapController({ isFullscreen }: { isFullscreen: boolean }) {
 
 function AvailableRescuersMapController({
   rescuers,
+  userInteractedRef,
 }: {
   rescuers: MapViewProps["availableRescuerLocations"];
+  userInteractedRef: React.MutableRefObject<boolean>;
 }) {
   const map = useMap();
   const hasFittedRef = useRef(false);
@@ -157,8 +187,7 @@ function AvailableRescuersMapController({
       return;
     }
 
-    // Fit only once when the available-rescuer view is first populated.
-    if (hasFittedRef.current) {
+    if (hasFittedRef.current || userInteractedRef.current) {
       return;
     }
 
@@ -173,7 +202,7 @@ function AvailableRescuersMapController({
     });
 
     hasFittedRef.current = true;
-  }, [rescuers, map]);
+  }, [rescuers, map, userInteractedRef]);
 
   return null;
 }
@@ -213,6 +242,7 @@ export function ClientMap({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const mapWrapperRef = useRef<HTMLDivElement>(null);
+  const userInteractedRef = useRef(false);
 
   const toggleFullscreen = async () => {
     try {
@@ -328,8 +358,12 @@ export function ClientMap({
       </button>
       <MapContainer center={center} zoom={DEFAULT_ZOOM} scrollWheelZoom className="h-full w-full">
         <FullscreenMapController isFullscreen={isFullscreen} />
+        <MapUserInteractionGuard userInteractedRef={userInteractedRef} />
 
-        <AvailableRescuersMapController rescuers={availableRescuerLocations} />
+        <AvailableRescuersMapController
+          rescuers={availableRescuerLocations}
+          userInteractedRef={userInteractedRef}
+        />
 
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -342,7 +376,11 @@ export function ClientMap({
           disableMarkerCentering={availableRescuerLocations.length > 0}
         /> */}
 
-        <LiveLocationController location={routeLocation} follow={showNavigation} />
+        <LiveLocationController
+          location={routeLocation}
+          follow={showNavigation}
+          userInteractedRef={userInteractedRef}
+        />
 
         <LiveRoute
           liveLocation={routeLocation}
