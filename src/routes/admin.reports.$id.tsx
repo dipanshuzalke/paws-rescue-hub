@@ -60,13 +60,11 @@ function AdminReportDetail() {
 
   const report = reports.find((r) => r.id === id);
 
-  const { rescuerLocation, rescuerName, tracking } = useRescueLiveLocation(id);
-  console.log("ADMIN LIVE TRACKING:", {
-    reportId: id,
+    const {
+    rescuerLocation: remoteRescuerLocation,
+    rescuerName: liveRescuerName,
     tracking,
-    rescuerName,
-    rescuerLocation,
-  });
+  } = useRescueLiveLocation(report?.id);
 
   if (!report) {
     return (
@@ -154,6 +152,7 @@ function AdminReportDetail() {
               markers={[
                 {
                   id: report.id,
+                  kind: "request",
                   label: `#${report.id}`,
                   sub: report.address,
                   coords: report.coords,
@@ -162,7 +161,7 @@ function AdminReportDetail() {
               ]}
               height="h-[320px]"
               tracking={tracking}
-              remoteRescuerLocation={rescuerLocation}
+              remoteRescuerLocation={remoteRescuerLocation}
               showLiveLocation={tracking}
             />
           </div>

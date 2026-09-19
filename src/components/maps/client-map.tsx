@@ -62,33 +62,33 @@ const getRescuerIcon = (heading: number | null) => {
   });
 };
 
-function MapCenterController({
-  markers,
-  tracking,
-  disableMarkerCentering = false,
-}: {
-  markers: MapMarker[];
-  tracking: boolean;
-  disableMarkerCentering?: boolean;
-}) {
-  const map = useMap();
+// function MapCenterController({
+//   markers,
+//   tracking,
+//   disableMarkerCentering = false,
+// }: {
+//   markers: MapMarker[];
+//   tracking: boolean;
+//   disableMarkerCentering?: boolean;
+// }) {
+//   const map = useMap();
 
-  useEffect(() => {
-    if (tracking || disableMarkerCentering) {
-      return;
-    }
+//   useEffect(() => {
+//     if (tracking || disableMarkerCentering) {
+//       return;
+//     }
 
-    const first = markers[0];
+//     const first = markers[0];
 
-    if (!first?.coords) {
-      return;
-    }
+//     if (!first?.coords) {
+//       return;
+//     }
 
-    map.setView([first.coords.lat, first.coords.lng], 16, { animate: false });
-  }, [markers, tracking, disableMarkerCentering, map]);
+//     map.setView([first.coords.lat, first.coords.lng], 16, { animate: false });
+//   }, [markers, tracking, disableMarkerCentering, map]);
 
-  return null;
-}
+//   return null;
+// }
 
 function MapClickHandler({ onMapClick }: { onMapClick?: (coords: GeoPoint) => void }) {
   useMapEvents({
@@ -103,18 +103,24 @@ function MapClickHandler({ onMapClick }: { onMapClick?: (coords: GeoPoint) => vo
   return null;
 }
 
-function LiveLocationController({ location }: { location: LiveLocation | null }) {
+function LiveLocationController({
+  location,
+  follow = false,
+}: {
+  location: LiveLocation | null;
+  follow?: boolean;
+}) {
   const map = useMap();
 
   useEffect(() => {
-    if (!location) {
+    if (!location || !follow) {
       return;
     }
 
     map.setView([location.lat, location.lng], map.getZoom() < 15 ? 15 : map.getZoom(), {
       animate: true,
     });
-  }, [location, map]);
+  }, [location, follow, map]);
 
   return null;
 }
@@ -141,9 +147,18 @@ function AvailableRescuersMapController({
   rescuers: MapViewProps["availableRescuerLocations"];
 }) {
   const map = useMap();
+  const hasFittedRef = useRef(false);
 
   useEffect(() => {
+    // Do not call fitBounds on every live GPS update.
+    // Repeated fitBounds calls prevent the user from freely zooming/panning.
     if (!rescuers || rescuers.length === 0) {
+      hasFittedRef.current = false;
+      return;
+    }
+
+    // Fit only once when the available-rescuer view is first populated.
+    if (hasFittedRef.current) {
       return;
     }
 
@@ -156,6 +171,8 @@ function AvailableRescuersMapController({
       maxZoom: 15,
       animate: false,
     });
+
+    hasFittedRef.current = true;
   }, [rescuers, map]);
 
   return null;
@@ -319,13 +336,13 @@ export function ClientMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <MapCenterController
+        {/* <MapCenterController
           markers={markers}
           tracking={tracking}
           disableMarkerCentering={availableRescuerLocations.length > 0}
-        />
+        /> */}
 
-        <LiveLocationController location={liveLocation} />
+        <LiveLocationController location={routeLocation} follow={showNavigation} />
 
         <LiveRoute
           liveLocation={routeLocation}

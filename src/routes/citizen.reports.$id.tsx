@@ -474,6 +474,7 @@ function CitizenReportDetail() {
                   },
                 ]}
                 remoteRescuerLocation={remoteRescuerLocation}
+                showNavigation={false}
               />
             </div>
           </div>

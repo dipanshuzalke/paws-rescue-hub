@@ -270,7 +270,7 @@ function NgoRequestDetail() {
             {report.rescuerName ? (
               <div className="space-y-1 text-sm">
                 <p className="font-medium text-foreground">{report.rescuerName}</p>
-                <p className="text-muted-foreground">{report.ngoName ?? "—"}</p>
+                {/* <p className="text-muted-foreground">{report.ngoName ?? "—"}</p> */}
                 <Button
                   size="sm"
                   variant="outline"
@@ -314,21 +314,6 @@ function NgoRequestDetail() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          ) : null}
-
-          {report.notes.length > 0 ? (
-            <div className="card-surface p-5">
-              <SectionHeading title="Notes" />
-              <ul className="space-y-3">
-                {report.notes.map((n) => (
-                  <li key={n.id} className="text-sm">
-                    <p className="font-medium text-foreground">{n.author}</p>
-                    <p className="text-xs text-muted-foreground">{formatDateTime(n.at)}</p>
-                    <p className="mt-1 text-foreground">{n.text}</p>
-                  </li>
-                ))}
-              </ul>
             </div>
           ) : null}
         </div>
