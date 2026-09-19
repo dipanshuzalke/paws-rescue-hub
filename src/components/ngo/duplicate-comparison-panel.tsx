@@ -1,4 +1,4 @@
-import { Link as LinkIcon, Unlink } from "lucide-react";
+import { Check, Link as LinkIcon, MapPin, Unlink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -84,7 +84,10 @@ export function DuplicateComparisonPanel({
   return (
     <>
       <section className="card-surface p-4 border-primary/30 bg-primary/5">
-        <SectionHeading title="Potential duplicates" description={`${localMatches.length} similar case${localMatches.length !== 1 ? "s" : ""} found`} />
+        <SectionHeading
+          title="Potential duplicates"
+          description={`${localMatches.length} similar case${localMatches.length !== 1 ? "s" : ""} found`}
+        />
 
         <div className="space-y-3 mt-4">
           {localMatches.map((match) => (
@@ -116,8 +119,30 @@ export function DuplicateComparisonPanel({
                 </div>
 
                 <p className="text-xs text-muted-foreground mt-1">
-                  #{match.reportId} · {match.area} · {formatDateTime(match.createdAt)}
+                  <MapPin className="inline h-3.5 w-3.5 mr-1" aria-hidden="true" />
+                  {match.area}, {match.city} · {formatDateTime(match.createdAt)}
                 </p>
+
+                <p className="text-xs text-muted-foreground mt-1">
+                  Reported {Math.round(match.minutesAgo / 60)} hours ago
+                </p>
+
+                {match.reasons.length > 0 ? (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    <p className="font-medium">Why this match:</p>
+                    <ul className="mt-1 space-y-0.5">
+                      {match.reasons.map((reason, i) => (
+                        <li key={i} className="flex gap-1">
+                          <Check
+                            className="h-3 w-3 shrink-0 text-success mt-0.5"
+                            aria-hidden="true"
+                          />
+                          {reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
                 <div className="flex gap-1.5 mt-2">
                   <PriorityBadge level={match.emergency} />
@@ -160,8 +185,8 @@ export function DuplicateComparisonPanel({
           <DialogHeader>
             <DialogTitle>Link as duplicate</DialogTitle>
             <DialogDescription>
-              Case #{report.id} will be linked to #{selectedMatch?.reportId} as a duplicate. The reporter will be
-              notified.
+              Case #{report.id} will be linked to #{selectedMatch?.reportId} as a duplicate. The
+              reporter will be notified.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -191,7 +216,8 @@ export function DuplicateComparisonPanel({
           <DialogHeader>
             <DialogTitle>Keep as separate case</DialogTitle>
             <DialogDescription>
-              Case #{report.id} will be treated as a separate rescue request distinct from #{selectedMatch?.reportId}.
+              Case #{report.id} will be treated as a separate rescue request distinct from #
+              {selectedMatch?.reportId}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
