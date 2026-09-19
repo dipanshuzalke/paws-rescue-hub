@@ -48,6 +48,7 @@ function AdminUsers() {
   const [status, setStatus] = useState("all");
   const [detailUser, setDetailUser] = useState<User | null>(null);
   const [confirm, setConfirm] = useState<{ user: User; action: "toggle" | "delete" } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const list = users ?? data ?? [];
 
@@ -65,19 +66,59 @@ function AdminUsers() {
     });
   }, [list, role, status, search]);
 
-  const applyAction = () => {
-    if (!confirm) return;
-    const { user, action } = confirm;
+  const applyAction = async () => {
+  if (!confirm) return;
+
+  const { user, action } = confirm;
+
+  try {
+    setActionLoading(true);
+
     if (action === "delete") {
-      setUsers((prev) => (prev ?? list).filter((u) => u.id !== user.id));
-      toast.success(`${user.name} was removed from the platform.`);
+      if (apiMode) {
+        await adminService.deleteUser(user.id);
+      }
+
+      // Remove from UI only after API succeeds
+      setUsers((prev) =>
+        (prev ?? list).filter((u) => u.id !== user.id),
+      );
+
+      toast.success(`${user.name} was permanently deleted.`);
     } else {
-      const nextStatus = user.status === "ACTIVE" || user.status === "VERIFIED" ? "INACTIVE" : "ACTIVE";
-      setUsers((prev) => (prev ?? list).map((u) => (u.id === user.id ? { ...u, status: nextStatus } : u)));
-      toast.success(`${user.name} is now ${nextStatus === "ACTIVE" ? "active" : "inactive"}.`);
+      const nextStatus =
+        user.status === "ACTIVE" || user.status === "VERIFIED"
+          ? "INACTIVE"
+          : "ACTIVE";
+
+      setUsers((prev) =>
+        (prev ?? list).map((u) =>
+          u.id === user.id
+            ? { ...u, status: nextStatus }
+            : u,
+        ),
+      );
+
+      toast.success(
+        `${user.name} is now ${
+          nextStatus === "ACTIVE" ? "active" : "inactive"
+        }.`,
+      );
     }
+
     setConfirm(null);
-  };
+  } catch (error) {
+    console.error("User action failed:", error);
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to delete user.",
+    );
+  } finally {
+    setActionLoading(false);
+  }
+};
 
   const columns: Column<User>[] = [
     {
@@ -145,10 +186,10 @@ function AdminUsers() {
             <DropdownMenuItem onClick={() => setDetailUser(u)}>
               <Eye className="h-4 w-4" aria-hidden="true" /> View details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setConfirm({ user: u, action: "toggle" })}>
+            {/* <DropdownMenuItem onClick={() => setConfirm({ user: u, action: "toggle" })}>
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               {u.status === "ACTIVE" || u.status === "VERIFIED" ? "Deactivate" : "Activate"}
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={() => setConfirm({ user: u, action: "delete" })}
@@ -166,7 +207,12 @@ function AdminUsers() {
     <div className="space-y-6">
       <PageHeader title="All Users" description="Manage every account across ResQ Paws." />
       <FilterBar>
-        <SearchBar value={search} onChange={setSearch} placeholder="Search by name, email or location…" className="flex-1 sm:min-w-[240px]" />
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by name, email or location…"
+          className="flex-1 sm:min-w-[240px]"
+        />
         <FilterSelect
           value={role}
           onChange={setRole}
@@ -195,12 +241,21 @@ function AdminUsers() {
       {loading ? (
         <TableSkeleton rows={8} cols={6} />
       ) : error ? (
-        <p className="text-sm text-critical">{error} <Button variant="link" onClick={retry}>Retry</Button></p>
+        <p className="text-sm text-critical">
+          {error}{" "}
+          <Button variant="link" onClick={retry}>
+            Retry
+          </Button>
+        </p>
       ) : (
         <DataTable columns={columns} data={filtered} getRowId={(u) => u.id} />
       )}
 
-      <UserDetailDialog user={detailUser} open={!!detailUser} onOpenChange={(v) => !v && setDetailUser(null)} />
+      <UserDetailDialog
+        user={detailUser}
+        open={!!detailUser}
+        onOpenChange={(v) => !v && setDetailUser(null)}
+      />
 
       <ConfirmDialog
         open={!!confirm}

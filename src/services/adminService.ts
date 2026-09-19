@@ -50,6 +50,10 @@ export const adminService = {
     return adaptUser(await unwrap<ApiUser>(api.patch(`/admin/users/${id}/status`, { status })));
   },
 
+  async deleteUser(id: string) {
+    return unwrap<{ userId: string; message: string }>(api.delete(`/admin/users/${id}`));
+  },
+
   async getRescuers(query: UserQuery = {}) {
     const { items, pagination } = await unwrapList<ApiUser>(
       api.get("/admin/rescuers", { params: query }),
@@ -187,7 +191,7 @@ export const adminService = {
           target = `rescue report (#${String(reportId).slice(-6).toUpperCase()})`;
         }
       }
-      
+
       const action = actionLabels[entry.action] ?? entry.action.toLowerCase().replaceAll("_", " ");
 
       return {

@@ -189,7 +189,7 @@ function AdminRescuers() {
             <DropdownMenuItem onClick={() => setDetail(r)}>
               <Eye className="h-4 w-4" aria-hidden="true" /> View details
             </DropdownMenuItem>
-            {r.status !== "VERIFIED" ? (
+            {/* {r.status !== "VERIFIED" ? (
               <DropdownMenuItem onClick={() => setConfirm({ rescuer: r, action: "verify" })}>
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Verify
               </DropdownMenuItem>
@@ -199,7 +199,7 @@ function AdminRescuers() {
               onClick={() => setConfirm({ rescuer: r, action: "suspend" })}
             >
               <Ban className="h-4 w-4" aria-hidden="true" /> Suspend
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       ),

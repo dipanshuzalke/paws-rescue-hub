@@ -31,12 +31,6 @@ export const Route = createFileRoute("/citizen/profile")({
   component: CitizenProfile,
 });
 
-const badges = [
-  { label: "First Responder", icon: PawPrint },
-  { label: "Verified Citizen", icon: ShieldCheck },
-  { label: "5+ Reports", icon: Award },
-];
-
 /**
  * Converts the user's location into the string
  * displayed inside the Location input.
@@ -395,31 +389,6 @@ function CitizenProfile() {
               Active cases
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* =====================================================
-          BADGES
-      ====================================================== */}
-      <div className="card-surface p-6">
-        <h2 className="font-display text-lg font-bold text-foreground">
-          Badges
-        </h2>
-
-        <div className="mt-3 flex flex-wrap gap-3">
-          {badges.map(({ label, icon: Icon }) => (
-            <span
-              key={label}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-soft px-3 py-1.5 text-sm font-semibold text-primary"
-            >
-              <Icon
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
-
-              {label}
-            </span>
-          ))}
         </div>
       </div>
     </div>
