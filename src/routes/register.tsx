@@ -97,6 +97,8 @@ function Register() {
   const [show, setShow] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -298,13 +300,14 @@ function Register() {
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
+          {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
 
             <div className="relative">
               <Input
                 id="password"
-                type={show ? "text" : "password"}
+                type={showPassword ? "text" : "password"}
                 minLength={8}
                 value={form.password}
                 onChange={(e) => set("password", e.target.value)}
@@ -313,11 +316,11 @@ function Register() {
 
               <button
                 type="button"
-                onClick={() => setShow((s) => !s)}
-                aria-label={show ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:text-foreground"
               >
-                {show ? (
+                {showPassword ? (
                   <EyeOff className="h-4 w-4" aria-hidden="true" />
                 ) : (
                   <Eye className="h-4 w-4" aria-hidden="true" />
@@ -327,35 +330,40 @@ function Register() {
 
             {errors.password ? <p className="text-xs text-destructive">{errors.password}</p> : null}
           </div>
+
+          {/* Confirm Password */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm password</Label>
+
             <div className="relative">
               <Input
                 id="confirmPassword"
-                type={show ? "text" : "password"}
+                type={showConfirmPassword ? "text" : "password"}
                 minLength={8}
                 value={form.confirmPassword}
                 onChange={(e) => set("confirmPassword", e.target.value)}
+                className="pr-10"
               />
+
               <button
                 type="button"
-                onClick={() => setShow((s) => !s)}
-                aria-label={show ? "Hide password" : "Show password"}
+                onClick={() => setShowConfirmPassword((s) => !s)}
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:text-foreground"
               >
-                {show ? (
+                {showConfirmPassword ? (
                   <EyeOff className="h-4 w-4" aria-hidden="true" />
                 ) : (
                   <Eye className="h-4 w-4" aria-hidden="true" />
                 )}
               </button>
             </div>
+
             {errors.confirmPassword ? (
               <p className="text-xs text-destructive">{errors.confirmPassword}</p>
             ) : null}
           </div>
         </div>
-
         <label className="flex items-start gap-2.5 text-sm text-muted-foreground">
           <Checkbox
             checked={form.terms}
