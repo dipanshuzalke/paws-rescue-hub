@@ -34,6 +34,12 @@ const activeTracking = new Map();
 const AVAILABLE_RESCUERS_ROOM = "available_rescuers";
 const availableRescuers = new Map();
 
+let ioInstance = null;
+
+export function getIO() {
+  return ioInstance;
+}
+
 /**
  * Example:
  *
@@ -222,6 +228,7 @@ export function createSocketServer(httpServer) {
       methods: ["GET", "POST"],
     },
   });
+  ioInstance = io;
 
   /**
    * Authenticate every Socket.IO connection.
@@ -235,6 +242,7 @@ export function createSocketServer(httpServer) {
    */
   io.on("connection", (socket) => {
     console.log(`[socket] Connected: ${socket.id} | ${socket.user.name} | ${socket.user.role}`);
+    socket.join(`user:${socket.user._id}`);
 
     /**
      * ========================================================

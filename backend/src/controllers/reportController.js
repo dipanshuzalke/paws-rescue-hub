@@ -5,7 +5,7 @@ import { ApiError, asyncHandler } from "../utils/apiError.js";
 import { ok, created, list } from "../utils/apiResponse.js";
 import { persistUploads } from "../middleware/uploadMiddleware.js";
 import { buildReportFilter, paginateReports, recordHistory } from "../services/reportService.js";
-import { notifyRole } from "../services/notificationService.js";
+import { notifyNewReport } from "../services/notificationService.js";
 
 const POPULATE_USER_FIELDS = "name email phone role avatar profileImage organization availability";
 const SAFE_REPORTER_FIELDS = "name email phone avatar profileImage";
@@ -55,17 +55,7 @@ export const createReport = asyncHandler(async (req, res) => {
 
   await recordHistory({ report, user: req.user, previousStatus: "NONE", newStatus: "REPORTED", note: "Report created" });
 
-  // A newly reported case is also visible in the rescuer's available queue,
-  // so alert active rescuers immediately instead of waiting for an NGO to
-  // manually assign the case.
-  await notifyRole(["NGO", "ADMIN", "RESCUER"], {
-    report: report._id,
-    type: "NEW_REPORT",
-    title: `New ${report.emergencyLevel} priority report`,
-    message: `${report.animalType} reported ${report.condition.toLowerCase()} at ${report.address}`,
-    emergencyLevel: report.emergencyLevel,
-    link: `/reports/${report._id}`,
-  });
+  await notifyNewReport(report);
 
   const populated = await report.populate([{ path: "reporter", select: SAFE_REPORTER_FIELDS }]);
 

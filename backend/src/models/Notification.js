@@ -11,10 +11,12 @@ const notificationSchema = new mongoose.Schema(
     emergencyLevel: { type: String, default: null },
     link: { type: String, default: "" },
     isRead: { type: Boolean, default: false, index: true },
+    dedupeKey: { type: String, default: null, index: true },
   },
   { timestamps: true },
 );
 
 notificationSchema.index({ recipient: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ recipient: 1, dedupeKey: 1 }, { unique: true, sparse: true });
 
 export const Notification = mongoose.model("Notification", notificationSchema);

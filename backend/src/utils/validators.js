@@ -111,6 +111,10 @@ export const statusUpdateSchema = z.object({
   note: z.string().trim().max(1000).optional().default(""),
 });
 
+export const rejectAssignmentSchema = z.object({
+  reason: z.string().trim().max(2000).optional().default(""),
+});
+
 export const noteSchema = z.object({
   text: z.string().trim().min(1, "Note text is required").max(2000),
 });

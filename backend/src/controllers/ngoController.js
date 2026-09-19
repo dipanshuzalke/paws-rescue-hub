@@ -7,7 +7,7 @@ import { asyncHandler, ApiError } from "../utils/apiError.js";
 import { ok, created, list, buildPagination, parseQueryOptions } from "../utils/apiResponse.js";
 import { assignmentSchema } from "../utils/validators.js";
 import { buildReportFilter, paginateReports, recordHistory } from "../services/reportService.js";
-import { createNotification, notifyUsers } from "../services/notificationService.js";
+import { notifyPreviousRescuerReassigned, notifyRescuerAssigned } from "../services/notificationService.js";
 import * as analyticsService from "../services/analyticsService.js";
 
 const ACTIVE_STATUSES = ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
@@ -309,15 +309,7 @@ export const createAssignment = asyncHandler(async (req, res) => {
       previousRescuer.activeCases = Math.max(0, (previousRescuer.activeCases || 0) - 1);
       await previousRescuer.save();
     }
-    await createNotification({
-      recipient: previousRescuerId,
-      report: report._id,
-      type: "ASSIGNMENT",
-      title: "Rescue assignment changed",
-      message: `Report ${report.reportId} has been reassigned to another rescuer.`,
-      emergencyLevel: report.emergencyLevel,
-      link: `/rescuer/requests/${report._id}`,
-    });
+    await notifyPreviousRescuerReassigned({ report, previousRescuerId });
   }
 
   const assignment = await RescueAssignment.create({
@@ -349,25 +341,7 @@ export const createAssignment = asyncHandler(async (req, res) => {
     note: notes || "Rescuer assigned",
   });
 
-  await createNotification({
-    recipient: rescuer._id,
-    report: report._id,
-    type: "ASSIGNMENT",
-    title: "New rescue assignment",
-    message: isReassignment
-      ? `Report ${report.reportId} has been reassigned to you. Please review it promptly.`
-      : `You have been assigned to report ${report.reportId}. Please review it promptly.`,
-    emergencyLevel: report.emergencyLevel,
-    link: `/rescuer/requests/${report._id}`,
-  });
-
-  await notifyUsers([report.reporter], {
-    report: report._id,
-    type: "STATUS_UPDATE",
-    title: "A rescuer is reviewing your report",
-    message: `A rescuer has been selected for report ${report.reportId} and is awaiting acceptance.`,
-    emergencyLevel: report.emergencyLevel,
-  });
+  await notifyRescuerAssigned({ report, rescuer, isReassignment });
 
   const populated = await RescueReport.findById(report._id).populate(REPORT_POPULATE);
   return created(res, populated, "Rescuer assigned successfully");

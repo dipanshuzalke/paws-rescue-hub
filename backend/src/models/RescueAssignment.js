@@ -13,6 +13,7 @@ const rescueAssignmentSchema = new mongoose.Schema(
     startedAt: Date,
     completedAt: Date,
     rejectedAt: Date,
+    rejectionReason: { type: String, default: "", maxlength: 2000 },
     notes: { type: String, default: "", maxlength: 2000 },
   },
   { timestamps: true },
