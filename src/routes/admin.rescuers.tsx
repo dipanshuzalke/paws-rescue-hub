@@ -54,9 +54,9 @@ function AdminRescuers() {
   const [status, setStatus] = useState("all");
   const [availability, setAvailability] = useState("all");
   const [detail, setDetail] = useState<Rescuer | null>(null);
-  const [confirm, setConfirm] = useState<{ rescuer: Rescuer; action: "verify" | "suspend" } | null>(
-    null,
-  );
+  const [confirm, setConfirm] = useState<
+    { rescuer: Rescuer; action: "verify" | "reactivate" | "suspend" } | null
+  >(null);
 
   const list = rescuers ?? data ?? [];
 
@@ -80,19 +80,41 @@ function AdminRescuers() {
     });
   }, [list, status, availability, search]);
 
-  const applyAction = () => {
+  const applyAction = async () => {
     if (!confirm) return;
+
     const { rescuer, action } = confirm;
-    const nextStatus = action === "verify" ? "VERIFIED" : "INACTIVE";
-    setRescuers((prev) =>
-      (prev ?? list).map((r) => (r.id === rescuer.id ? { ...r, status: nextStatus } : r)),
-    );
-    toast.success(
+    const nextStatus =
       action === "verify"
-        ? `${rescuer.name} has been verified.`
-        : `${rescuer.name} has been suspended.`,
-    );
-    setConfirm(null);
+        ? "VERIFIED"
+        : action === "reactivate"
+          ? "ACTIVE"
+          : "INACTIVE";
+
+    try {
+      const updatedRescuer = (apiMode
+        ? await adminService.setUserStatus(rescuer.id, nextStatus)
+        : ({ ...rescuer, status: nextStatus } as Rescuer)) as Rescuer;
+
+      setRescuers((prev) => (prev ?? list).map((r) => (r.id === rescuer.id ? updatedRescuer : r)));
+
+      toast.success(
+        action === "verify"
+          ? `${rescuer.name} has been verified.`
+          : action === "reactivate"
+            ? `${rescuer.name} has been reactivated.`
+            : `${rescuer.name} has been suspended.`,
+      );
+      setConfirm(null);
+    } catch {
+      toast.error(
+        action === "verify"
+          ? `Could not verify ${rescuer.name}. Please try again.`
+          : action === "reactivate"
+            ? `Could not reactivate ${rescuer.name}. Please try again.`
+            : `Could not suspend ${rescuer.name}. Please try again.`,
+      );
+    }
   };
 
   const columns: Column<Rescuer>[] = [
@@ -189,17 +211,18 @@ function AdminRescuers() {
             <DropdownMenuItem onClick={() => setDetail(r)}>
               <Eye className="h-4 w-4" aria-hidden="true" /> View details
             </DropdownMenuItem>
-            {/* {r.status !== "VERIFIED" ? (
-              <DropdownMenuItem onClick={() => setConfirm({ rescuer: r, action: "verify" })}>
-                <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Verify
+            {r.status === "INACTIVE" ? (
+              <DropdownMenuItem onClick={() => setConfirm({ rescuer: r, action: "reactivate" })}>
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Reactivate
               </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => setConfirm({ rescuer: r, action: "suspend" })}
-            >
-              <Ban className="h-4 w-4" aria-hidden="true" /> Suspend
-            </DropdownMenuItem> */}
+            ) : (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setConfirm({ rescuer: r, action: "suspend" })}
+              >
+                <Ban className="h-4 w-4" aria-hidden="true" /> Suspend
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -259,13 +282,27 @@ function AdminRescuers() {
       <ConfirmDialog
         open={!!confirm}
         onOpenChange={(v) => !v && setConfirm(null)}
-        title={confirm?.action === "verify" ? "Verify this rescuer?" : "Suspend this rescuer?"}
-        description={
-          confirm?.action === "verify"
-            ? `${confirm.rescuer.name} will be marked as a verified rescuer.`
-            : `${confirm?.rescuer.name} will be suspended and unable to accept new rescues.`
+        title={
+          confirm?.action === "reactivate"
+            ? "Reactivate this rescuer?"
+            : confirm?.action === "verify"
+              ? "Verify this rescuer?"
+              : "Suspend this rescuer?"
         }
-        confirmLabel={confirm?.action === "verify" ? "Verify" : "Suspend"}
+        description={
+          confirm?.action === "reactivate"
+            ? `${confirm.rescuer.name} will be reactivated and able to accept new rescues again.`
+            : confirm?.action === "verify"
+              ? `${confirm.rescuer.name} will be marked as a verified rescuer.`
+              : `${confirm?.rescuer.name} will be suspended and unable to accept new rescues.`
+        }
+        confirmLabel={
+          confirm?.action === "reactivate"
+            ? "Reactivate"
+            : confirm?.action === "verify"
+              ? "Verify"
+              : "Suspend"
+        }
         destructive={confirm?.action === "suspend"}
         onConfirm={applyAction}
       />
