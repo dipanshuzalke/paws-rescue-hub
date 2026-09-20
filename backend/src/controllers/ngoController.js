@@ -111,11 +111,57 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (req.body.areasServed !== undefined) {
-    profile.areasServed = req.body.areasServed.trim();
+    const nextAreasServed = req.body.areasServed.trim();
+    profile.areasServed = nextAreasServed;
+
+    if (!profile.address && nextAreasServed) {
+      profile.address = nextAreasServed;
+    }
+  }
+
+  if (req.body.location !== undefined) {
+    const nextLocation = req.body.location;
+    const addressText =
+      typeof nextLocation === "string"
+        ? nextLocation.trim()
+        : nextLocation?.address?.trim() ?? "";
+
+    if (addressText) {
+      profile.address = addressText;
+    }
+
+    if (Array.isArray(nextLocation?.coordinates) && nextLocation.coordinates.length === 2) {
+      profile.location = {
+        type: "Point",
+        coordinates: nextLocation.coordinates,
+        address: addressText || profile.location?.address || profile.address || "",
+      };
+    } else if (profile.location && Array.isArray(profile.location.coordinates) && profile.location.coordinates.length === 2) {
+      profile.location = {
+        type: "Point",
+        coordinates: profile.location.coordinates,
+        address: addressText || profile.location.address || profile.address || "",
+      };
+    } else {
+      profile.location = undefined;
+    }
+  }
+
+  if (req.body.address !== undefined) {
+    const addressText = String(req.body.address ?? "").trim();
+    profile.address = addressText;
+
+    if (profile.location && Array.isArray(profile.location.coordinates) && profile.location.coordinates.length === 2) {
+      profile.location = {
+        type: "Point",
+        coordinates: profile.location.coordinates,
+        address: addressText,
+      };
+    }
   }
 
   if (req.body.description !== undefined) {
-    profile.about = req.body.description.trim();
+    profile.description = req.body.description.trim();
   }
 
   /*

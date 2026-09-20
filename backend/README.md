@@ -33,14 +33,14 @@ Sign up at [Cloudinary](https://cloudinary.com/) and obtain your API credentials
 
 ### Password-reset email
 
-Password reset links are sent through the [Resend](https://resend.com) HTTPS API.
-Set `RESEND_API_KEY` and `RESEND_FROM` in your environment. `RESEND_FROM` must be
-a sender address from a domain verified in Resend (for example,
-`ResQ Paws <support@your-domain.com>`). Also set `CLIENT_URL` to the public
-frontend URL so reset links open the reset-password page.
+Password reset links are sent through SMTP using the configured mail provider.
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and
+`SMTP_FROM` in your environment. Also set `CLIENT_URL` to the public frontend URL
+so reset links open the correct page.
 
-This works on Render's free tier because it uses HTTPS rather than blocked SMTP
-ports. Do not commit API keys to `.env` files tracked by Git.
+This is the recommended production setup because many hosts block outbound SMTP
+ports unless you use a provider with explicit credentials and verified sender setup.
+Do not commit credentials to `.env` files tracked by Git.
 
 ## Database Seeding
 

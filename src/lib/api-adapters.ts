@@ -152,6 +152,7 @@ export interface ApiOrganization {
   email: string;
   phone: string;
   address?: string;
+  location?: { coordinates?: number[]; address?: string };
   contactPerson?: string;
   areasServed?: string;
   website?: string;
@@ -220,7 +221,7 @@ export function adaptUser(u: ApiUser): User {
     bio: u.bio ?? "",
     role: toUiRole(u.role),
     status: ((u.status as UserStatus) ?? (u.isActive === false ? "INACTIVE" : "ACTIVE")) as UserStatus,
-    location: u.location?.address ?? "Nagpur",
+    location: u.location?.address?.trim() || "Location not set",
     joinedAt: (u.createdAt ?? new Date().toISOString()).slice(0, 10),
     avatar: u.profileImage?.url,
     cases: u.reportCount ?? (u.completedCases ?? 0) + (u.activeCases ?? 0),
@@ -535,11 +536,14 @@ export function adaptNotification(n: ApiNotification, role: Role | "all" = "all"
 }
 
 export function adaptOrganization(o: ApiOrganization): NGO {
+  const orgLocation = o.location?.address ?? o.address ?? "";
+  const displayLocation = orgLocation.trim() || (o.areasServed ?? "").trim() || "Location not set";
+
   return {
     id: o._id,
     name: o.name,
     registrationNumber: o.registrationNumber,
-    location: o.address ?? "Nagpur",
+    location: displayLocation,
     contactPerson: o.contactPerson ?? "—",
     email: o.email,
     phone: o.phone,

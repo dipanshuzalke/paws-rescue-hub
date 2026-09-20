@@ -40,6 +40,7 @@ function NgoProfile() {
     contactPerson: user?.name ?? ngo?.contactPerson ?? "",
     email: user?.email ?? ngo?.email ?? "",
     phone: user?.phone ?? ngo?.phone ?? "",
+    location: ngo?.location ?? "",
     areasServed: ngo?.areasServed ?? "Dharampeth, Sadar, Sitabuldi, Manish Nagar",
     description:
       ngo?.about ??
@@ -57,6 +58,7 @@ function NgoProfile() {
           contactPerson: profile.contactPerson,
           email: profile.email,
           phone: profile.phone,
+          location: profile.location || profile.areasServed || "",
           areasServed: profile.areasServed ?? "",
           description: profile.about,
         });
@@ -77,6 +79,7 @@ function NgoProfile() {
           contactPerson: form.contactPerson,
           email: form.email,
           phone: form.phone,
+          address: form.location,
           areasServed: form.areasServed,
           description: form.description,
         });
@@ -87,6 +90,7 @@ function NgoProfile() {
           contactPerson: profile.contactPerson,
           email: profile.email,
           phone: profile.phone,
+          location: profile.location || profile.areasServed || "",
           areasServed: profile.areasServed ?? "",
           description: profile.about,
         }));
@@ -143,6 +147,10 @@ function NgoProfile() {
             <div className="space-y-1.5">
               <Label htmlFor="org-phone">Phone</Label>
               <Input id="org-phone" value={form.phone} onChange={update("phone")} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="org-location">Location</Label>
+              <Input id="org-location" value={form.location} onChange={update("location")} required />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="org-areas">Areas served</Label>

@@ -1,29 +1,31 @@
 import nodemailer from "nodemailer";
-import { Resend } from "resend";
 import { env } from "../config/env.js";
 import { User } from "../models/User.js";
 
 let smtpTransporter = null;
 function getSmtpTransporter() {
   if (!smtpTransporter && env.smtp.user && env.smtp.pass) {
-    smtpTransporter = nodemailer.createTransport({
-      host: env.smtp.host,
-      port: env.smtp.port,
-      secure: env.smtp.secure,
-      auth: {
-        user: env.smtp.user,
-        pass: env.smtp.pass,
-      },
-    });
+    try {
+      smtpTransporter = nodemailer.createTransport({
+        host: env.smtp.host,
+        port: env.smtp.port,
+        secure: env.smtp.secure,
+        auth: {
+          user: env.smtp.user,
+          pass: env.smtp.pass,
+        },
+      });
+    } catch (error) {
+      console.error("[email] Failed to initialize SMTP transporter:", error.message);
+      return null;
+    }
   }
-  return smtpTransporter;
-}
 
-function getResend() {
-  if (!env.resend.apiKey || !env.resend.from) {
-    throw new Error("Resend is not configured. Set RESEND_API_KEY and RESEND_FROM.");
+  if (!smtpTransporter) {
+    console.warn("[email] SMTP transporter unavailable. Check SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM.");
   }
-  return new Resend(env.resend.apiKey);
+
+  return smtpTransporter;
 }
 
 function escapeHtml(value) {
@@ -37,15 +39,21 @@ function escapeHtml(value) {
 }
 
 /**
- * Universal email sender: prefers SMTP (e.g. Gmail), falls back to Resend.
+ * SMTP-only email sender for production.
  */
 export async function sendMail({ to, subject, text, html }) {
   const transporter = getSmtpTransporter();
-  if (transporter) {
-    const fromAddress = env.smtp.from.includes("@") && !env.smtp.from.includes("<")
-      ? `"SafePaws" <${env.smtp.from}>`
-      : env.smtp.from;
+  if (!transporter) {
+    const message = "SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM.";
+    console.warn(`[email] ${message}`);
+    return null;
+  }
 
+  const fromAddress = env.smtp.from.includes("@") && !env.smtp.from.includes("<")
+    ? `"SafePaws" <${env.smtp.from}>`
+    : env.smtp.from;
+
+  try {
     return await transporter.sendMail({
       from: fromAddress,
       to,
@@ -53,22 +61,17 @@ export async function sendMail({ to, subject, text, html }) {
       text,
       html,
     });
-  }
-
-  if (env.resend.apiKey && env.resend.from) {
-    const { data, error } = await getResend().emails.send({
-      from: env.resend.from,
+  } catch (error) {
+    console.error("[email] SMTP send failed:", {
       to,
+      from: fromAddress,
       subject,
-      text,
-      html,
+      message: error.message,
+      code: error.code,
+      response: error.response,
     });
-    if (error) throw new Error(error.message);
-    return data;
+    throw error;
   }
-
-  console.warn("[email] Neither SMTP nor Resend is configured — skipping email dispatch.");
-  return null;
 }
 
 export async function sendPasswordResetEmail({ to, name, resetUrl }) {
@@ -125,10 +128,9 @@ function buildReportEmailHtml(report) {
 export async function notifyRescuersNewReport(report) {
   try {
     const hasSmtp = Boolean(env.smtp.user && env.smtp.pass);
-    const hasResend = Boolean(env.resend.apiKey && env.resend.from);
 
-    if (!hasSmtp && !hasResend) {
-      console.warn("[email] Email service not configured (neither SMTP nor Resend) — skipping rescuer email notifications.");
+    if (!hasSmtp) {
+      console.warn("[email] SMTP is not configured — skipping rescuer email notifications.");
       return;
     }
 

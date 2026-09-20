@@ -67,58 +67,42 @@ function AdminUsers() {
   }, [list, role, status, search]);
 
   const applyAction = async () => {
-  if (!confirm) return;
+    if (!confirm) return;
 
-  const { user, action } = confirm;
+    const { user, action } = confirm;
 
-  try {
-    setActionLoading(true);
+    try {
+      setActionLoading(true);
 
-    if (action === "delete") {
-      if (apiMode) {
-        await adminService.deleteUser(user.id);
+      if (action === "delete") {
+        if (apiMode) {
+          await adminService.deleteUser(user.id);
+        }
+
+        // Remove from UI only after API succeeds
+        setUsers((prev) => (prev ?? list).filter((u) => u.id !== user.id));
+
+        toast.success(`${user.name} was permanently deleted.`);
+      } else {
+        const nextStatus =
+          user.status === "ACTIVE" || user.status === "VERIFIED" ? "INACTIVE" : "ACTIVE";
+
+        setUsers((prev) =>
+          (prev ?? list).map((u) => (u.id === user.id ? { ...u, status: nextStatus } : u)),
+        );
+
+        toast.success(`${user.name} is now ${nextStatus === "ACTIVE" ? "active" : "inactive"}.`);
       }
 
-      // Remove from UI only after API succeeds
-      setUsers((prev) =>
-        (prev ?? list).filter((u) => u.id !== user.id),
-      );
+      setConfirm(null);
+    } catch (error) {
+      console.error("User action failed:", error);
 
-      toast.success(`${user.name} was permanently deleted.`);
-    } else {
-      const nextStatus =
-        user.status === "ACTIVE" || user.status === "VERIFIED"
-          ? "INACTIVE"
-          : "ACTIVE";
-
-      setUsers((prev) =>
-        (prev ?? list).map((u) =>
-          u.id === user.id
-            ? { ...u, status: nextStatus }
-            : u,
-        ),
-      );
-
-      toast.success(
-        `${user.name} is now ${
-          nextStatus === "ACTIVE" ? "active" : "inactive"
-        }.`,
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete user.");
+    } finally {
+      setActionLoading(false);
     }
-
-    setConfirm(null);
-  } catch (error) {
-    console.error("User action failed:", error);
-
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Failed to delete user.",
-    );
-  } finally {
-    setActionLoading(false);
-  }
-};
+  };
 
   const columns: Column<User>[] = [
     {

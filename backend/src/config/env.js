@@ -19,10 +19,6 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   cookieName: process.env.COOKIE_NAME || "resqpaws_token",
-  resend: {
-    apiKey: process.env.RESEND_API_KEY || "",
-    from: process.env.RESEND_FROM || "",
-  },
   smtp: {
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: Number(process.env.SMTP_PORT || 465),

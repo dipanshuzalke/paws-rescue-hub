@@ -50,7 +50,9 @@ export function UserDetailDialog({
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <dt className="sr-only">Location</dt>
-            <dd className="min-w-0 truncate text-foreground">{user.location}</dd>
+            <dd className="min-w-0 truncate text-foreground">
+              {user.location || "Location not set"}
+            </dd>
           </div>
           {user.organization ? (
             <div className="flex items-center gap-2">
