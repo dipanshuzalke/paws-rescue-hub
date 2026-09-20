@@ -145,18 +145,28 @@ export async function notifyRescuersNewReport(report) {
     const html = buildReportEmailHtml(report);
     const text = `New rescue report: ${report.animalType} (${report.condition}) at ${report.address || "unknown location"} — Emergency: ${report.emergencyLevel}`;
 
-    const validRescuers = rescuers.filter((r) => r.email);
+    const validRescuers = rescuers.filter((r) => r.email && String(r.email).trim());
     console.log(`[email] Dispatching rescue notification to ${validRescuers.length} rescuers...`);
 
     const results = await Promise.allSettled(
-      validRescuers.map((r) =>
-        sendMail({ to: r.email, subject, text, html })
-          .catch((err) => console.error(`[email] Failed for ${r.email}:`, err.message))
-      )
+      validRescuers.map(async (r) => {
+        try {
+          const result = await sendMail({ to: r.email, subject, text, html });
+          if (result === null) {
+            console.warn(`[email] No SMTP delivery result for ${r.email}; delivery was skipped.`);
+            return { ok: false, email: r.email, skipped: true };
+          }
+          return { ok: true, email: r.email, skipped: false };
+        } catch (err) {
+          console.error(`[email] Failed for ${r.email}:`, err.message);
+          return { ok: false, email: r.email, skipped: false, error: err.message };
+        }
+      })
     );
 
-    const sent = results.filter((r) => r.status === "fulfilled" && r.value !== null).length;
-    console.log(`[email] Notified ${sent}/${validRescuers.length} rescuers about report ${report._id}`);
+    const sent = results.filter((r) => r.status === "fulfilled" && r.value?.ok === true).length;
+    const failed = results.filter((r) => r.status === "fulfilled" && r.value?.ok === false).length;
+    console.log(`[email] Sent ${sent}, failed ${failed}, total ${validRescuers.length} for report ${report._id}`);
   } catch (err) {
     console.error("[email] notifyRescuersNewReport failed:", err.message);
   }
