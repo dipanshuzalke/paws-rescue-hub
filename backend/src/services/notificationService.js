@@ -1,10 +1,65 @@
 import { Notification } from "../models/Notification.js";
+import { RescueReport } from "../models/RescueReport.js";
 import { User } from "../models/User.js";
 import { publishNotification } from "./realtimeNotificationService.js";
 
 function asId(value) {
   if (!value) return null;
   return String(value._id || value.id || value);
+}
+
+function normalizeText(value) {
+  if (value === null || value === undefined) return "";
+  return String(value).replace(/\s+/g, " ").trim();
+}
+
+function sentenceCase(value) {
+  const text = normalizeText(value);
+  if (!text) return "";
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function reportTitle(report = {}) {
+  return normalizeText(report.title || report.animalType || "the animal");
+}
+
+function reportLocation(report = {}) {
+  const location = normalizeText(report.address || report.area || report.location?.address || "");
+  return location ? ` near ${location}` : "";
+}
+
+export async function resolveReportContext(report) {
+  if (!report) return {};
+  const hasReportFields =
+    typeof report === "object" &&
+    (report.title || report.animalType || report.address || report.area || report.location || report.reportId);
+  if (hasReportFields) return report;
+  const id = asId(report);
+  if (!id) return {};
+  const reportDoc = await RescueReport.findById(id).lean();
+  return reportDoc || {};
+}
+
+export function buildReportDescriptor(report = {}, { lowercase = false } = {}) {
+  const title = reportTitle(report);
+  const label = title || "the animal";
+  const formatted = lowercase ? label.charAt(0).toLowerCase() + label.slice(1) : sentenceCase(label);
+  return `${formatted}${reportLocation(report)}`;
+}
+
+export function buildRescueOutcomeMessage(report = {}) {
+  const title = reportTitle(report);
+  const subject = title ? title.toLowerCase() : "the animal";
+  return `The ${subject}${reportLocation(report)} has been successfully rescued.`;
+}
+
+export async function buildReportNotificationDetails(report) {
+  const context = await resolveReportContext(report);
+  return {
+    report: context,
+    subject: buildReportDescriptor(context),
+    outcome: buildRescueOutcomeMessage(context),
+  };
 }
 
 function uniqueIds(values = []) {
@@ -118,22 +173,23 @@ async function notifyEach(users, payload, variant = "report") {
 
 /** 1. Citizen created a report → relevant NGO + Admin (not every rescuer). */
 export async function notifyNewReport(report) {
+  const reportContext = await resolveReportContext(report);
   const [ngos, admins] = await Promise.all([
     activeUsersByRole("NGO"),
     activeUsersByRole("ADMIN"),
   ]);
-  const emergency = report.emergencyLevel === "CRITICAL" || report.emergencyLevel === "HIGH";
+  const emergency = reportContext.emergencyLevel === "CRITICAL" || reportContext.emergencyLevel === "HIGH";
   const title = emergency
-    ? `Emergency rescue request (${report.emergencyLevel})`
+    ? `Emergency rescue request (${reportContext.emergencyLevel})`
     : "New rescue request";
-  const message = `${report.animalType} reported ${String(report.condition || "").toLowerCase()} at ${report.address}`;
+  const message = `New rescue report for ${buildReportDescriptor(reportContext)}.`;
   const payload = {
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "NEW_REPORT",
     title,
     message,
-    emergencyLevel: report.emergencyLevel,
-    dedupeKey: `NEW_REPORT:${asId(report._id)}`,
+    emergencyLevel: reportContext.emergencyLevel,
+    dedupeKey: `NEW_REPORT:${asId(reportContext._id || report._id)}`,
   };
   await notifyEach(ngos, payload);
   await notifyEach(admins, payload);
@@ -142,43 +198,46 @@ export async function notifyNewReport(report) {
 /** 2. NGO assigned a rescuer. */
 export async function notifyRescuerAssigned({ report, rescuer, isReassignment = false }) {
   const rescuerId = asId(rescuer);
+  const reportContext = await resolveReportContext(report);
   if (!rescuerId) return null;
   return createNotification({
     recipient: rescuerId,
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "ASSIGNMENT",
     title: isReassignment ? "Rescue assignment updated" : "New rescue assignment",
-    message: "You have been assigned a new rescue case.",
-    emergencyLevel: report.emergencyLevel,
-    link: notificationLink("RESCUER", report._id),
-    dedupeKey: `ASSIGNMENT:${asId(report._id)}:${rescuerId}`,
+    message: `You have been assigned a rescue case for ${buildReportDescriptor(reportContext)}.`,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    link: notificationLink("RESCUER", reportContext._id || report._id),
+    dedupeKey: `ASSIGNMENT:${asId(reportContext._id || report._id)}:${rescuerId}`,
   });
 }
 
 export async function notifyPreviousRescuerReassigned({ report, previousRescuerId }) {
+  const reportContext = await resolveReportContext(report);
   if (!previousRescuerId) return null;
   return createNotification({
     recipient: previousRescuerId,
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "ASSIGNMENT",
     title: "Rescue assignment changed",
-    message: `Report ${report.reportId} has been reassigned to another rescuer.`,
-    emergencyLevel: report.emergencyLevel,
-    link: notificationLink("RESCUER", report._id),
-    dedupeKey: `ASSIGNMENT_REMOVED:${asId(report._id)}:${asId(previousRescuerId)}`,
+    message: `The rescue case for ${buildReportDescriptor(reportContext)} has been reassigned to another rescuer.`,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    link: notificationLink("RESCUER", reportContext._id || report._id),
+    dedupeKey: `ASSIGNMENT_REMOVED:${asId(reportContext._id || report._id)}:${asId(previousRescuerId)}`,
   });
 }
 
 /** 3. Rescuer accepted. */
 export async function notifyAssignmentAccepted({ report, rescuerName }) {
   const name = displayName(rescuerName);
-  return notifyEach(await ngoUsersForReport(report), {
-    report: report._id,
+  const reportContext = await resolveReportContext(report);
+  return notifyEach(await ngoUsersForReport(reportContext), {
+    report: reportContext._id || report._id,
     type: "RESCUE_ACCEPTED",
     title: "Rescue assignment accepted",
-    message: `${name} has accepted the rescue assignment.`,
-    emergencyLevel: report.emergencyLevel,
-    dedupeKey: `RESCUE_ACCEPTED:${asId(report._id)}`,
+    message: `${name} has accepted the rescue assignment for ${buildReportDescriptor(reportContext)}.`,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    dedupeKey: `RESCUE_ACCEPTED:${asId(reportContext._id || report._id)}`,
   });
 }
 
@@ -186,75 +245,78 @@ export async function notifyAssignmentAccepted({ report, rescuerName }) {
 export async function notifyAssignmentRejected({ report, rescuerName, reason }) {
   const name = displayName(rescuerName);
   const reasonText = reason?.trim() ? ` Reason: ${reason.trim()}` : "";
-  return notifyEach(await ngoUsersForReport(report), {
-    report: report._id,
+  const reportContext = await resolveReportContext(report);
+  return notifyEach(await ngoUsersForReport(reportContext), {
+    report: reportContext._id || report._id,
     type: "ASSIGNMENT_REJECTED",
     title: "Rescue assignment rejected",
-    message: `${name} has rejected the rescue assignment.${reasonText}`,
-    emergencyLevel: report.emergencyLevel,
-    dedupeKey: `ASSIGNMENT_REJECTED:${asId(report._id)}:${asId(report.assignment) || "none"}`,
+    message: `${name} has rejected the rescue assignment for ${buildReportDescriptor(reportContext)}.${reasonText}`,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    dedupeKey: `ASSIGNMENT_REJECTED:${asId(reportContext._id || report._id)}:${asId(reportContext.assignment || report.assignment) || "none"}`,
   });
 }
 
 /** 5. Rescuer reached the location (IN_PROGRESS). */
 export async function notifyReachedLocation({ report, rescuerName }) {
   const name = displayName(rescuerName);
+  const reportContext = await resolveReportContext(report);
   const payload = {
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "RESCUE_STARTED",
     title: "Rescuer reached the location",
-    message: `${name} has reached the reported location.`,
-    emergencyLevel: report.emergencyLevel,
-    dedupeKey: `RESCUE_STARTED:${asId(report._id)}`,
+    message: `${name} has reached the reported location for ${buildReportDescriptor(reportContext)}.`,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    dedupeKey: `RESCUE_STARTED:${asId(reportContext._id || report._id)}`,
   };
-  const reporter = asId(report.reporter);
+  const reporter = asId(reportContext.reporter || report.reporter);
   await Promise.all([
     reporter
       ? createNotification({
           ...payload,
           recipient: reporter,
-          link: notificationLink("CITIZEN", report._id),
+          link: notificationLink("CITIZEN", reportContext._id || report._id),
         })
       : null,
-    notifyEach(await ngoUsersForReport(report), payload),
+    notifyEach(await ngoUsersForReport(reportContext), payload),
   ]);
 }
 
 /** 6. Status is RESCUED. */
 export async function notifyAnimalRescued(report) {
+  const reportContext = await resolveReportContext(report);
   const payload = {
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "RESCUE_COMPLETED",
     title: "Animal rescued",
-    message: "The animal has been successfully rescued.",
-    emergencyLevel: report.emergencyLevel,
-    dedupeKey: `RESCUE_COMPLETED:${asId(report._id)}`,
+    message: buildRescueOutcomeMessage(reportContext),
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    dedupeKey: `RESCUE_COMPLETED:${asId(reportContext._id || report._id)}`,
   };
-  const reporter = asId(report.reporter);
+  const reporter = asId(reportContext.reporter || report.reporter);
   await Promise.all([
     reporter
       ? createNotification({
           ...payload,
           recipient: reporter,
-          link: notificationLink("CITIZEN", report._id),
+          link: notificationLink("CITIZEN", reportContext._id || report._id),
         })
       : null,
-    notifyEach(await ngoUsersForReport(report), payload),
+    notifyEach(await ngoUsersForReport(reportContext), payload),
   ]);
 }
 
 /** 7. Evidence submitted → assigned NGO, with verification deep-link. */
 export async function notifyEvidenceSubmitted({ report, rescuerName, submissionCount = 1 }) {
-  const name = displayName(rescuerName);
+  const reportContext = await resolveReportContext(report);
   return notifyEach(
-    await ngoUsersForReport(report),
+    await ngoUsersForReport(reportContext),
     {
-      report: report._id,
+      report: reportContext._id || report._id,
       type: "EVIDENCE_SUBMITTED",
       title: "Rescue evidence submitted",
-      message: `${name} has submitted rescue evidence for verification.`,
-      emergencyLevel: report.emergencyLevel,
-      dedupeKey: `EVIDENCE_SUBMITTED:${asId(report._id)}:${submissionCount}`,
+      message: `Rescue evidence submitted for ${buildReportDescriptor(reportContext)}.`,
+      emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+      dedupeKey: `EVIDENCE_SUBMITTED:${asId(reportContext._id || report._id)}:${submissionCount}`,
     },
     "evidence",
   );
@@ -262,62 +324,62 @@ export async function notifyEvidenceSubmitted({ report, rescuerName, submissionC
 
 /** 8. Evidence verified or rejected → assigned rescuer. */
 export async function notifyEvidenceReviewed({ report, verified, reason }) {
-  const rescuerId = asId(report.assignedRescuer) || asId(report.rescueEvidence?.submittedBy);
+  const reportContext = await resolveReportContext(report);
+  const rescuerId = asId(reportContext.assignedRescuer || report.assignedRescuer) || asId(reportContext.rescueEvidence?.submittedBy || report.rescueEvidence?.submittedBy);
   if (!rescuerId) return null;
   const note = reason?.trim();
+  const reportDescriptor = buildReportDescriptor(reportContext);
+  const baseMessage = `Your rescue evidence for ${reportDescriptor} has been ${verified ? "approved" : "rejected"}.`;
   if (verified) {
     return createNotification({
       recipient: rescuerId,
-      report: report._id,
+      report: reportContext._id || report._id,
       type: "EVIDENCE_VERIFIED",
-      title: "Rescue evidence verified",
-      message: note
-        ? `Your rescue evidence has been verified. ${note}`
-        : "Your rescue evidence has been verified.",
-      emergencyLevel: report.emergencyLevel,
-      link: notificationLink("RESCUER", report._id),
-      dedupeKey: `EVIDENCE_VERIFIED:${asId(report._id)}:${report.rescueEvidence?.submissionCount || 1}`,
+      title: "Rescue evidence approved",
+      message: note ? `${baseMessage} ${note}` : baseMessage,
+      emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+      link: notificationLink("RESCUER", reportContext._id || report._id),
+      dedupeKey: `EVIDENCE_VERIFIED:${asId(reportContext._id || report._id)}:${reportContext.rescueEvidence?.submissionCount || report.rescueEvidence?.submissionCount || 1}`,
     });
   }
   return createNotification({
     recipient: rescuerId,
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "EVIDENCE_REJECTED",
-    title: "Rescue evidence rejected",
-    message: note
-      ? `Your rescue evidence was rejected. Reason: ${note}`
-      : "Your rescue evidence was rejected.",
-    emergencyLevel: report.emergencyLevel,
-    link: notificationLink("RESCUER", report._id),
-    dedupeKey: `EVIDENCE_REJECTED:${asId(report._id)}:${report.rescueEvidence?.submissionCount || 1}`,
+    title: "Rescue evidence needs revision",
+    message: note ? `${baseMessage} Reason: ${note}` : baseMessage,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    link: notificationLink("RESCUER", reportContext._id || report._id),
+    dedupeKey: `EVIDENCE_REJECTED:${asId(reportContext._id || report._id)}:${reportContext.rescueEvidence?.submissionCount || report.rescueEvidence?.submissionCount || 1}`,
   });
 }
 
 /** 9. Case closed → citizen and rescuer. */
 export async function notifyCaseClosed(report) {
+  const reportContext = await resolveReportContext(report);
   const payload = {
-    report: report._id,
+    report: reportContext._id || report._id,
     type: "CASE_CLOSED",
     title: "Rescue case closed",
-    message: "Your rescue case has been completed and closed.",
-    emergencyLevel: report.emergencyLevel,
-    dedupeKey: `CASE_CLOSED:${asId(report._id)}`,
+    message: `The rescue case for ${buildReportDescriptor(reportContext)} has been completed and closed.`,
+    emergencyLevel: reportContext.emergencyLevel || report.emergencyLevel,
+    dedupeKey: `CASE_CLOSED:${asId(reportContext._id || report._id)}`,
   };
-  const reporter = asId(report.reporter);
-  const rescuer = asId(report.assignedRescuer);
+  const reporter = asId(reportContext.reporter || report.reporter);
+  const rescuer = asId(reportContext.assignedRescuer || report.assignedRescuer);
   await Promise.all([
     reporter
       ? createNotification({
           ...payload,
           recipient: reporter,
-          link: notificationLink("CITIZEN", report._id),
+          link: notificationLink("CITIZEN", reportContext._id || report._id),
         })
       : null,
     rescuer && rescuer !== reporter
       ? createNotification({
           ...payload,
           recipient: rescuer,
-          link: notificationLink("RESCUER", report._id),
+          link: notificationLink("RESCUER", reportContext._id || report._id),
         })
       : null,
   ]);
@@ -378,12 +440,13 @@ export async function notifyRescueStatusChange({ report, newStatus, actorName })
   }
   if (newStatus === "CLOSED") {
     await notifyCaseClosed(report);
+    const reportContext = await resolveReportContext(report);
     await notifyAdmins({
-      report,
+      report: reportContext,
       type: "CASE_CLOSED",
       title: "Rescue case closed",
-      message: `Case ${report.reportId} has been completed and closed.`,
-      dedupeKey: `ADMIN_CLOSED:${asId(report._id)}`,
+      message: `The rescue case for ${buildReportDescriptor(reportContext)} has been completed and closed.`,
+      dedupeKey: `ADMIN_CLOSED:${asId(reportContext._id || report._id)}`,
     });
   }
 }

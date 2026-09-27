@@ -154,8 +154,8 @@ export const acceptRescue = asyncHandler(async (req, res) => {
   await notifyUsers([report.reporter], {
     report: report._id,
     type: "RESCUE_ACCEPTED",
-    title: "A rescuer has accepted your report",
-    message: `${req.user.name} is on the way to help`,
+    title: "Your rescue request has been accepted",
+    message: `Your rescue request has been accepted by ${req.user.name} for ${buildReportDescriptor(report)}.`,
     emergencyLevel: report.emergencyLevel,
     link: `/reports/${report._id}`,
   });

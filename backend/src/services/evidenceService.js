@@ -2,7 +2,12 @@ import { ApiError } from "../utils/apiError.js";
 import { RescueHistory } from "../models/RescueHistory.js";
 import { RescueReport } from "../models/RescueReport.js";
 import { User } from "../models/User.js";
-import { notifyUsers, notifyRole } from "./notificationService.js";
+import {
+  notifyUsers,
+  notifyRole,
+  buildReportDescriptor,
+  notifyEvidenceReviewed,
+} from "./notificationService.js";
 import { transitionReport, populateReport } from "./rescueService.js";
 import { MIN_EVIDENCE_IMAGES } from "../utils/constants.js";
 
@@ -91,11 +96,12 @@ export async function submitEvidence({ report, user, photos = [], payload = {} }
     previousStatus,
   });
 
+  const reportDescriptor = buildReportDescriptor(report);
   await notifyRole(["NGO", "ADMIN"], {
     report: report._id,
     type: "EVIDENCE_SUBMITTED",
     title: `Evidence awaiting verification — ${report.reportId}`,
-    message: `${user.name} submitted rescue evidence for verification.`,
+    message: `Rescue evidence submitted for ${reportDescriptor}.`,
     emergencyLevel: report.emergencyLevel,
     link: `/reports/${report._id}`,
   });
@@ -184,6 +190,7 @@ export async function verifyEvidence({ report, user, notes = "", rescuerRating, 
     }
   }
 
+  await notifyEvidenceReviewed({ report, verified: true, reason: notes || "" });
   await notifyUsers([report.rescueEvidence.submittedBy, report.assignedRescuer], {
     report: report._id,
     type: "EVIDENCE_VERIFIED",
@@ -230,6 +237,7 @@ export async function rejectEvidence({ report, user, reason }) {
 
   await auditEvent({ report, user, action: "RESCUE_EVIDENCE_REJECTED", note: reason.trim() });
 
+  await notifyEvidenceReviewed({ report, verified: false, reason: reason.trim() });
   await notifyUsers([report.rescueEvidence.submittedBy, report.assignedRescuer], {
     report: report._id,
     type: "EVIDENCE_REJECTED",
